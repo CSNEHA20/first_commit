@@ -353,3 +353,84 @@ s3://policylab-artifacts-prod/
 ## 22. End-to-End Data Flow
 
 From policy edit in Monaco to verified production sync in Amazon Verified Permissions, all state transitions are immutable, cryptographically verifiable, and strictly gated by deterministic evidence.
+
+---
+
+## 23. Enforced 9-Stage Evaluation Pipeline Data Flow (Stage D)
+
+PolicyLab enforces a strict sequential pipeline before Cedar evaluation:
+
+```mermaid
+flowchart TD
+    Step1[1. Load Policy Version] --> Step2[2. Resolve Cedar Schema]
+    Step2 --> Step3[3. Validate Policy Syntax & Types]
+    Step3 -->|Valid| Step4[4. Load / Resolve Entity Snapshot]
+    Step3 -->|Syntax Error| Fail[Return INVALID_INPUT with DENY]
+    Step4 --> Step5[5. Validate Entity Graph Structure & Parents]
+    Step5 -->|Valid| Step6[6. Validate Request & Context Identifiers]
+    Step5 -->|Malformed Entities| Fail
+    Step6 -->|Valid| Step7[7. Deterministic Cedar Evaluation]
+    Step6 -->|Invalid Types / Missing Fields| Fail
+    Step7 --> Step8[8. Normalize Result into Canonical Form]
+    Step8 --> Step9[9. Record Canonical Evidence with SHA-256 Provenance]
+```
+
+---
+
+## 24. Enterprise Database Adapter Extension Architecture (Stage B)
+
+PolicyLab decouples authorization evaluation from concrete database engines via the `IEntityProvider` contract. Additional enterprise adapters can be plugged in without modifying the Cedar engine or diff pipeline:
+
+```text
+┌────────────────────────────────────────────────────────┐
+│               PolicyLab Cedar Engine                   │
+└───────────────────────────┬────────────────────────────┘
+                            │ Consumes Cedar JSON Entities
+┌───────────────────────────▼────────────────────────────┐
+│                    IEntityProvider                     │
+│  (get_entity, load_entities, load_snapshot, etc.)      │
+└───────┬─────────────┬─────────────┬─────────────┬──────┘
+        │             │             │             │
+┌───────▼──────┐┌─────▼──────┐┌─────▼──────┐┌─────▼──────┐
+│  Fixture     ││ DynamoDB   ││ PostgreSQL ││  LDAP / AD │
+│  Provider    ││ Provider   ││ Provider   ││  Provider  │
+└──────────────┘└────────────┘└────────────┘└────────────┘
+```
+
+### Implementing Future Enterprise Adapters:
+
+1. **PostgreSQL Adapter (`PostgreSQLEntityProvider`):**
+   - Query: `SELECT entity_type, entity_id, attributes, parent_uids FROM authorization_entities WHERE entity_uid = ANY(%s);`
+   - Mapping: Converts relational columns into Cedar JSON (`{"uid": {"type": row.entity_type, "id": row.entity_id}, "attrs": row.attributes, "parents": row.parent_uids}`).
+   - Connection pooling via `asyncpg` or SQLAlchemy.
+
+2. **Redis Adapter (`RedisEntityProvider`):**
+   - Query: `MGET entity:User:alice entity:Role:admin`
+   - Mapping: Parses cached JSON string records into Cedar entity objects.
+   - Ideal for ultra-low latency request-scoped entity lookups ($<2\text{ms}$).
+
+3. **LDAP / Active Directory Adapter (`LDAPEntityProvider`):**
+   - Query: LDAP search filter `(&(objectClass=user)(sAMAccountName=alice))` with memberOf attribute mapping.
+   - Mapping: Maps user CN and group memberships into `Role` and `Group` parent entities.
+
+---
+
+## 25. AWS Step Functions Asynchronous Audit Orchestration (Stage I2)
+
+For multi-stage verification workflows on larger scenario suites, PolicyLab orchestrates through an asynchronous Step Functions state machine (`infrastructure/statemachines/audit_workflow.asl.json`):
+
+```text
+ValidateCandidatePolicy
+  │
+  ├── [Syntax Error] ──► AuditHaltedSyntaxError (Fail)
+  │
+  └── [Valid]
+        │
+        ▼
+ExecuteSemanticDiffAndRegression
+        │
+        ├── [PASS] ──► GenerateGroundedExplanation ──► StoreAuditReport ──► Complete
+        │
+        └── [BLOCKED] ─► GenerateViolationExplanation ─► StoreAuditReport ─► Complete
+```
+

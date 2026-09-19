@@ -17,6 +17,7 @@ from ..models.authz import (
     AuthorizationRequest,
     CanonicalEvidence,
     EvaluationDiagnostics,
+    EvaluationStatus,
     MatchedPolicy,
     SourceLocation,
     ValidationError,
@@ -166,12 +167,20 @@ class CedarWasmAdapter(ICedarEngine):
         }
         res = self._invoke_bridge(payload)
 
+        is_success = res.get("success", False)
         decision_str = res.get("decision", "DENY")
         decision = (
             AuthorizationDecision.ALLOW
             if decision_str == "ALLOW"
             else AuthorizationDecision.DENY
         )
+
+        if not is_success:
+            eval_status = EvaluationStatus.EVALUATION_ERROR
+        elif decision == AuthorizationDecision.ALLOW:
+            eval_status = EvaluationStatus.SUCCESS_ALLOW
+        else:
+            eval_status = EvaluationStatus.SUCCESS_DENY
 
         matched_policies = [
             MatchedPolicy(
@@ -201,10 +210,12 @@ class CedarWasmAdapter(ICedarEngine):
                 "context": request.context,
             },
             decision=decision,
+            evaluationStatus=eval_status,
             matchedPolicies=matched_policies,
             determiningPolicies=res.get("determiningPolicies", []),
             diagnostics=diagnostics,
             executionDurationMs=res.get("executionDurationMs", 0.0),
+            runtimeMetadata={"bridge": "cedar_bridge.js"},
         )
 
     def batch_evaluate(

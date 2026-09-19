@@ -1,0 +1,115 @@
+{
+  "Comment": "PolicyLab Long-Running Audit & Verification State Machine (WeMakeDevs AWS First Commit 2026)",
+  "StartAt": "ValidateCandidatePolicy",
+  "States": {
+    "ValidateCandidatePolicy": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${PolicyLabBackendFunctionArn}",
+        "Payload": {
+          "operation": "validate_policy",
+          "policyText.$": "$.candidatePolicyText",
+          "schemaText.$": "$.schemaText"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Next": "IsCandidateSyntaxValid"
+    },
+    "IsCandidateSyntaxValid": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.isValid",
+          "BooleanEquals": true,
+          "Next": "ExecuteSemanticDiffAndRegression"
+        }
+      ],
+      "Default": "AuditHaltedSyntaxError"
+    },
+    "AuditHaltedSyntaxError": {
+      "Type": "Fail",
+      "Cause": "Candidate policy failed Cedar syntax validation.",
+      "Error": "CedarSyntaxValidationFailure"
+    },
+    "ExecuteSemanticDiffAndRegression": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${PolicyLabBackendFunctionArn}",
+        "Payload": {
+          "operation": "run_regression",
+          "baselinePolicyText.$": "$.baselinePolicyText",
+          "candidatePolicyText.$": "$.candidatePolicyText",
+          "schemaText.$": "$.schemaText",
+          "suite.$": "$.suite",
+          "contracts.$": "$.contracts",
+          "entities.$": "$.entities"
+        }
+      },
+      "Next": "CheckRegressionGateStatus"
+    },
+    "CheckRegressionGateStatus": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.gateDecision.status",
+          "StringEquals": "PASS",
+          "Next": "GenerateGroundedExplanation"
+        }
+      ],
+      "Default": "GenerateViolationExplanation"
+    },
+    "GenerateViolationExplanation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${PolicyLabBackendFunctionArn}",
+        "Payload": {
+          "operation": "explain_violation",
+          "regressionReport.$": "$"
+        }
+      },
+      "Next": "StoreAuditReportInS3AndDynamoDB"
+    },
+    "GenerateGroundedExplanation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${PolicyLabBackendFunctionArn}",
+        "Payload": {
+          "operation": "explain_pass",
+          "regressionReport.$": "$"
+        }
+      },
+      "Next": "StoreAuditReportInS3AndDynamoDB"
+    },
+    "StoreAuditReportInS3AndDynamoDB": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${PolicyLabBackendFunctionArn}",
+        "Payload": {
+          "operation": "persist_audit_report",
+          "auditData.$": "$"
+        }
+      },
+      "Next": "AuditWorkflowComplete"
+    },
+    "AuditWorkflowComplete": {
+      "Type": "Succeed"
+    }
+  }
+}

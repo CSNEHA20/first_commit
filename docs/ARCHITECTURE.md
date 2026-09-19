@@ -91,13 +91,24 @@ graph TD
     end
 
     subgraph API [API Gateway & Lambdas]
-        Router[FastAPI Dispatcher]
-        ValLambda[Validation Handler]
-        SimLambda[Simulation Handler]
+        Router[FastAPI Dispatcher / Mangum]
+        ValLambda[Validation & Schema Boundary]
+        SimLambda[Simulation & Enforced Pipeline]
         DiffLambda[Diff & Blast Radius Handler]
-        RegLambda[Regression Handler]
-        AuditLambda[Strands Audit Handler]
-        DeployLambda[AVP Deploy Handler]
+        RegLambda[Regression & Gate Handler]
+        MatrixLambda[Effective Access Matrix Handler]
+        WhatIfLambda[What-If Simulator Handler]
+        AuditLambda[Strands PolicyAuditAgent Handler]
+        DeployLambda[AVP Deploy Handler & Gate Check]
+    end
+
+    subgraph DataAccess [Entity & Persistence Layer]
+        EntityProv[IEntityProvider]
+        FixProv[FixtureEntityProvider]
+        StoredProv[StoredEntityProvider]
+        DynamoProv[DynamoDBEntityProvider]
+        Repo[IPolicyLabRepository / DynamoDB]
+        S3Repo[S3ArtifactRepository]
     end
 
     subgraph Domain [Core Deterministic Engine]

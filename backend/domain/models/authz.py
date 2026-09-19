@@ -63,6 +63,14 @@ class AuthorizationRequest(BaseModel):
     entities: List[Dict[str, Any]] = Field(default_factory=list, description="Cedar entities graph")
 
 
+class EvaluationStatus(str, Enum):
+    SUCCESS_ALLOW = "SUCCESS_ALLOW"
+    SUCCESS_DENY = "SUCCESS_DENY"
+    INVALID_INPUT = "INVALID_INPUT"
+    EVALUATION_ERROR = "EVALUATION_ERROR"
+    INCOMPLETE_EVIDENCE = "INCOMPLETE_EVIDENCE"
+
+
 class CanonicalEvidence(BaseModel):
     """
     Standardized JSON authorization evidence payload consumed by all higher-level
@@ -74,10 +82,20 @@ class CanonicalEvidence(BaseModel):
     evaluationMode: str = "DETERMINISTIC"
     request: Dict[str, Any]
     decision: AuthorizationDecision
+    evaluationStatus: EvaluationStatus = EvaluationStatus.SUCCESS_DENY
     matchedPolicies: List[MatchedPolicy] = Field(default_factory=list)
     determiningPolicies: List[str] = Field(default_factory=list)
     diagnostics: EvaluationDiagnostics = Field(default_factory=EvaluationDiagnostics)
     executionDurationMs: float
+    scenarioId: Optional[str] = None
+    policyVersionId: Optional[str] = None
+    entitySnapshotId: Optional[str] = None
+    validationStatus: Optional[str] = None
+    runtimeMetadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+# CanonicalEvaluationResult is the formal contract alias for CanonicalEvidence
+CanonicalEvaluationResult = CanonicalEvidence
 
 
 class PolicyValidationRequest(BaseModel):
