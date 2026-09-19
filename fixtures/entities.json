@@ -15,6 +15,16 @@
     "parents": []
   },
   {
+    "uid": { "type": "Role", "id": "finance_manager" },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": { "type": "Role", "id": "viewer" },
+    "attrs": {},
+    "parents": []
+  },
+  {
     "uid": { "type": "User", "id": "admin_root" },
     "attrs": {},
     "parents": [{ "type": "Role", "id": "admin" }]
@@ -28,6 +38,21 @@
     "uid": { "type": "User", "id": "contractor_alice" },
     "attrs": {},
     "parents": [{ "type": "Role", "id": "contractor" }]
+  },
+  {
+    "uid": { "type": "User", "id": "finance_manager_sarah" },
+    "attrs": {},
+    "parents": [{ "type": "Role", "id": "finance_manager" }]
+  },
+  {
+    "uid": { "type": "User", "id": "tenant_a_user" },
+    "attrs": {},
+    "parents": [{ "type": "Role", "id": "viewer" }]
+  },
+  {
+    "uid": { "type": "Invoice", "id": "inv_001" },
+    "attrs": { "amount": 5000 },
+    "parents": []
   },
   {
     "uid": { "type": "Invoice", "id": "inv_9082" },

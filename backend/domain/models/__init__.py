@@ -1,27 +1,47 @@
+"""
+PolicyLab Domain Models Package
+"""
+
 from .authz import (
     AuthorizationDecision,
+    AuthorizationRequest,
+    CanonicalEvidence,
+    EvaluationDiagnostics,
+    MatchedPolicy,
+    PolicyValidationRequest,
+    PolicyValidationResponse,
     SeverityLevel,
     SourceLocation,
     ValidationError,
     ValidationResult,
-    MatchedPolicy,
-    EvaluationDiagnostics,
-    AuthorizationRequest,
-    CanonicalEvidence,
-    PolicyValidationRequest,
-    PolicyValidationResponse,
+)
+from .scenario import (
+    BatchSimulationRequest,
+    Scenario,
+    ScenarioExecutionStatus,
+    ScenarioResult,
+    ScenarioSuite,
+    SimulationRun,
+    SimulationRunStatus,
 )
 
 __all__ = [
     "AuthorizationDecision",
+    "AuthorizationRequest",
+    "CanonicalEvidence",
+    "EvaluationDiagnostics",
+    "MatchedPolicy",
+    "PolicyValidationRequest",
+    "PolicyValidationResponse",
     "SeverityLevel",
     "SourceLocation",
     "ValidationError",
     "ValidationResult",
-    "MatchedPolicy",
-    "EvaluationDiagnostics",
-    "AuthorizationRequest",
-    "CanonicalEvidence",
-    "PolicyValidationRequest",
-    "PolicyValidationResponse",
+    "Scenario",
+    "ScenarioSuite",
+    "ScenarioExecutionStatus",
+    "ScenarioResult",
+    "BatchSimulationRequest",
+    "SimulationRun",
+    "SimulationRunStatus",
 ]

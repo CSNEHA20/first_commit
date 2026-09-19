@@ -16,7 +16,7 @@ function parseEntityUid(uidStr) {
   if (match) {
     return { type: match[1], id: match[2] };
   }
-  return { type: 'Entity', id: uidStr };
+  throw new Error(`Invalid Cedar entity UID format: '${uidStr}'. Expected format: 'Type::"id"'`);
 }
 
 function validatePolicy(policyText, schemaText = null) {
@@ -157,6 +157,7 @@ function evaluate(request) {
     } else {
       return {
         success: false,
+        error: (result.errors || []).map(e => e.message).join('; ') || 'Cedar evaluation failed',
         decision: 'DENY',
         determiningPolicies: [],
         matchedPolicies: [],
@@ -173,6 +174,7 @@ function evaluate(request) {
     const durationMs = Number(endTime - startTime) / 1e6;
     return {
       success: false,
+      error: ex.message || String(ex),
       decision: 'DENY',
       determiningPolicies: [],
       matchedPolicies: [],
@@ -184,6 +186,102 @@ function evaluate(request) {
       engine: `cedar-wasm@${cedar.getCedarVersion()}`
     };
   }
+}
+
+function batchEvaluate(request) {
+  const startTime = process.hrtime.bigint();
+  const scenarios = request.scenarios || [];
+  const globalEntities = request.entities || [];
+  const results = [];
+
+  for (const sc of scenarios) {
+    const scStartTime = process.hrtime.bigint();
+    try {
+      const principalUid = parseEntityUid(sc.principal);
+      const actionUid = parseEntityUid(sc.action);
+      const resourceUid = parseEntityUid(sc.resource);
+      const entities = sc.entities && sc.entities.length > 0 ? sc.entities : globalEntities;
+
+      const callPayload = {
+        principal: principalUid,
+        action: actionUid,
+        resource: resourceUid,
+        context: sc.context || {},
+        policies: { staticPolicies: request.policyText },
+        entities: entities
+      };
+
+      if (request.schema) {
+        callPayload.schema = request.schema;
+      }
+
+      const result = cedar.isAuthorized(callPayload);
+      const scEndTime = process.hrtime.bigint();
+      const durationMs = Number(scEndTime - scStartTime) / 1e6;
+
+      if (result.type === 'success') {
+        const decision = result.response.decision === 'allow' ? 'ALLOW' : 'DENY';
+        const determiningPolicies = result.response.diagnostics ? result.response.diagnostics.reason || [] : [];
+        const diagErrors = result.response.diagnostics && result.response.diagnostics.errors
+          ? result.response.diagnostics.errors.map(e => e.error.message)
+          : [];
+
+        results.push({
+          scenarioId: sc.id,
+          scenarioTitle: sc.title || null,
+          success: true,
+          decision: decision,
+          determiningPolicies: determiningPolicies,
+          matchedPolicies: determiningPolicies.map(pid => ({
+            policyId: pid,
+            effect: decision === 'ALLOW' ? 'permit' : 'forbid',
+            clause: ''
+          })),
+          diagnostics: {
+            errors: diagErrors,
+            warnings: (result.warnings || []).map(w => w.message)
+          },
+          executionDurationMs: Math.round(durationMs * 100) / 100
+        });
+      } else {
+        results.push({
+          scenarioId: sc.id,
+          scenarioTitle: sc.title || null,
+          success: false,
+          error: (result.errors || []).map(e => e.message).join('; ') || 'Evaluation error',
+          diagnostics: {
+            errors: (result.errors || []).map(e => e.message),
+            warnings: (result.warnings || []).map(w => w.message)
+          },
+          executionDurationMs: Math.round(durationMs * 100) / 100
+        });
+      }
+    } catch (ex) {
+      const scEndTime = process.hrtime.bigint();
+      const durationMs = Number(scEndTime - scStartTime) / 1e6;
+      results.push({
+        scenarioId: sc.id,
+        scenarioTitle: sc.title || null,
+        success: false,
+        error: ex.message || String(ex),
+        diagnostics: {
+          errors: [ex.message || String(ex)],
+          warnings: []
+        },
+        executionDurationMs: Math.round(durationMs * 100) / 100
+      });
+    }
+  }
+
+  const endTime = process.hrtime.bigint();
+  const totalDurationMs = Number(endTime - startTime) / 1e6;
+
+  return {
+    success: true,
+    results: results,
+    totalDurationMs: Math.round(totalDurationMs * 100) / 100,
+    engine: `cedar-wasm@${cedar.getCedarVersion()}`
+  };
 }
 
 // CLI handler for stdin/stdout JSON
@@ -203,6 +301,8 @@ if (require.main === module) {
         res = validatePolicy(req.policyText, req.schema);
       } else if (req.operation === 'evaluate') {
         res = evaluate(req);
+      } else if (req.operation === 'batch_evaluate') {
+        res = batchEvaluate(req);
       } else if (req.operation === 'version') {
         res = {
           cedarVersion: cedar.getCedarVersion(),
@@ -221,5 +321,6 @@ if (require.main === module) {
 module.exports = {
   validatePolicy,
   evaluate,
+  batchEvaluate,
   parseEntityUid
 };

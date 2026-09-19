@@ -6,6 +6,16 @@ export type VersionStatus = "DRAFT" | "VALIDATED" | "ANALYZED" | "VERIFIED" | "D
 
 export type DeploymentGateStatus = "READY" | "BLOCKED" | "VERIFIED"
 
+export interface AuthorizationRequest {
+  principal: string
+  action: string
+  resource: string
+  context?: Record<string, unknown>
+  policyText: string
+  schemaText?: string
+  entities?: Array<Record<string, unknown>>
+}
+
 export interface MatchedPolicy {
   policyId: string
   effect: "permit" | "forbid"

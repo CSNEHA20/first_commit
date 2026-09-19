@@ -1,0 +1,144 @@
+{
+  "id": "suite_acmepay_core",
+  "name": "AcmePay Core Authorization Regression & Simulation Suite",
+  "description": "Comprehensive baseline scenario suite verifying role-based least privilege, contractor isolation, and payroll protection invariants.",
+  "version": "1.0.0",
+  "scenarios": [
+    {
+      "id": "sc_01",
+      "title": "Admin can delete invoices",
+      "description": "Admin users possess full administrative access including destructive actions across all resources.",
+      "principal": "User::\"admin_root\"",
+      "action": "Action::\"delete\"",
+      "resource": "Invoice::\"inv_001\"",
+      "context": {},
+      "expectedDecision": "ALLOW",
+      "contractId": "SC-01",
+      "tags": ["admin", "p0", "baseline"]
+    },
+    {
+      "id": "sc_02",
+      "title": "Admin can view payroll reports",
+      "description": "Admin users can view sensitive executive payroll reports.",
+      "principal": "User::\"admin_root\"",
+      "action": "Action::\"view\"",
+      "resource": "PayrollReport::\"payroll_2026_q1\"",
+      "context": {},
+      "expectedDecision": "ALLOW",
+      "contractId": "SC-01",
+      "tags": ["admin", "payroll", "p0"]
+    },
+    {
+      "id": "sc_03",
+      "title": "Editor can read department invoices",
+      "description": "Editors are permitted to view billing invoice records.",
+      "principal": "User::\"editor_bob\"",
+      "action": "Action::\"view\"",
+      "resource": "Invoice::\"inv_9082\"",
+      "context": {},
+      "expectedDecision": "ALLOW",
+      "contractId": "SC-02",
+      "tags": ["editor", "invoice", "baseline"]
+    },
+    {
+      "id": "sc_04",
+      "title": "Editor can edit department invoices",
+      "description": "Editors are permitted to modify billing invoice records.",
+      "principal": "User::\"editor_bob\"",
+      "action": "Action::\"edit\"",
+      "resource": "Invoice::\"inv_9082\"",
+      "context": {},
+      "expectedDecision": "ALLOW",
+      "contractId": "SC-02",
+      "tags": ["editor", "invoice", "baseline"]
+    },
+    {
+      "id": "sc_05",
+      "title": "Editor cannot delete invoices",
+      "description": "Destructive deletion of invoices is prohibited for Editors (Admin only).",
+      "principal": "User::\"editor_bob\"",
+      "action": "Action::\"delete\"",
+      "resource": "Invoice::\"inv_9082\"",
+      "context": {},
+      "expectedDecision": "DENY",
+      "contractId": "SC-03",
+      "tags": ["editor", "invoice", "security_contract"]
+    },
+    {
+      "id": "sc_06",
+      "title": "Contractor cannot delete payroll reports",
+      "description": "External contractors must never have delete access on payroll records (enforced via explicit forbid).",
+      "principal": "User::\"contractor_alice\"",
+      "action": "Action::\"delete\"",
+      "resource": "PayrollReport::\"payroll_2026_q1\"",
+      "context": {
+        "network": "EXTERNAL"
+      },
+      "expectedDecision": "DENY",
+      "contractId": "SC-04",
+      "tags": ["contractor", "payroll", "critical_invariant"]
+    },
+    {
+      "id": "sc_07",
+      "title": "Contractor cannot export payroll records",
+      "description": "Bulk data export of payroll summaries is prohibited for contractors.",
+      "principal": "User::\"contractor_alice\"",
+      "action": "Action::\"export\"",
+      "resource": "PayrollReport::\"payroll_2026_q1\"",
+      "context": {
+        "network": "EXTERNAL"
+      },
+      "expectedDecision": "DENY",
+      "contractId": "SC-05",
+      "tags": ["contractor", "export", "security_contract"]
+    },
+    {
+      "id": "sc_08",
+      "title": "Contractor can view support tickets",
+      "description": "Contractors have read access to support tickets assigned to their queue.",
+      "principal": "User::\"contractor_alice\"",
+      "action": "Action::\"view\"",
+      "resource": "SupportTicket::\"ticket_102\"",
+      "context": {},
+      "expectedDecision": "ALLOW",
+      "contractId": "SC-07",
+      "tags": ["contractor", "support", "baseline"]
+    },
+    {
+      "id": "sc_09",
+      "title": "Contractor cannot delete support tickets",
+      "description": "Contractors cannot delete support tickets (default deny).",
+      "principal": "User::\"contractor_alice\"",
+      "action": "Action::\"delete\"",
+      "resource": "SupportTicket::\"ticket_102\"",
+      "context": {},
+      "expectedDecision": "DENY",
+      "contractId": "SC-07",
+      "tags": ["contractor", "support", "security_contract"]
+    },
+    {
+      "id": "sc_10",
+      "title": "Finance manager can export payroll reports",
+      "description": "Finance managers have explicit permission to export financial and payroll records.",
+      "principal": "User::\"finance_manager_sarah\"",
+      "action": "Action::\"export\"",
+      "resource": "PayrollReport::\"payroll_2026_q1\"",
+      "context": {},
+      "expectedDecision": "ALLOW",
+      "contractId": "SC-08",
+      "tags": ["finance", "payroll", "baseline"]
+    },
+    {
+      "id": "sc_11",
+      "title": "Viewer cannot delete invoices",
+      "description": "Default deny prevents unprivileged viewers from performing destructive deletion.",
+      "principal": "User::\"tenant_a_user\"",
+      "action": "Action::\"delete\"",
+      "resource": "Invoice::\"inv_9082\"",
+      "context": {},
+      "expectedDecision": "DENY",
+      "contractId": "SC-09",
+      "tags": ["viewer", "default_deny"]
+    }
+  ]
+}

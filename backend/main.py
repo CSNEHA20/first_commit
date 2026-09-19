@@ -1,6 +1,6 @@
 """
 PolicyLab Backend API Service
-FastAPI REST interface exposing deterministic Cedar validation and evaluation.
+FastAPI REST interface exposing deterministic Cedar validation, single evaluation, and batch scenario simulation.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -12,14 +12,19 @@ from .domain.models.authz import (
     PolicyValidationRequest,
     PolicyValidationResponse,
 )
+from .domain.models.scenario import (
+    BatchSimulationRequest,
+    SimulationRun,
+)
 from .domain.cedar.validation import CedarValidationService
 from .domain.cedar.evaluation import CedarEvaluationService
+from .domain.cedar.runner import ScenarioRunner
 from .domain.cedar.engine import LocalCedarAdapter
 
 app = FastAPI(
-    title="PolicyLab Deterministic Authorization Core API",
-    description="Deterministic Cedar policy validation and authorization evaluation service.",
-    version="1.0.0",
+    title="PolicyLab Deterministic Authorization & Scenario Engine API",
+    description="Deterministic Cedar policy validation, authorization evaluation, and scenario runner service.",
+    version="1.1.0",
 )
 
 app.add_middleware(
@@ -32,6 +37,7 @@ app.add_middleware(
 
 validation_service = CedarValidationService()
 evaluation_service = CedarEvaluationService()
+scenario_runner = ScenarioRunner()
 cedar_adapter = LocalCedarAdapter()
 
 
@@ -69,7 +75,7 @@ def validate_policy(request: PolicyValidationRequest):
 
 @app.post("/simulate", response_model=CanonicalEvidence)
 def simulate_authorization(request: AuthorizationRequest):
-    """Deterministically evaluates an authorization request against a Cedar policy set."""
+    """Deterministically evaluates a single authorization request against a Cedar policy set."""
     try:
         evidence = evaluation_service.evaluate(request)
         return evidence
@@ -77,4 +83,25 @@ def simulate_authorization(request: AuthorizationRequest):
         raise HTTPException(
             status_code=400,
             detail=f"Authorization evaluation failed: {str(ex)}",
+        )
+
+
+@app.post("/simulate/batch", response_model=SimulationRun)
+def simulate_batch(request: BatchSimulationRequest):
+    """
+    Deterministically evaluates a suite of declared authorization scenarios
+    against a Cedar policy set, returning a structured simulation matrix.
+    """
+    try:
+        run_matrix = scenario_runner.run(request)
+        return run_matrix
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid simulation request: {str(ve)}",
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Simulation runner execution failed: {str(ex)}",
         )
