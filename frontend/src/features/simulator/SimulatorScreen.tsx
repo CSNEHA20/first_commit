@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
   Zap,
   Play,
@@ -7,12 +7,20 @@ import {
   Bookmark,
   HelpCircle,
   Clock,
+  Cpu,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { DecisionBadge } from "@/components/common/DecisionBadge"
 import { StatusBadge } from "@/components/common/StatusBadge"
-import { AuthorizationDecision } from "@/types/authz"
+import { AuthorizationDecision, CanonicalEvidence } from "@/types/authz"
+import { simulateSingleAuthorization } from "@/lib/api"
+import {
+  ACMEPAY_ENTITIES,
+  ACMEPAY_SCHEMA,
+  POLICY_V12_TEXT,
+  POLICY_V13_TEXT,
+} from "@/fixtures/acmepay"
 
 const SAMPLE_PRINCIPALS = [
   { id: 'User::"contractor_alice"', role: "contractor", label: 'User::"contractor_alice" (Contractor)' },
@@ -72,7 +80,12 @@ export const SimulatorScreen: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false)
   const [hasEvaluated, setHasEvaluated] = useState(true)
 
-  const evaluateAccess = (
+  const [targetEvidence, setTargetEvidence] = useState<CanonicalEvidence | null>(null)
+  const [baselineEvidence, setBaselineEvidence] = useState<CanonicalEvidence | null>(null)
+  const [candidateEvidence, setCandidateEvidence] = useState<CanonicalEvidence | null>(null)
+  const [isLiveCedar, setIsLiveCedar] = useState(false)
+
+  const evaluateAccessLocal = (
     principal: string,
     action: string,
     resource: string,
@@ -146,24 +159,103 @@ export const SimulatorScreen: React.FC = () => {
     }
   }
 
-  const result = evaluateAccess(selectedPrincipal, selectedAction, selectedResource, policyVersion)
-  const baselineResult = evaluateAccess(selectedPrincipal, selectedAction, selectedResource, "v12")
-  const candidateResult = evaluateAccess(selectedPrincipal, selectedAction, selectedResource, "v13")
-  const isDecisionFlip = baselineResult.decision !== candidateResult.decision
+  const runSimulation = useCallback(
+    async (
+      principal: string,
+      action: string,
+      resource: string,
+      ver: "v12" | "v13",
+      contextStr: string
+    ) => {
+      setIsSimulating(true)
+      let parsedCtx: Record<string, unknown> = {}
+      try {
+        parsedCtx = JSON.parse(contextStr)
+      } catch {
+        parsedCtx = {}
+      }
+
+      try {
+        const [targetRes, baseRes, candRes] = await Promise.all([
+          simulateSingleAuthorization({
+            principal,
+            action,
+            resource,
+            context: parsedCtx,
+            policyText: ver === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT,
+            schemaText: ACMEPAY_SCHEMA,
+            entities: ACMEPAY_ENTITIES,
+          }),
+          simulateSingleAuthorization({
+            principal,
+            action,
+            resource,
+            context: parsedCtx,
+            policyText: POLICY_V12_TEXT,
+            schemaText: ACMEPAY_SCHEMA,
+            entities: ACMEPAY_ENTITIES,
+          }),
+          simulateSingleAuthorization({
+            principal,
+            action,
+            resource,
+            context: parsedCtx,
+            policyText: POLICY_V13_TEXT,
+            schemaText: ACMEPAY_SCHEMA,
+            entities: ACMEPAY_ENTITIES,
+          }),
+        ])
+
+        setTargetEvidence(targetRes)
+        setBaselineEvidence(baseRes)
+        setCandidateEvidence(candRes)
+        setIsLiveCedar(true)
+        setHasEvaluated(true)
+      } catch (err) {
+        console.warn("Backend simulation failed, using deterministic local engine fallback:", err)
+        setIsLiveCedar(false)
+        setHasEvaluated(true)
+      } finally {
+        setIsSimulating(false)
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    runSimulation(selectedPrincipal, selectedAction, selectedResource, policyVersion, contextJson)
+  }, [runSimulation, selectedPrincipal, selectedAction, selectedResource, policyVersion, contextJson])
+
+  const localResult = evaluateAccessLocal(selectedPrincipal, selectedAction, selectedResource, policyVersion)
+  const localBaseline = evaluateAccessLocal(selectedPrincipal, selectedAction, selectedResource, "v12")
+  const localCandidate = evaluateAccessLocal(selectedPrincipal, selectedAction, selectedResource, "v13")
+
+  const activeDecision: AuthorizationDecision = targetEvidence?.decision ?? localResult.decision
+  const activeExecutionMs: number = targetEvidence
+    ? Math.round(targetEvidence.executionDurationMs * 100) / 100
+    : localResult.executionMs
+  const activeMatchedPolicy: string = targetEvidence?.determiningPolicies?.length
+    ? targetEvidence.determiningPolicies.join(", ")
+    : targetEvidence?.matchedPolicies?.[0]?.policyId || localResult.matchedPolicy
+  const activeReason: string = targetEvidence
+    ? activeDecision === "ALLOW"
+      ? `Explicit permit satisfied via Cedar WASM engine (${activeMatchedPolicy}).`
+      : "No explicit permit statement matched the authorization request. Implicit default deny applied."
+    : localResult.reason
+
+  const baselineDecision: AuthorizationDecision = baselineEvidence?.decision ?? localBaseline.decision
+  const candidateDecision: AuthorizationDecision = candidateEvidence?.decision ?? localCandidate.decision
+  const isDecisionFlip = baselineDecision !== candidateDecision
 
   const handleSimulate = () => {
-    setIsSimulating(true)
-    setTimeout(() => {
-      setIsSimulating(false)
-      setHasEvaluated(true)
-    }, 150)
+    runSimulation(selectedPrincipal, selectedAction, selectedResource, policyVersion, contextJson)
   }
 
   const applyTemplate = (tpl: typeof QUICK_TEMPLATES[0]) => {
     setSelectedPrincipal(tpl.principal)
     setSelectedAction(tpl.action)
     setSelectedResource(tpl.resource)
-    setHasEvaluated(true)
+    runSimulation(tpl.principal, tpl.action, tpl.resource, policyVersion, contextJson)
   }
 
   return (
@@ -326,8 +418,14 @@ export const SimulatorScreen: React.FC = () => {
           <Card className="glass-card-premium">
             <CardHeader className="p-4 border-b border-white/[0.08]">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-bold">Evaluation Outcome</CardTitle>
-                <StatusBadge status={result.decision} size="xs" />
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-xs font-bold">Evaluation Outcome</CardTitle>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                    <Cpu className="h-2.5 w-2.5" />
+                    {isLiveCedar ? "Cedar WASM Live" : "Deterministic Engine"}
+                  </span>
+                </div>
+                <StatusBadge status={activeDecision} size="xs" />
               </div>
             </CardHeader>
 
@@ -336,7 +434,7 @@ export const SimulatorScreen: React.FC = () => {
                 <>
                   {/* Decision Hero Banner */}
                   <div className={`p-4 rounded-2xl border backdrop-blur-xl flex items-center justify-between shadow-lg ${
-                    result.decision === "ALLOW"
+                    activeDecision === "ALLOW"
                       ? "border-emerald-500/40 bg-emerald-500/[0.08] shadow-[0_0_20px_rgba(24,184,104,0.15)]"
                       : "border-red-500/40 bg-red-500/[0.08] shadow-[0_0_20px_rgba(239,68,68,0.15)]"
                   }`}>
@@ -344,7 +442,7 @@ export const SimulatorScreen: React.FC = () => {
                       <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1 font-mono">
                         Target Decision ({policyVersion})
                       </span>
-                      <DecisionBadge decision={result.decision} size="lg" />
+                      <DecisionBadge decision={activeDecision} size="lg" />
                     </div>
 
                     <div className="text-right">
@@ -352,7 +450,7 @@ export const SimulatorScreen: React.FC = () => {
                         <Clock className="h-3 w-3 text-orange-400" /> Latency
                       </span>
                       <span className="font-mono font-black text-sm text-foreground">
-                        {result.executionMs} ms
+                        {activeExecutionMs} ms
                       </span>
                     </div>
                   </div>
@@ -364,10 +462,10 @@ export const SimulatorScreen: React.FC = () => {
                     </span>
                     <div className="flex items-center gap-2 font-mono text-xs text-foreground font-bold">
                       <Code2 className="h-3.5 w-3.5 text-orange-400" />
-                      <code className="text-orange-400">{result.matchedPolicy}</code>
+                      <code className="text-orange-400">{activeMatchedPolicy}</code>
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-relaxed pt-0.5 font-sans">
-                      {result.reason}
+                      {activeReason}
                     </p>
                   </div>
 
@@ -386,12 +484,12 @@ export const SimulatorScreen: React.FC = () => {
                     <div className="flex items-center justify-between text-xs pt-1">
                       <div className="text-center flex-1 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm">
                         <span className="text-[10px] text-muted-foreground block mb-1 font-mono">v12 (Production)</span>
-                        <DecisionBadge decision={baselineResult.decision} size="sm" />
+                        <DecisionBadge decision={baselineDecision} size="sm" />
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground mx-2 shrink-0" />
                       <div className="text-center flex-1 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm">
                         <span className="text-[10px] text-muted-foreground block mb-1 font-mono">v13 (Candidate)</span>
-                        <DecisionBadge decision={candidateResult.decision} size="sm" />
+                        <DecisionBadge decision={candidateDecision} size="sm" />
                       </div>
                     </div>
                   </div>

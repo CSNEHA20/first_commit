@@ -22,6 +22,7 @@ import {
   ACMEPAY_SCHEMA,
 } from "@/fixtures/acmepay"
 import { ActiveTab } from "@/components/layout/AppSidebar"
+import { validateCedarPolicy, PolicyValidationResponse } from "@/lib/api"
 
 interface PolicyEditorScreenProps {
   onNavigate: (tab: ActiveTab) => void
@@ -37,11 +38,40 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   )
   const [copied, setCopied] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [isValidating, setIsValidating] = useState(false)
+  const [validationResult, setValidationResult] = useState<PolicyValidationResponse | null>(null)
+  const [valDurationMs, setValDurationMs] = useState<number | null>(null)
 
   const handleVersionChange = (ver: "v12" | "v13") => {
     setSelectedVersion(ver)
     setCode(ver === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT)
     setIsSaved(false)
+    setValidationResult(null)
+    setValDurationMs(null)
+  }
+
+  const handleValidate = async () => {
+    setIsValidating(true)
+    const start = performance.now()
+    try {
+      const res = await validateCedarPolicy(code)
+      setValDurationMs(Math.round((performance.now() - start) * 10) / 10)
+      setValidationResult(res)
+    } catch (err: any) {
+      setValDurationMs(Math.round((performance.now() - start) * 10) / 10)
+      setValidationResult({
+        isValid: false,
+        errors: [{
+          message: err.message || "Cedar validation request failed",
+          severity: "error",
+          sourceLocations: []
+        }],
+        warnings: [],
+        engine: "Cedar WASM"
+      })
+    } finally {
+      setIsValidating(false)
+    }
   }
 
   const handleCopyCode = () => {
@@ -101,6 +131,18 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
           <Button
             variant="outline"
             size="sm"
+            onClick={handleValidate}
+            disabled={isValidating}
+            className="text-xs gap-1 h-7 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 transition-all font-semibold"
+            title="Validate policy syntax with live Cedar WASM engine"
+          >
+            <CheckCircle2 className={`h-3 w-3 ${isValidating ? "animate-spin text-orange-400" : "text-orange-400"}`} />
+            <span>{isValidating ? "Validating..." : "Validate AST"}</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleCopyCode}
             className="text-xs gap-1 h-7 border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.08] text-foreground"
           >
@@ -152,10 +194,24 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge variant="allow" className="text-[10px] gap-1 font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                  <CheckCircle2 className="h-3 w-3" />
-                  AST Valid
-                </Badge>
+                {validationResult ? (
+                  validationResult.isValid ? (
+                    <Badge variant="allow" className="text-[10px] gap-1 font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Cedar Validated ({validationResult.engine})
+                    </Badge>
+                  ) : (
+                    <Badge variant="blocked" className="text-[10px] gap-1 font-mono bg-red-500/10 text-red-400 border-red-500/20">
+                      <AlertTriangle className="h-3 w-3" />
+                      Syntax Error ({validationResult.errors.length})
+                    </Badge>
+                  )
+                ) : (
+                  <Badge variant="allow" className="text-[10px] gap-1 font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                    <CheckCircle2 className="h-3 w-3" />
+                    AST Valid
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -200,8 +256,25 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
 
             {/* Diagnostics Bar */}
             <div className="px-3.5 py-2.5 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                {selectedVersion === "v13" ? (
+              <div className="flex items-center gap-2 overflow-hidden">
+                {validationResult ? (
+                  !validationResult.isValid ? (
+                    <div className="flex items-center gap-1.5 text-rose-400 font-medium truncate">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-400" />
+                      <span className="truncate">Syntax Error: {validationResult.errors?.map((e) => e.message).join("; ") || "Invalid Cedar syntax"}</span>
+                    </div>
+                  ) : validationResult.warnings && validationResult.warnings.length > 0 ? (
+                    <div className="flex items-center gap-1.5 text-amber-400 font-medium truncate">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{validationResult.warnings?.map((w) => w.message).join("; ")}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      <span>Policy validated by Cedar WASM engine. Zero syntax errors.</span>
+                    </div>
+                  )
+                ) : selectedVersion === "v13" ? (
                   <div className="flex items-center gap-1.5 text-amber-400 font-medium">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     <span>Line 18 & 24: Unrestricted action clause matches 4 schema actions.</span>
@@ -214,8 +287,8 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                 )}
               </div>
 
-              <span className="text-[10px] text-muted-foreground font-mono">
-                UTF-8 · LF · Cedar Core
+              <span className="text-[10px] text-muted-foreground font-mono shrink-0 ml-2">
+                {validationResult ? `Cedar WASM · ${valDurationMs ?? 0.8}ms` : "UTF-8 · LF · Cedar Core"}
               </span>
             </div>
           </div>
