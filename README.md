@@ -141,12 +141,13 @@ Complete engineering specifications are available in the [`docs/`](./docs) direc
 | **Phase 5: Grounded AI Explanations & AWS Deployment** | **COMPLETE** | Evidence-grounded AI explanations (Bedrock/Claude 3.5 & deterministic template fallback), structured citations, cryptographic human approval, and AVP deployment. |
 | **Phase 6: Frontend UI Polish & Evidence Visualizer** | **COMPLETE** | Production-ready dark-mode glassmorphic workspace, Monaco editor, diff analyzer, and audit screens. |
 | **Phase 7: Full Software Implementation & Hardening** | **COMPLETE** | Stateful entity providers, DynamoDB/S3 repositories, 9-stage validation boundary, Bedrock candidate generator, Strands agent, Access Matrix, What-If simulator, Step Functions, and security hardening. |
+| **Phase 8: Live AWS Integration & Deployment Verification** | **COMPLETE** | AWS environment auditing, secure config validation, dual-mode Lambda Step Functions dispatcher, AVP deployment model harmonization, CloudWatch EMF metrics, and failure injection testing. |
 
 ---
 
 ## Running Verification
 
-### All Test Suites (98 passing tests)
+### All Test Suites (119 passing tests)
 ```bash
 python -m pytest -v
 ```
@@ -162,11 +163,14 @@ npm run build
 python -m pytest tests/integration/test_acmepay_e2e_full_lifecycle.py -v
 ```
 
-### Phase 7 Capabilities & Integration Tests
+### Phase 8 AWS Integration & Failure-Injection Suites
 ```bash
-python -m pytest tests/integration/test_phase7_api.py -v
-python -m pytest tests/unit/test_security_hardening.py -v
+python -m pytest tests/unit/test_aws_config.py -v
+python -m pytest tests/unit/test_lambda_stepfunctions_handler.py -v
+python -m pytest tests/unit/test_phase8_failure_injection.py -v
+python -m pytest tests/integration/test_phase8_aws_status_api.py -v
 ```
+
 
 ---
 

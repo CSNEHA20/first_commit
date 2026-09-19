@@ -11,7 +11,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from .core.logging import set_correlation_id
+from .core.logging import log_operational_metric, set_correlation_id
+from .core.aws_config import aws_config, AWSClusterStatus
 from .domain.models.authz import (
     AuthorizationRequest,
     CanonicalEvidence,
@@ -151,7 +152,7 @@ report_exporter = AuditReportExportService()
 
 @app.get("/health")
 def get_health():
-    """Health check endpoint returning Cedar engine version metadata."""
+    """Health check endpoint returning Cedar engine and AWS environment status."""
     try:
         versions = cedar_adapter.get_version()
         return {
@@ -159,12 +160,24 @@ def get_health():
             "engine": "Cedar WASM",
             "cedarVersion": versions.get("cedarVersion", "4.13.0"),
             "cedarLangVersion": versions.get("cedarLangVersion", "4.5"),
+            "environment": aws_config.environment,
+            "awsRegion": aws_config.region,
+            "credentialsDetected": aws_config.has_aws_credentials(),
         }
     except Exception as ex:
         return {
             "status": "degraded",
             "error": str(ex),
         }
+
+
+@app.get("/aws/status", response_model=AWSClusterStatus)
+def get_aws_status():
+    """
+    Audits and returns the truthful operational status of all AWS service integrations.
+    Distinguishes LIVE, LOCAL_MOCKED, and NOT_CONFIGURED states.
+    """
+    return aws_config.audit_environment()
 
 
 @app.post("/policies/validate", response_model=PolicyValidationResponse)
@@ -367,8 +380,18 @@ def prepare_deployment(request: DeploymentPrepareRequest):
     and creates a deployment preparation record.
     """
     try:
-        return deployment_service.prepare_deployment(request)
+        prep_res = deployment_service.prepare_deployment(request)
+        if not prep_res.isEligible:
+            log_operational_metric(
+                "DeploymentBlocked", 1.0, unit="Count", dimensions={"TargetEnv": prep_res.targetEnv}
+            )
+        else:
+            log_operational_metric(
+                "DeploymentPrepared", 1.0, unit="Count", dimensions={"TargetEnv": prep_res.targetEnv}
+            )
+        return prep_res
     except Exception as ex:
+        log_operational_metric("DeploymentPrepareFailure", 1.0, unit="Count")
         raise HTTPException(
             status_code=400,
             detail=f"Deployment preparation failed: {str(ex)}",
@@ -381,7 +404,9 @@ def approve_deployment(request: HumanApprovalRequest):
     Registers explicit human operator sign-off for a specific prepared deployment and policy hash.
     """
     try:
-        return deployment_service.register_approval(request)
+        appr_res = deployment_service.register_approval(request)
+        log_operational_metric("HumanApprovalGranted", 1.0, unit="Count")
+        return appr_res
     except ValueError as ve:
         raise HTTPException(
             status_code=400,
@@ -400,13 +425,19 @@ def submit_deployment(request: DeploymentSubmitRequest):
     Submits an approved policy set to Amazon Verified Permissions after validating human approval.
     """
     try:
-        return deployment_service.submit_deployment(request)
+        submit_res = deployment_service.submit_deployment(request)
+        log_operational_metric(
+            "DeploymentSubmitted", 1.0, unit="Count", dimensions={"Status": submit_res.status.value}
+        )
+        return submit_res
     except ValueError as ve:
+        log_operational_metric("DeploymentSubmissionRejected", 1.0, unit="Count")
         raise HTTPException(
             status_code=400,
             detail=str(ve),
         )
     except Exception as ex:
+        log_operational_metric("DeploymentSubmissionError", 1.0, unit="Count")
         raise HTTPException(
             status_code=500,
             detail=f"Deployment submission error: {str(ex)}",

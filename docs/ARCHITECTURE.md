@@ -452,5 +452,54 @@ VERIFIED PERMISSIONS (Target Policy Store Deployment Gate)
     ↓
 POLISHED FRONTEND (Monaco, Hero Card, Evidence Drawer)
     ↓
-END-TO-END DEMO (AcmePay Live Demonstration & Video)
+LIVE AWS HARDENING & STEP FUNCTIONS (Dual Dispatcher & EMF Metrics)
+    ↓
+END-TO-END DEMO (AcmePay Full Lifecycle & Verification)
 ```
+
+---
+
+## 27. Phase 8 Live AWS Integration Architecture
+
+```text
+                       ┌────────────────────────────────────────────────────────┐
+                       │            API Gateway / Client Request                │
+                       └───────────────────────────┬────────────────────────────┘
+                                                   │
+                                                   ▼
+                                ┌──────────────────────────────────────┐
+                                │       backend/lambda_handler.py       │
+                                │   (Dual-Mode Dispatch Entrypoint)    │
+                                └──────────────────┬───────────────────┘
+                                                   │
+                         ┌─────────────────────────┴─────────────────────────┐
+                         │                                                   │
+            [HTTP API / Proxy Event]                            [Step Functions Direct Task]
+                         │                                                   │
+                         ▼                                                   ▼
+                ┌─────────────────┐                               ┌─────────────────────┐
+                │ Mangum Adapter  │                               │ handle_step_func... │
+                └────────┬────────┘                               └──────────┬──────────┘
+                         │                                                   │
+                         ▼                                                   ▼
+                ┌─────────────────┐                               ┌─────────────────────┐
+                │ FastAPI App     │                               │ validate_policy     │
+                │ (REST Endpoints)│                               │ run_regression      │
+                └────────┬────────┘                               │ explain_violation   │
+                         │                                        │ persist_audit_report│
+                         │                                        └──────────┬──────────┘
+                         │                                                   │
+                         └─────────────────────────┬─────────────────────────┘
+                                                   │
+                                                   ▼
+                  ┌─────────────────────────────────────────────────────────────────┐
+                  │                 Core Verification & AWS Clients                 │
+                  ├────────────────────────┬────────────────────────────────────────┤
+                  │ AWS Configuration      │ backend/core/aws_config.py (Fail-Closed)│
+                  │ Logging & Metrics      │ backend/core/logging.py (CloudWatch EMF)│
+                  │ Persistence Adapters   │ DynamoDB (Conditional) & S3 (SHA-256)   │
+                  │ Verified Permissions   │ Boto3AVPAdapter / DeterministicFakeAVP │
+                  │ Bedrock Runtime        │ BedrockPolicyGenerator / Claude Sonnet │
+                  └─────────────────────────────────────────────────────────────────┘
+```
+

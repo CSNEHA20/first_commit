@@ -434,3 +434,35 @@ ExecuteSemanticDiffAndRegression
         └── [BLOCKED] ─► GenerateViolationExplanation ─► StoreAuditReport ─► Complete
 ```
 
+---
+
+## 26. Phase 8 Verified Deployment & Observability Data Flow
+
+```text
+Operator / UI                PolicyLab Backend               Verified Permissions           CloudWatch Logs
+     │                               │                                 │                            │
+     │── 1. Prepare Deployment ─────►│                                 │                            │
+     │   (candidateText, targetEnv)  │── Compute Candidate SHA-256     │                            │
+     │                               │── Check Gate == PASS?           │                            │
+     │                               │── (If BLOCKED: Blocked, Stop)   │                            │
+     │                               │                                 │── Log Metric ─────────────►│
+     │◄── Return Prepared Record ────│                                 │   DeploymentPrepared /     │
+     │    (prepId, policyHash, OK)   │                                 │   DeploymentBlocked (EMF)  │
+     │                               │                                 │                            │
+     │── 2. Register Human Sign-Off ─►                                 │                            │
+     │   (prepId, policyHash, approv)│── Verify Policy Hash Match      │                            │
+     │                               │── Verify Gate is PASS           │                            │
+     │                               │── Store Approval Token          │── Log Metric ─────────────►│
+     │◄── Return Approval Token ─────│                                 │   HumanApprovalGranted     │
+     │                               │                                 │                            │
+     │── 3. Submit Deployment ──────►│                                 │                            │
+     │   (token, candidateText)      │── Verify Token Exists           │                            │
+     │                               │── Verify Policy Hash Matches    │                            │
+     │                               │   Token Digest (Anti-Tamper)    │                            │
+     │                               │── Invoke create_policy() ──────►│                            │
+     │                               │◄── Return policyId / proof ─────│                            │
+     │                               │── Record in Audit Ledger        │── Log Metric ─────────────►│
+     │◄── Return Synchronized ───────│                                 │   DeploymentSubmitted (EMF)│
+```
+
+

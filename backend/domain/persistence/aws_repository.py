@@ -3,6 +3,7 @@ PolicyLab AWS Persistence Adapters (DynamoDB & S3)
 Provides scalable serverless persistence for PolicySets, PolicyVersions, Snapshots,
 Audit Runs, and S3 Immutable Evidence Artifacts.
 Includes graceful local fallback when AWS environment or credentials are unconfigured.
+Hardened with SHA-256 integrity verification, conditional writes, and conflict detection.
 """
 
 from datetime import datetime, timezone
@@ -14,6 +15,16 @@ from typing import Any, Dict, List, Optional
 from ..models.deployment import DeploymentRecord, DeploymentStatus
 from ..models.entity import EntitySnapshot, compute_canonical_entity_hash
 from .repository import IPolicyLabRepository, InMemoryPolicyLabRepository
+
+
+class PolicyVersionConflictError(Exception):
+    """Raised when a conditional write fails due to duplicate or conflicting policy version tags."""
+    pass
+
+
+class S3ArtifactIntegrityError(Exception):
+    """Raised when an artifact retrieved from storage does not match its expected SHA-256 hash."""
+    pass
 
 
 class S3ArtifactRepository:
@@ -32,60 +43,86 @@ class S3ArtifactRepository:
     def _initialize_client(self) -> None:
         try:
             import boto3
-            self._s3_client = boto3.client("s3", region_name=self.region)
+            import botocore.config
+            cfg = botocore.config.Config(connect_timeout=5, read_timeout=10, retries={"max_attempts": 2})
+            self._s3_client = boto3.client("s3", region_name=self.region, config=cfg)
         except Exception:
             self._s3_client = None
 
-    def store_artifact(self, key: str, content: str, content_type: str = "text/plain") -> Dict[str, str]:
+    @property
+    def is_live(self) -> bool:
+        return self._s3_client is not None and os.environ.get("AWS_S3_ENABLED") == "true"
+
+    def store_artifact(
+        self, key: str, content: str, content_type: str = "text/plain", expected_sha256: Optional[str] = None
+    ) -> Dict[str, str]:
         """
         Stores an artifact and returns its canonical S3 URI, SHA-256 hash, and timestamp.
+        Verifies content against expected_sha256 if supplied.
         """
-        sha256_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        actual_sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        if expected_sha256 and expected_sha256 != actual_sha256:
+            raise S3ArtifactIntegrityError(
+                f"Content SHA-256 mismatch before storage: expected '{expected_sha256}', computed '{actual_sha256}'."
+            )
+
         now = datetime.now(timezone.utc).isoformat()
 
-        if self._s3_client and os.environ.get("AWS_S3_ENABLED") == "true":
+        if self.is_live:
             try:
                 self._s3_client.put_object(
                     Bucket=self.bucket_name,
                     Key=key,
                     Body=content.encode("utf-8"),
                     ContentType=content_type,
-                    Metadata={"sha256": sha256_hash, "created_at": now},
+                    Metadata={"sha256": actual_sha256, "created_at": now},
                 )
                 return {
                     "uri": f"s3://{self.bucket_name}/{key}",
-                    "sha256": sha256_hash,
+                    "sha256": actual_sha256,
                     "storage": "S3_LIVE",
                     "createdAt": now,
                 }
             except Exception:
-                pass  # Fall through to local storage
+                pass  # Fall through to local fallback
 
         # In-memory / local fallback
         self._local_storage[key] = {
             "content": content,
             "contentType": content_type,
-            "sha256": sha256_hash,
+            "sha256": actual_sha256,
             "createdAt": now,
         }
         return {
             "uri": f"local://artifacts/{key}",
-            "sha256": sha256_hash,
+            "sha256": actual_sha256,
             "storage": "LOCAL_MOCKED",
             "createdAt": now,
         }
 
-    def get_artifact(self, key: str) -> Optional[str]:
-        if self._s3_client and os.environ.get("AWS_S3_ENABLED") == "true":
+    def get_artifact(self, key: str, verify_sha256: Optional[str] = None) -> Optional[str]:
+        """
+        Retrieves an artifact by key, verifying integrity against expected SHA-256 if provided.
+        """
+        content = None
+        if self.is_live:
             try:
                 res = self._s3_client.get_object(Bucket=self.bucket_name, Key=key)
-                return res["Body"].read().decode("utf-8")
+                content = res["Body"].read().decode("utf-8")
             except Exception:
-                pass
+                content = None
 
-        if key in self._local_storage:
-            return self._local_storage[key]["content"]
-        return None
+        if content is None and key in self._local_storage:
+            content = self._local_storage[key]["content"]
+
+        if content is not None and verify_sha256:
+            actual_sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            if actual_sha != verify_sha256:
+                raise S3ArtifactIntegrityError(
+                    f"Artifact '{key}' SHA-256 verification failed: expected '{verify_sha256}', computed '{actual_sha}'."
+                )
+
+        return content
 
 
 class DynamoDBPolicyLabRepository(IPolicyLabRepository):
@@ -108,7 +145,9 @@ class DynamoDBPolicyLabRepository(IPolicyLabRepository):
     def _initialize_resource(self) -> None:
         try:
             import boto3
-            self._dynamodb_resource = boto3.resource("dynamodb", region_name=self.region)
+            import botocore.config
+            cfg = botocore.config.Config(connect_timeout=5, read_timeout=10, retries={"max_attempts": 2})
+            self._dynamodb_resource = boto3.resource("dynamodb", region_name=self.region, config=cfg)
             self._table = self._dynamodb_resource.Table(self.table_name)
         except Exception:
             self._dynamodb_resource = None
@@ -147,10 +186,12 @@ class DynamoDBPolicyLabRepository(IPolicyLabRepository):
         return self._fallback_repo.get_policy_set(set_id)
 
     def save_policy_version(self, version: Dict[str, Any]) -> None:
+        set_id = version["setId"]
+        v_tag = version["versionTag"]
+
         if self.is_live:
             try:
-                set_id = version["setId"]
-                v_tag = version["versionTag"]
+                from botocore.exceptions import ClientError
                 item = {
                     "PK": f"VERSION#{set_id}",
                     "SK": f"TAG#{v_tag}",
@@ -168,8 +209,20 @@ class DynamoDBPolicyLabRepository(IPolicyLabRepository):
                     ConditionExpression="attribute_not_exists(PK) AND attribute_not_exists(SK)",
                 )
                 return
-            except Exception:
+            except Exception as ex:
+                err_code = getattr(ex, "response", {}).get("Error", {}).get("Code", "")
+                if err_code == "ConditionalCheckFailedException" or "ConditionalCheckFailed" in str(ex):
+                    raise PolicyVersionConflictError(
+                        f"Policy version '{v_tag}' for policy set '{set_id}' already exists."
+                    )
                 pass
+
+        # In-memory fallback with conditional check
+        existing = self._fallback_repo.get_policy_version(set_id, v_tag)
+        if existing:
+            raise PolicyVersionConflictError(
+                f"Policy version '{v_tag}' for policy set '{set_id}' already exists (In-Memory Check)."
+            )
         self._fallback_repo.save_policy_version(version)
 
     def get_policy_version(self, set_id: str, version_tag: str) -> Optional[Dict[str, Any]]:
