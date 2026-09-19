@@ -35,25 +35,25 @@ export function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200">
-      {/* Top Application Header */}
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-150">
+      {/* Workbench Titlebar Header */}
       <AppHeader
-        activeProject="AcmePay-Core-Authz"
+        activeProject="AcmePay / Authorization"
         activeVersion="v12 (PROD)"
       />
 
-      {/* Main Workspace Layout */}
-      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto">
-        {/* Sidebar Navigation */}
+      {/* Main Split Workspace Layout */}
+      <div className="flex-1 flex flex-col md:flex-row w-full min-w-0">
+        {/* Workspace Sidebar */}
         <AppSidebar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
-          failedContractsCount={1}
+          failedContractsCount={3}
           counterexamplesCount={3}
         />
 
-        {/* Core Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-y-auto">
+        {/* Core Screen Workspace Area */}
+        <main className="flex-1 p-4 sm:p-5 lg:p-6 min-w-0 overflow-y-auto max-w-7xl">
           {renderActiveScreen()}
         </main>
       </div>

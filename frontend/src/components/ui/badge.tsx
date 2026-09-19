@@ -3,22 +3,21 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+          "border border-primary/20 bg-primary text-primary-foreground",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border border-border bg-secondary text-secondary-foreground",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
-        allow: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-        deny: "border-rose-500/30 bg-rose-500/10 text-rose-400",
-        warning: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-        blocked: "border-rose-600 bg-rose-600/20 text-rose-300 font-bold",
-        ai: "border-purple-500/30 bg-purple-500/10 text-purple-300",
+          "border border-destructive/30 bg-destructive/10 text-destructive font-semibold",
+        outline: "border border-border bg-transparent text-foreground",
+        allow: "border border-status-allow/40 bg-status-allow/10 text-status-allow font-semibold",
+        deny: "border border-status-deny/40 bg-status-deny/10 text-status-deny font-semibold",
+        warning: "border border-status-warning/40 bg-status-warning/10 text-status-warning font-semibold",
+        blocked: "border border-status-blocked/50 bg-status-blocked/15 text-status-blocked font-bold",
       },
     },
     defaultVariants: {

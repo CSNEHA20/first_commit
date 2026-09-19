@@ -7,15 +7,13 @@ import {
   XCircle,
   Lock,
   ArrowRight,
-  FileCode2,
-  History,
-  Check,
   UserCheck,
   AlertTriangle,
   Server,
   Key,
+  Check,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -49,9 +47,9 @@ export const DeploymentScreen: React.FC = () => {
   const [readiness, setReadiness] = useState<AVPReadinessResponse | null>(null)
   const [prepResult, setPrepResult] = useState<DeploymentPrepareResponse | null>(null)
   const [approval, setApproval] = useState<HumanApprovalResponse | null>(null)
-  const [approverName, setApproverName] = useState("Vishal Lakshmikanthan (Principal SecOps)")
+  const [approverName, setApproverName] = useState("Vishal Lakshmikanthan (SecOps Lead)")
   const [ticketRef, setTicketRef] = useState("SEC-2026-9042")
-  const [approvalNotes, setApprovalNotes] = useState("Verified against full AcmePay 18-scenario suite with zero contract violations.")
+  const [approvalNotes, setApprovalNotes] = useState("Verified against full AcmePay security invariant suite.")
   const [isDeploying, setIsDeploying] = useState(false)
   const [submitResult, setSubmitResult] = useState<DeploymentSubmitResponse | null>(null)
   const [deploymentRecords, setDeploymentRecords] = useState<DeploymentRecord[]>(DEFAULT_DEPLOYMENT_HISTORY as any)
@@ -85,7 +83,6 @@ export const DeploymentScreen: React.FC = () => {
     setSubmitResult(null)
     setApproval(null)
     try {
-      // 1. Run regression to get canonical gate decision
       const regression = await runRegression({
         baselinePolicyText: POLICY_V12_TEXT,
         candidatePolicyText,
@@ -100,8 +97,6 @@ export const DeploymentScreen: React.FC = () => {
         candidateLabel: selectedVersion,
       })
 
-
-      // 2. Prepare deployment target
       const prep = await prepareDeployment({
         candidatePolicyText,
         schemaText: ACMEPAY_SCHEMA,
@@ -144,7 +139,6 @@ export const DeploymentScreen: React.FC = () => {
         candidateLabel: selectedVersion,
       })
       setSubmitResult(sub)
-      // Refresh history
       const history = await getDeploymentHistory().catch(() => [])
       if (history && history.length > 0) {
         setDeploymentRecords(history)
@@ -159,47 +153,44 @@ export const DeploymentScreen: React.FC = () => {
   const isBlocked = prepResult ? !prepResult.isDeployable : selectedVersion === "v13"
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-200">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="text-xs font-mono gap-1">
-              <Server className="h-3 w-3 text-indigo-400" />
+            <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+              <Server className="h-3 w-3" />
               Target: Amazon Verified Permissions ({readiness?.adapterMode || "DETERMINISTIC_FAKE"})
-            </Badge>
-            <Badge variant={isBlocked ? "blocked" : "allow"}>
-              {isBlocked ? "Gate: ⛔ BLOCKED" : "Gate: 🟢 VERIFIED"}
+            </span>
+            <span className="text-muted-foreground/40">·</span>
+            <Badge variant={isBlocked ? "blocked" : "allow"} className="text-[10px] font-mono">
+              {isBlocked ? "Gate: BLOCKED" : "Gate: VERIFIED"}
             </Badge>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Rocket className="h-5 w-5 text-indigo-500" />
-            Verified Permissions Deployment Gate & Governance
+          <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
+            <Rocket className="h-5 w-5 text-primary" />
+            Verified Permissions Deployment Gate
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Enforcing zero-trust verification and cryptographic human approval before synchronizing Cedar policy sets to AWS policy stores.
-          </p>
         </div>
 
-        {/* Version Switcher */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Candidate:</span>
-          <div className="flex items-center p-1 rounded-lg bg-muted border border-border">
+          <div className="flex items-center p-0.5 rounded-md bg-muted border border-border">
             <button
               onClick={() => setSelectedVersion("v12")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
                 selectedVersion === "v12"
-                  ? "bg-background text-foreground shadow-sm font-bold"
+                  ? "bg-background text-foreground shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v12 (Verified Baseline)
+              v12 (Verified)
             </button>
             <button
               onClick={() => setSelectedVersion("v13")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
                 selectedVersion === "v13"
-                  ? "bg-background text-foreground shadow-sm font-bold"
+                  ? "bg-background text-foreground shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -210,144 +201,129 @@ export const DeploymentScreen: React.FC = () => {
       </div>
 
       {errorMsg && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+        <div className="p-2.5 rounded bg-status-deny/10 border border-status-deny/20 text-status-deny text-xs flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Deployment Readiness Card */}
-      <Card className={`border ${isBlocked ? "border-rose-500/40 bg-rose-500/5" : "border-emerald-500/40 bg-emerald-500/5"}`}>
-        <CardHeader className="p-6 pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                {isBlocked ? (
-                  <>
-                    <ShieldAlert className="h-5 w-5 text-rose-500" />
-                    Deployment Blocked — Unresolved Security Invariants
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="h-5 w-5 text-emerald-500" />
-                    Deployment Readiness Passed — Ready for Operator Approval
-                  </>
-                )}
+      {/* Deployment Gate Checklist & Approval Card */}
+      <Card className="border-border bg-card">
+        <CardHeader className="p-3.5 pb-2 border-b border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {isBlocked ? (
+                <ShieldAlert className="h-4 w-4 text-status-deny" />
+              ) : (
+                <ShieldCheck className="h-4 w-4 text-status-allow" />
+              )}
+              <CardTitle className="text-xs font-semibold">
+                {isBlocked
+                  ? "Deployment Blocked — Unresolved Security Invariants"
+                  : "Deployment Readiness Verified — Awaiting Operator Sign-Off"}
               </CardTitle>
-              <CardDescription>
-                Candidate Version: <span className="font-mono font-bold text-foreground">{selectedVersion}</span> | Target Store:{" "}
-                <span className="font-mono text-foreground">{prepResult?.targetPolicyStoreId || `ps-acmepay-${targetEnv}`}</span>
-              </CardDescription>
             </div>
 
             <Tabs value={targetEnv} onValueChange={(v) => setTargetEnv(v as any)}>
-              <TabsList className="bg-background border border-border">
-                <TabsTrigger value="staging" className="text-xs">Staging</TabsTrigger>
-                <TabsTrigger value="production" className="text-xs">Production</TabsTrigger>
+              <TabsList className="h-6 bg-muted">
+                <TabsTrigger value="staging" className="text-xs h-5 px-2">Staging</TabsTrigger>
+                <TabsTrigger value="production" className="text-xs h-5 px-2">Production</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
+          <CardDescription className="text-[11px] text-muted-foreground font-mono">
+            Candidate: {selectedVersion} · Policy Store: {prepResult?.targetPolicyStoreId || `ps-acmepay-${targetEnv}`}
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="p-6 pt-3 space-y-4 text-xs">
+        <CardContent className="p-3.5 space-y-3 text-xs">
           {/* Pre-Deployment Verification Checklist */}
-          <div className="divide-y divide-border rounded-lg border border-border bg-background/80 overflow-hidden">
-            <div className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+          <div className="divide-y divide-border rounded border border-border bg-muted/20">
+            <div className="p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
                 <span className="font-medium text-foreground">1. Cedar Syntax & Schema Compilation</span>
               </div>
-              <Badge variant="allow">PASSED</Badge>
+              <Badge variant="allow" className="text-[9px] font-mono">PASSED</Badge>
             </div>
 
-            <div className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            <div className="p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
                 <span className="font-medium text-foreground">2. Bounded Scenario Diff (432 Combinations)</span>
               </div>
-              <Badge variant="allow">EVALUATED</Badge>
+              <Badge variant="allow" className="text-[9px] font-mono">EVALUATED</Badge>
             </div>
 
-            <div className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+            <div className="p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 {isBlocked ? (
-                  <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                  <XCircle className="h-3.5 w-3.5 text-status-deny shrink-0" />
                 ) : (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
                 )}
                 <span className="font-medium text-foreground">
-                  3. Security Contract Regression Suite (18 Scenarios)
+                  3. Security Contract Invariants (18 Scenarios)
                 </span>
               </div>
               {isBlocked ? (
-                <Badge variant="blocked">1 CONTRACT FAILED (SC-04)</Badge>
+                <Badge variant="blocked" className="text-[9px] font-mono">SC-04 FAILED</Badge>
               ) : (
-                <Badge variant="allow">18/18 PASSED</Badge>
+                <Badge variant="allow" className="text-[9px] font-mono">18/18 PASS</Badge>
               )}
             </div>
 
-            <div className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+            <div className="p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 {isBlocked ? (
-                  <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                  <XCircle className="h-3.5 w-3.5 text-status-deny shrink-0" />
                 ) : (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
                 )}
                 <span className="font-medium text-foreground">
-                  4. Critical Counterexample Resolution
+                  4. Deterministic Counterexample Resolution
                 </span>
               </div>
               {isBlocked ? (
-                <Badge variant="blocked">1 ACTIVE (S-06)</Badge>
+                <Badge variant="blocked" className="text-[9px] font-mono">1 CRITICAL ACTIVE</Badge>
               ) : (
-                <Badge variant="allow">0 ACTIVE</Badge>
+                <Badge variant="allow" className="text-[9px] font-mono">0 ACTIVE</Badge>
               )}
             </div>
           </div>
 
           {isBlocked ? (
-            <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-start gap-2.5">
-              <Lock className="h-4 w-4 shrink-0 mt-0.5" />
-              <div className="text-xs space-y-0.5">
-                <span className="font-bold">Production Deployment Restricted:</span>
-                <p className="text-muted-foreground">
+            <div className="p-2.5 rounded bg-status-blocked/10 border border-status-blocked/20 text-status-deny flex items-start gap-2">
+              <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <div className="space-y-0.5 text-xs">
+                <span className="font-semibold">Deployment Gate Blocked:</span>
+                <p className="text-[11px] text-foreground/80">
                   {prepResult?.rejectionReasons?.[0] ||
-                    'Contract SC-04 ("Contractors cannot delete payroll reports") failed assertion. Synchronization with Amazon Verified Permissions policy store is strictly blocked by the deterministic gate.'}
+                    'Security Contract SC-04 ("Contractors cannot delete payroll reports") failed assertion. Policy cannot be deployed to Amazon Verified Permissions until regression is resolved.'}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-start gap-2.5">
-                <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
-                <div className="text-xs space-y-0.5">
-                  <span className="font-bold">Gate Passed: Ready for Operator Approval</span>
-                  <p className="text-muted-foreground">
-                    All 18 security contracts and regression assertions evaluated successfully. Policy SHA-256:{" "}
-                    <code className="font-mono text-foreground font-semibold">{prepResult?.candidatePolicyHashSha256?.substring(0, 16)}...</code>
-                  </p>
-                </div>
-              </div>
-
-              {/* Human Approval Sign-off Form */}
-              <div className="p-4 rounded-lg bg-background border border-border space-y-3">
+            <div className="space-y-3 pt-1">
+              {/* Operator Approval Sign-Off */}
+              <div className="p-3 rounded border border-border bg-card space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-foreground flex items-center gap-1.5 text-xs">
-                    <UserCheck className="h-4 w-4 text-indigo-500" />
+                  <span className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
+                    <UserCheck className="h-3.5 w-3.5 text-primary" />
                     Human Operator Cryptographic Sign-Off
                   </span>
                   {approval ? (
-                    <Badge variant="allow" className="gap-1 font-mono text-[10px]">
+                    <Badge variant="allow" className="gap-1 font-mono text-[9px]">
                       <Key className="h-3 w-3" /> Token: {approval.approvalToken.substring(0, 12)}...
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="text-[10px]">Required Before Deploy</Badge>
+                    <Badge variant="outline" className="text-[9px]">Required</Badge>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div>
-                    <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
+                    <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5">
                       Authorizing Operator
                     </label>
                     <input
@@ -355,11 +331,11 @@ export const DeploymentScreen: React.FC = () => {
                       value={approverName}
                       onChange={(e) => setApproverName(e.target.value)}
                       disabled={!!approval}
-                      className="w-full px-2.5 py-1.5 rounded-md bg-muted/50 border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full px-2 py-1 rounded bg-muted/40 border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
+                    <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5">
                       Change Ticket / PR Ref
                     </label>
                     <input
@@ -367,21 +343,21 @@ export const DeploymentScreen: React.FC = () => {
                       value={ticketRef}
                       onChange={(e) => setTicketRef(e.target.value)}
                       disabled={!!approval}
-                      className="w-full px-2.5 py-1.5 rounded-md bg-muted/50 border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full px-2 py-1 rounded bg-muted/40 border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                    Approval Justification Notes
+                  <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5">
+                    Justification
                   </label>
                   <input
                     type="text"
                     value={approvalNotes}
                     onChange={(e) => setApprovalNotes(e.target.value)}
                     disabled={!!approval}
-                    className="w-full px-2.5 py-1.5 rounded-md bg-muted/50 border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full px-2 py-1 rounded bg-muted/40 border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
@@ -389,95 +365,73 @@ export const DeploymentScreen: React.FC = () => {
                   <Button
                     size="sm"
                     onClick={handleApprove}
-                    className="w-full text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white gap-1.5"
+                    className="w-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 h-7"
                   >
-                    <UserCheck className="h-3.5 w-3.5" />
+                    <UserCheck className="h-3 w-3" />
                     Sign & Register Approval Token
                   </Button>
                 )}
+              </div>
+
+              {/* Action Submit */}
+              <div className="flex justify-end pt-1">
+                <Button
+                  onClick={handleDeploy}
+                  disabled={isBlocked || !approval || isDeploying}
+                  className="text-xs font-medium gap-1.5 h-8 bg-status-allow text-white hover:bg-status-allow/90 disabled:opacity-50"
+                >
+                  {isDeploying ? (
+                    "Deploying to AVP..."
+                  ) : submitResult ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      Deployed Successfully
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="h-3.5 w-3.5" />
+                      Submit to Amazon Verified Permissions
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           )}
 
           {submitResult && (
-            <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 space-y-1.5 text-xs">
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="font-bold">Deployment Successfully Recorded to AVP!</span>
+            <div className="p-2.5 rounded bg-status-allow/10 border border-status-allow/20 text-status-allow space-y-1 text-xs font-mono">
+              <div className="flex items-center gap-1.5 font-sans font-semibold">
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                <span>Synchronized with Amazon Verified Permissions!</span>
               </div>
-              <p className="text-muted-foreground">
-                Deployment ID: <code className="font-mono text-foreground">{submitResult.deploymentId}</code> | Store: <code className="font-mono text-foreground">{submitResult.targetPolicyStoreId}</code>
-              </p>
-              <p className="font-mono text-[10px] text-emerald-400/80 truncate">
-                Proof: {submitResult.verificationProof}
+              <p className="text-[11px] text-muted-foreground">
+                Deployment ID: {submitResult.deploymentId} · Store: {submitResult.targetPolicyStoreId}
               </p>
             </div>
           )}
         </CardContent>
-
-        <CardFooter className="p-6 pt-0 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border/50">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <FileCode2 className="h-4 w-4" />
-            <span>Target AWS Policy Store: <code className="text-foreground font-mono">{prepResult?.targetPolicyStoreId || `ps-acmepay-${targetEnv}`}</code></span>
-          </div>
-
-          <Button
-            onClick={handleDeploy}
-            disabled={isBlocked || !approval || isDeploying}
-            className={`text-xs font-semibold gap-1.5 shadow-md ${
-              isBlocked || !approval
-                ? "bg-muted text-muted-foreground cursor-not-allowed opacity-60"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20"
-            }`}
-          >
-            {submitResult ? (
-              <>
-                <Check className="h-3.5 w-3.5" />
-                Synchronized with AVP
-              </>
-            ) : isDeploying ? (
-              "Deploying to AVP..."
-            ) : isBlocked ? (
-              <>
-                <Lock className="h-3.5 w-3.5" />
-                Deployment Blocked
-              </>
-            ) : !approval ? (
-              <>
-                <UserCheck className="h-3.5 w-3.5" />
-                Awaiting Operator Sign-Off
-              </>
-            ) : (
-              <>
-                <Rocket className="h-3.5 w-3.5" />
-                Deploy Verified Policy Set
-                <ArrowRight className="h-3.5 w-3.5" />
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </Card>
 
-      {/* Deployment History Ledger */}
+      {/* Verified Deployment Audit Trail */}
       <Card className="border-border bg-card">
-        <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <History className="h-4 w-4 text-indigo-500" />
+        <CardHeader className="p-3.5 pb-2 border-b border-border">
+          <CardTitle className="text-xs font-semibold">
             Verified Deployment Audit Trail
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs text-muted-foreground">
             Cryptographically signed deployments recorded in AWS Verified Permissions audit ledger.
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="p-4 pt-2">
-          <div className="divide-y divide-border rounded-lg border border-border overflow-hidden text-xs">
+        <CardContent className="p-0">
+          <div className="divide-y divide-border text-xs">
             {deploymentRecords.map((d) => (
-              <div key={d.id} className="p-3.5 flex items-center justify-between bg-muted/10">
-                <div className="space-y-1">
+              <div key={d.id} className="p-3 flex items-center justify-between gap-2">
+                <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-foreground font-mono">{d.versionTag}</span>
-                    <Badge variant="allow" className="text-[10px]">{d.status}</Badge>
+                    <code className="font-mono font-bold text-foreground">{d.versionTag}</code>
+                    <Badge variant="allow" className="text-[9px] font-mono">{d.status}</Badge>
                     <span className="text-muted-foreground text-[11px]">
                       Store: <code className="font-mono text-foreground">{d.targetStoreId}</code>
                     </span>
@@ -487,9 +441,9 @@ export const DeploymentScreen: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-right text-muted-foreground text-[11px]">
-                  <span>Deployed by {d.deployedBy}</span>
-                  <p className="text-[10px] text-muted-foreground/70">
+                <div className="text-right text-muted-foreground text-[11px] shrink-0">
+                  <span>by {d.deployedBy}</span>
+                  <p className="text-[10px] text-muted-foreground/70 font-mono">
                     {new Date(d.deployedAt).toLocaleString()}
                   </p>
                 </div>
@@ -501,4 +455,3 @@ export const DeploymentScreen: React.FC = () => {
     </div>
   )
 }
-

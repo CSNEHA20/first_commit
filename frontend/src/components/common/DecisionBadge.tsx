@@ -1,5 +1,5 @@
 import React from "react"
-import { CheckCircle2, XCircle } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { AuthorizationDecision } from "@/types/authz"
 
@@ -19,18 +19,22 @@ export const DecisionBadge: React.FC<DecisionBadgeProps> = ({
   return (
     <Badge
       variant={isAllow ? "allow" : "deny"}
-      className={`font-mono font-bold tracking-wider ${
-        size === "sm" ? "text-[10px] px-1.5 py-0" : size === "lg" ? "text-sm px-3 py-1" : "text-xs px-2 py-0.5"
+      className={`font-mono font-bold tracking-tight inline-flex items-center gap-1 ${
+        size === "sm"
+          ? "text-[10px] px-1.5 py-0"
+          : size === "lg"
+          ? "text-xs px-2.5 py-1"
+          : "text-[11px] px-2 py-0.5"
       }`}
     >
       {showIcon && (
         isAllow ? (
-          <CheckCircle2 className="h-3 w-3 mr-1 inline-block" />
+          <Check className="h-3 w-3 stroke-[2.5]" />
         ) : (
-          <XCircle className="h-3 w-3 mr-1 inline-block" />
+          <X className="h-3 w-3 stroke-[2.5]" />
         )
       )}
-      {decision}
+      <span>{decision}</span>
     </Badge>
   )
 }

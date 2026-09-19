@@ -1,19 +1,16 @@
 import React, { useState } from "react"
 import {
-  FlaskConical,
+  ShieldCheck,
+  ShieldAlert,
   Play,
   CheckCircle2,
   XCircle,
   Filter,
-  ShieldCheck,
-  ShieldAlert,
-  AlertCircle,
   RefreshCw,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DecisionBadge } from "@/components/common/DecisionBadge"
 import { SeverityBadge } from "@/components/common/SeverityBadge"
 import {
   SECURITY_CONTRACTS,
@@ -70,7 +67,6 @@ export const RegressionScreen: React.FC = () => {
     }
   }
 
-  // Adjust scenario results based on live report or fallback
   const scenarios: Scenario[] = ALL_REGRESSION_SCENARIOS.map((s) => {
     if (regressionReport) {
       const diffMatch = regressionReport.diffReport?.scenarioDiffs?.find(
@@ -104,51 +100,49 @@ export const RegressionScreen: React.FC = () => {
   const gateStatus = gateDecision?.status || (selectedVersion === "v12" ? "PASS" : "BLOCKED")
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-200">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="text-xs font-mono">
-              Suite: AcmePay Security Contracts
-            </Badge>
-            <Badge variant={failedCount > 0 ? "destructive" : "allow"}>
-              {failedCount > 0 ? `${failedCount} Regressions` : "100% Pass"}
+            <span className="text-xs text-muted-foreground font-mono">
+              Suite: AcmePay Security Invariants
+            </span>
+            <span className="text-muted-foreground/40">·</span>
+            <Badge variant={failedCount > 0 ? "blocked" : "allow"} className="text-[10px] font-mono">
+              {failedCount > 0 ? `${failedCount} Failures` : "All Passed"}
             </Badge>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-indigo-500" />
+          <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
             Security Contract Regression Suite
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Enforcing organizational authorization invariants as continuous automated regression tests.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Version Switcher */}
-          <div className="flex items-center p-1 rounded-lg bg-muted border border-border">
+          <div className="flex items-center p-0.5 rounded-md bg-muted border border-border">
             <button
               onClick={() => {
                 setSelectedVersion("v12")
                 setRegressionReport(null)
               }}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
                 selectedVersion === "v12"
-                  ? "bg-background text-foreground shadow-sm font-bold"
+                  ? "bg-background text-foreground shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v12 (PROD)
+              v12 (Production)
             </button>
             <button
               onClick={() => {
                 setSelectedVersion("v13")
                 setRegressionReport(null)
               }}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
                 selectedVersion === "v13"
-                  ? "bg-background text-foreground shadow-sm font-bold"
+                  ? "bg-background text-foreground shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -159,137 +153,111 @@ export const RegressionScreen: React.FC = () => {
           <Button
             onClick={handleRunSuite}
             disabled={isRunning}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs gap-1.5 font-semibold h-8 shadow-sm"
+            className="text-xs gap-1.5 h-7 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
           >
             {isRunning ? (
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <RefreshCw className="h-3 w-3 animate-spin" />
             ) : (
-              <Play className="h-3.5 w-3.5 fill-current" />
+              <Play className="h-3 w-3 fill-current" />
             )}
-            {isRunning ? "Evaluating in Cedar..." : "Run Live Regression"}
+            <span>{isRunning ? "Evaluating..." : "Run Test Suite"}</span>
           </Button>
         </div>
       </div>
 
-      {/* Pre-Deployment Gate Banner */}
-      <Card
-        className={`border shadow-md ${
+      {/* Pre-Deployment Gate Status Banner */}
+      <div
+        className={`p-3.5 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
           gateStatus === "PASS"
-            ? "border-emerald-500/40 bg-gradient-to-r from-emerald-500/10 via-card to-background"
-            : gateStatus === "BLOCKED"
-            ? "border-rose-500/40 bg-gradient-to-r from-rose-500/10 via-card to-background"
-            : "border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-card to-background"
+            ? "border-status-allow/30 bg-status-allow/[0.03]"
+            : "border-status-blocked/30 bg-status-blocked/[0.03]"
         }`}
       >
-        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div
-              className={`p-2 rounded-lg border ${
-                gateStatus === "PASS"
-                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-500"
-                  : gateStatus === "BLOCKED"
-                  ? "bg-rose-500/15 border-rose-500/30 text-rose-500"
-                  : "bg-amber-500/15 border-amber-500/30 text-amber-500"
-              }`}
-            >
-              {gateStatus === "PASS" ? (
-                <ShieldCheck className="h-5 w-5" />
-              ) : gateStatus === "BLOCKED" ? (
-                <ShieldAlert className="h-5 w-5" />
-              ) : (
-                <AlertCircle className="h-5 w-5" />
-              )}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-foreground">
-                  Pre-Deployment Gate: {gateStatus === "PASS" ? "VERIFIED (PASS)" : gateStatus === "BLOCKED" ? "BLOCKED" : "INCOMPLETE"}
-                </span>
-                <Badge variant={gateStatus === "PASS" ? "allow" : "destructive"} className="text-[10px]">
-                  {gateStatus}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {gateDecision?.reasons?.[0] ||
-                  (gateStatus === "PASS"
-                    ? "All organizational security contracts satisfied. Zero blocking violations."
-                    : "Blocking Security Contract SC-03 violated: Editor invoice deletion prohibited.")}
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div
+            className={`p-1.5 rounded ${
+              gateStatus === "PASS"
+                ? "bg-status-allow/15 text-status-allow"
+                : "bg-status-blocked/15 text-status-deny"
+            }`}
+          >
+            {gateStatus === "PASS" ? (
+              <ShieldCheck className="h-4 w-4" />
+            ) : (
+              <ShieldAlert className="h-4 w-4" />
+            )}
           </div>
-
-          <div className="text-right shrink-0">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-              Governance Policy
-            </span>
-            <span className="text-xs font-semibold text-foreground">
-              Human Approval Mandatory
-            </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-foreground">
+                Pre-Deployment Gate: {gateStatus === "PASS" ? "VERIFIED (PASS)" : "BLOCKED"}
+              </span>
+              <Badge variant={gateStatus === "PASS" ? "allow" : "blocked"} className="text-[9px] font-mono">
+                {gateStatus}
+              </Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {gateDecision?.reasons?.[0] ||
+                (gateStatus === "PASS"
+                  ? "All organizational security contracts satisfied. Zero blocking violations."
+                  : "Blocking Invariant SC-04 failed: Contractor payroll deletion prohibited.")}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Summary Scoreboard */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-border bg-card">
-          <CardHeader className="p-4 pb-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Scenarios</span>
-            <CardTitle className="text-xl font-mono text-foreground mt-1">
-              {scenarios.length} Scenarios
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-1 text-[11px] text-muted-foreground">
-            Contract invariants across 6 archetypes.
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="p-4 pb-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground">Passed</span>
-            <CardTitle className="text-xl font-mono text-emerald-600 dark:text-emerald-400 mt-1">
-              {passedCount} Passed
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-1 text-[11px] text-muted-foreground">
-            Evaluated to expected decisions.
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="p-4 pb-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground">Failed Regressions</span>
-            <CardTitle className="text-xl font-mono text-rose-500 mt-1">
-              {failedCount} Failed
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-1 text-[11px] text-muted-foreground">
-            Violated security invariants in candidate.
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="p-4 pb-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground">Suite Duration</span>
-            <CardTitle className="text-xl font-mono text-foreground mt-1">
-              {executionDurationMs} ms
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-1 text-[11px] text-muted-foreground">
-            Deterministic Cedar WASM engine.
-          </CardContent>
-        </Card>
+        <div className="text-right text-[11px] font-mono text-muted-foreground shrink-0">
+          Suite Time: {executionDurationMs}ms
+        </div>
       </div>
 
-      {/* Security Contracts Overview */}
+      {/* Scoreboard Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+        <div className="p-3 rounded-md border border-border bg-card">
+          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
+            Total Scenarios
+          </span>
+          <span className="text-lg font-bold text-foreground mt-0.5 block">
+            {scenarios.length}
+          </span>
+        </div>
+
+        <div className="p-3 rounded-md border border-border bg-card">
+          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
+            Passed
+          </span>
+          <span className="text-lg font-bold text-status-allow mt-0.5 block">
+            {passedCount}
+          </span>
+        </div>
+
+        <div className="p-3 rounded-md border border-border bg-card">
+          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
+            Regressions
+          </span>
+          <span className="text-lg font-bold text-status-deny mt-0.5 block">
+            {failedCount}
+          </span>
+        </div>
+
+        <div className="p-3 rounded-md border border-border bg-card">
+          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
+            Cedar Engine
+          </span>
+          <span className="text-xs font-bold text-foreground mt-1 block">
+            WASM v4.13
+          </span>
+        </div>
+      </div>
+
+      {/* Dense Security Contracts Table */}
       <Card className="border-border bg-card">
-        <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-sm">High-Level Security Invariants</CardTitle>
-          <CardDescription>
-            Organizational policies mapped to deterministic regression scenarios.
-          </CardDescription>
+        <CardHeader className="p-3.5 pb-2 border-b border-border">
+          <CardTitle className="text-xs font-semibold">
+            Security Invariant Contracts (6 Active Invariants)
+          </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 pt-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <CardContent className="p-0">
+          <div className="divide-y divide-border text-xs">
             {SECURITY_CONTRACTS.map((c) => {
               const liveContract = regressionReport?.contractResults?.find((r) => r.contractId === c.id)
               const isFailing = liveContract
@@ -299,31 +267,34 @@ export const RegressionScreen: React.FC = () => {
               return (
                 <div
                   key={c.id}
-                  className={`p-3 rounded-lg border text-xs space-y-1.5 ${
-                    isFailing
-                      ? "border-rose-500/30 bg-rose-500/5"
-                      : "border-border bg-muted/20"
+                  className={`p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors ${
+                    isFailing ? "bg-status-blocked/[0.03]" : "hover:bg-muted/30"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <SeverityBadge severity={c.severity} />
-                      <span className="font-bold text-foreground">{c.id}: {c.title}</span>
-                    </div>
+                  <div className="flex items-center gap-2.5">
                     {isFailing ? (
-                      <Badge variant="blocked">FAILED</Badge>
+                      <XCircle className="h-4 w-4 text-status-deny shrink-0" />
                     ) : (
-                      <Badge variant="allow">PASSED</Badge>
+                      <CheckCircle2 className="h-4 w-4 text-status-allow shrink-0" />
                     )}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    {c.description}
-                  </p>
-                  {isFailing && liveContract?.failureReason && (
-                    <div className="text-[10px] text-rose-500 font-mono pt-1">
-                      Violation: {liveContract.failureReason}
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono font-bold text-foreground">{c.id}</code>
+                        <span className="font-semibold text-foreground">{c.title}</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {c.description}
+                      </p>
                     </div>
-                  )}
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                    <SeverityBadge severity={c.severity} />
+                    <Badge variant={isFailing ? "blocked" : "allow"} className="text-[10px] font-mono">
+                      {isFailing ? "FAIL" : "PASS"}
+                    </Badge>
+                  </div>
                 </div>
               )
             })}
@@ -331,82 +302,72 @@ export const RegressionScreen: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Granular Scenarios Table */}
+      {/* Executable Scenario Assertions Table */}
       <Card className="border-border bg-card">
-        <CardHeader className="p-4 pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-sm">Executable Scenario Assertions</CardTitle>
-              <CardDescription>Individual test cases evaluated against Cedar policy.</CardDescription>
-            </div>
+        <CardHeader className="p-3.5 pb-2 border-b border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <CardTitle className="text-xs font-semibold">
+              Executable Scenario Assertions
+            </CardTitle>
 
             {/* Filter Tags */}
-            <div className="flex items-center gap-1.5">
-              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-              <div className="flex items-center gap-1 text-xs">
-                {["all", "admin", "editor", "contractor", "multi-tenant"].map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => setFilterTag(tag)}
-                    className={`px-2 py-0.5 rounded capitalize text-[11px] font-medium transition-colors ${
-                      filterTag === tag
-                        ? "bg-primary text-primary-foreground font-bold"
-                        : "text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-1">
+              <Filter className="h-3 w-3 text-muted-foreground mr-1" />
+              {["all", "admin", "editor", "contractor", "multi-tenant"].map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setFilterTag(tag)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                    filterTag === tag
+                      ? "bg-foreground text-background font-semibold"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-4 pt-2">
-          <div className="divide-y divide-border rounded-lg border border-border overflow-hidden text-xs">
+        <CardContent className="p-0">
+          <div className="divide-y divide-border text-xs">
             {filteredScenarios.map((s) => {
               const isPass = s.actualDecision === s.expectedDecision
               return (
                 <div
                   key={s.id}
-                  className={`p-3 flex items-center justify-between transition-colors ${
-                    isPass ? "bg-muted/10" : "bg-rose-500/10"
+                  className={`p-3 flex items-center justify-between gap-2 transition-colors ${
+                    isPass ? "hover:bg-muted/30" : "bg-status-blocked/[0.04]"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     {isPass ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
                     ) : (
-                      <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                      <XCircle className="h-3.5 w-3.5 text-status-deny shrink-0" />
                     )}
 
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{s.title}</span>
-                        {s.contractId && (
-                          <span className="text-[10px] font-mono text-muted-foreground">
-                            [{s.contractId}]
-                          </span>
-                        )}
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <code className="font-mono text-[10px] text-muted-foreground">[{s.id}]</code>
+                        <span className="font-medium text-foreground truncate">{s.title}</span>
                       </div>
-                      <div className="font-mono text-[11px] text-muted-foreground">
+                      <div className="font-mono text-[10px] text-muted-foreground truncate">
                         {s.principal} ➔ {s.action} ➔ {s.resource}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <span className="text-[10px] text-muted-foreground block">
-                        Expected: {s.expectedDecision}
-                      </span>
-                      <div className="flex items-center gap-1.5 justify-end">
-                        <span className="text-[10px] text-muted-foreground">Actual:</span>
-                        <DecisionBadge decision={s.actualDecision || "DENY"} size="sm" />
-                      </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right text-[10px] font-mono hidden sm:block">
+                      <span className="text-muted-foreground">Exp: {s.expectedDecision} · Act: </span>
+                      <strong className={isPass ? "text-status-allow" : "text-status-deny"}>
+                        {s.actualDecision}
+                      </strong>
                     </div>
 
-                    <Badge variant={isPass ? "allow" : "blocked"} className="text-[10px]">
+                    <Badge variant={isPass ? "allow" : "blocked"} className="text-[9px] font-mono">
                       {isPass ? "PASS" : "FAIL"}
                     </Badge>
                   </div>

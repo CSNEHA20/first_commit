@@ -57,27 +57,29 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   const lineCount = code.split("\n").length
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-200">
-      {/* Screen Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-4">
+      {/* Top Editor Toolbar Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <FileCode2 className="h-5 w-5 text-indigo-500" />
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-muted-foreground font-mono">Cedar Engine v3.1</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="text-xs text-muted-foreground">Deterministic Evaluation</span>
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
+            <FileCode2 className="h-5 w-5 text-muted-foreground" />
             Cedar Policy Editor
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Author and validate Cedar authorization policies against your application schema.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Version Selector Tabs */}
-          <div className="flex items-center p-1 rounded-lg bg-muted border border-border">
+          {/* Version Switcher Tabs */}
+          <div className="flex items-center p-0.5 rounded-md bg-muted border border-border">
             <button
               onClick={() => handleVersionChange("v12")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
                 selectedVersion === "v12"
-                  ? "bg-background text-foreground shadow-sm font-bold"
+                  ? "bg-background text-foreground shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -85,13 +87,13 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
             </button>
             <button
               onClick={() => handleVersionChange("v13")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
                 selectedVersion === "v13"
-                  ? "bg-background text-foreground shadow-sm font-bold"
+                  ? "bg-background text-foreground shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v13 (Draft / Buggy)
+              v13 (Draft)
             </button>
           </div>
 
@@ -99,17 +101,17 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
             variant="outline"
             size="sm"
             onClick={handleCopyCode}
-            className="text-xs gap-1.5 h-8"
+            className="text-xs gap-1 h-7"
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
-                Copied
+                <Check className="h-3 w-3 text-status-allow" />
+                <span>Copied</span>
               </>
             ) : (
               <>
-                <Copy className="h-3.5 w-3.5" />
-                Copy
+                <Copy className="h-3 w-3" />
+                <span>Copy</span>
               </>
             )}
           </Button>
@@ -117,28 +119,29 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
           <Button
             size="sm"
             onClick={handleSave}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs gap-1.5 h-8 font-semibold shadow-sm"
+            className="text-xs gap-1 h-7 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
           >
-            <Save className="h-3.5 w-3.5" />
-            {isSaved ? "Saved!" : "Save Version"}
+            <Save className="h-3 w-3" />
+            <span>{isSaved ? "Saved" : "Save Version"}</span>
           </Button>
         </div>
       </div>
 
-      {/* Editor & Impact Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Monaco Code Editor & Diagnostics (8 cols) */}
-        <div className="lg:col-span-8 space-y-4">
-          <Card className="border-border bg-card overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/40 text-xs">
+      {/* Editor & Context Workbench */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left Column: Code Surface (8 cols) */}
+        <div className="lg:col-span-8 space-y-3">
+          <div className="rounded-md border border-border bg-card overflow-hidden">
+            {/* Editor Sub-Header */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/40 text-xs">
               <div className="flex items-center gap-2">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-                  <TabsList className="h-7 bg-background">
-                    <TabsTrigger value="code" className="text-xs h-6 px-2.5">
+                  <TabsList className="h-6 bg-background">
+                    <TabsTrigger value="code" className="text-xs h-5 px-2 font-mono">
                       policy.cedar
                     </TabsTrigger>
-                    <TabsTrigger value="schema" className="text-xs h-6 px-2.5">
-                      acmepay.cedarschema.json
+                    <TabsTrigger value="schema" className="text-xs h-5 px-2 font-mono">
+                      schema.json
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -148,26 +151,27 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge variant="allow" className="text-[10px] gap-1">
+                <Badge variant="allow" className="text-[10px] gap-1 font-mono">
                   <CheckCircle2 className="h-3 w-3" />
-                  Cedar v3.1 Syntax OK
+                  AST Valid
                 </Badge>
               </div>
             </div>
 
-            <CardContent className="p-0">
+            {/* Code Body Area */}
+            <div>
               {activeTab === "code" ? (
-                <div className="flex bg-muted/20 font-mono text-xs leading-relaxed overflow-x-auto min-h-[420px]">
+                <div className="flex bg-muted/10 font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
                   {/* Line Numbers */}
-                  <div className="p-4 pr-3 select-none text-right text-muted-foreground/50 border-r border-border bg-muted/30 w-12 shrink-0">
+                  <div className="py-3 px-2.5 select-none text-right text-muted-foreground/40 border-r border-border bg-muted/20 w-10 shrink-0 text-[11px]">
                     {Array.from({ length: lineCount }).map((_, i) => (
-                      <div key={i} className="h-5 leading-5 font-mono text-[11px]">
+                      <div key={i} className="h-5 leading-5">
                         {i + 1}
                       </div>
                     ))}
                   </div>
 
-                  {/* Code Text Area with Line-Highlighting Mock */}
+                  {/* Textarea Code Input */}
                   <textarea
                     value={code}
                     onChange={(e) => {
@@ -175,122 +179,117 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                       setIsSaved(false)
                     }}
                     spellCheck={false}
-                    className="w-full p-4 bg-transparent resize-none outline-none font-mono text-xs leading-5 text-foreground selection:bg-indigo-500/30 whitespace-pre"
+                    className="w-full p-3 bg-transparent resize-none outline-none font-mono text-xs leading-5 text-foreground selection:bg-primary/20 whitespace-pre"
                     rows={lineCount + 2}
                   />
                 </div>
               ) : (
-                <div className="p-4 bg-muted/20 font-mono text-xs leading-relaxed overflow-x-auto min-h-[420px]">
+                <div className="p-3 bg-muted/10 font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
                   <pre className="text-muted-foreground">{ACMEPAY_SCHEMA}</pre>
                 </div>
               )}
-            </CardContent>
+            </div>
 
             {/* Diagnostics Bar */}
-            <div className="p-3 border-t border-border bg-muted/30 flex items-center justify-between text-xs">
+            <div className="px-3 py-2 border-t border-border bg-muted/30 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 {selectedVersion === "v13" ? (
-                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>Line 18: Unrestricted action clause matched 4 schema actions.</span>
+                  <div className="flex items-center gap-1.5 text-status-warning font-medium">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    <span>Line 18 & 24: Unrestricted action clause matches 4 schema actions.</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <CheckCircle2 className="h-4 w-4" />
+                  <div className="flex items-center gap-1.5 text-status-allow font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                     <span>Policy set satisfies all schema constraints. Zero diagnostics.</span>
                   </div>
                 )}
               </div>
 
-              <span className="text-[11px] text-muted-foreground font-mono">
-                UTF-8 | LF | Cedar
+              <span className="text-[10px] text-muted-foreground font-mono">
+                UTF-8 · LF · Cedar
               </span>
             </div>
-          </Card>
+          </div>
         </div>
 
-        {/* Right Column: Policy Impact & Version Info (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
+        {/* Right Column: Policy Context & Diagnostics (4 cols) */}
+        <div className="lg:col-span-4 space-y-3">
           <Card className="border-border bg-card">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <GitCompare className="h-4 w-4 text-indigo-500" />
-                Policy Impact Analysis
-              </CardTitle>
+            <CardHeader className="p-3.5 pb-2">
+              <CardTitle className="text-xs font-semibold">Policy Context</CardTitle>
             </CardHeader>
 
-            <CardContent className="p-4 pt-2 space-y-4 text-xs">
-              <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-2">
+            <CardContent className="p-3.5 pt-1 space-y-3 text-xs">
+              <div className="p-2.5 rounded bg-muted/40 border border-border space-y-1.5 text-[11px]">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Baseline Version:</span>
-                  <Badge variant="outline" className="font-mono">v12</Badge>
+                  <span className="text-muted-foreground">Version:</span>
+                  <Badge variant={selectedVersion === "v13" ? "blocked" : "allow"} className="font-mono text-[10px]">
+                    {selectedVersion}
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Proposed Version:</span>
-                  <Badge variant="blocked" className="font-mono">{selectedVersion}</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">SHA-256 Hash:</span>
-                  <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[120px]">
+                  <span className="text-muted-foreground">SHA-256:</span>
+                  <span className="font-mono text-muted-foreground truncate max-w-[120px]">
                     {selectedVersion === "v13" ? "f4219a8...fa12" : "8a3e77f...91bc"}
                   </span>
                 </div>
               </div>
 
               {selectedVersion === "v13" ? (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 space-y-2">
-                  <div className="flex items-center gap-1.5 text-rose-500 font-bold">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>High Authorization Blast Radius</span>
+                <div className="p-2.5 rounded bg-status-blocked/10 border border-status-blocked/20 space-y-1.5 text-xs">
+                  <div className="flex items-center gap-1.5 text-status-deny font-semibold">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    <span>Broadened Action Scope</span>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Modifying the action clause unintentionally granted destructive permissions (+3 actions, +184 resources).
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Naked <code className="font-mono text-foreground font-semibold">action</code> wildcard permits contractor delete/export operations (+3 actions, +184 resources).
                   </p>
                   <Button
                     onClick={() => onNavigate("changes")}
                     variant="deny"
                     size="sm"
-                    className="w-full text-xs font-semibold gap-1.5 mt-2"
+                    className="w-full text-xs font-medium gap-1 h-7 mt-1"
                   >
-                    <GitCompare className="h-3.5 w-3.5" />
+                    <GitCompare className="h-3 w-3" />
                     Inspect Behavioral Diff
                   </Button>
                 </div>
               ) : (
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
-                    <CheckCircle2 className="h-4 w-4" />
+                <div className="p-2.5 rounded bg-status-allow/10 border border-status-allow/20 space-y-1 text-xs">
+                  <div className="flex items-center gap-1.5 text-status-allow font-semibold">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                     <span>Production Baseline</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    This version is currently active in Amazon Verified Permissions.
+                    Active policy set in Amazon Verified Permissions.
                   </p>
                 </div>
               )}
 
               <Separator />
 
-              <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-                  Quick Actions
+              <div className="space-y-1.5">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                  Actions
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onNavigate("simulator")}
-                  className="w-full text-xs justify-start gap-2"
+                  className="w-full text-xs justify-start gap-1.5 h-7"
                 >
-                  <Play className="h-3.5 w-3.5 text-amber-500" />
-                  Simulate Ad-hoc Request
+                  <Play className="h-3 w-3 text-status-warning" />
+                  Simulate Request
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onNavigate("tests")}
-                  className="w-full text-xs justify-start gap-2"
+                  className="w-full text-xs justify-start gap-1.5 h-7"
                 >
-                  <Code2 className="h-3.5 w-3.5 text-indigo-500" />
-                  Run Regression Contracts
+                  <Code2 className="h-3 w-3 text-primary" />
+                  Run Security Contracts
                 </Button>
               </div>
             </CardContent>

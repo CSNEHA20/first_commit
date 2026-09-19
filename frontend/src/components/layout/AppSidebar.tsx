@@ -4,9 +4,10 @@ import {
   FileCode2,
   Zap,
   GitCompare,
-  ShieldAlert,
-  FlaskConical,
+  ShieldCheck,
   Rocket,
+  ShieldAlert,
+  AlertTriangle,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
@@ -30,16 +31,14 @@ interface NavItem {
   id: ActiveTab
   label: string
   icon: React.ComponentType<{ className?: string }>
-  badge?: {
-    text: string
-    variant: "default" | "secondary" | "destructive" | "outline" | "allow" | "deny" | "warning" | "blocked" | "ai"
-  }
+  badgeText?: string
+  badgeVariant?: "default" | "secondary" | "destructive" | "outline" | "allow" | "deny" | "warning" | "blocked"
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeTab,
   onSelectTab,
-  failedContractsCount = 1,
+  failedContractsCount = 3,
   counterexamplesCount = 3,
 }) => {
   const navItems: NavItem[] = [
@@ -52,7 +51,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       id: "policies",
       label: "Policy Editor",
       icon: FileCode2,
-      badge: { text: "v12 / v13", variant: "outline" },
     },
     {
       id: "simulator",
@@ -63,90 +61,93 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       id: "changes",
       label: "Change Analysis",
       icon: GitCompare,
-      badge:
-        counterexamplesCount > 0
-          ? { text: `${counterexamplesCount} Findings`, variant: "destructive" }
-          : undefined,
-    },
-    {
-      id: "audit",
-      label: "Policy Audit",
-      icon: ShieldAlert,
-      badge: { text: "BLOCKED", variant: "blocked" },
+      badgeText: counterexamplesCount > 0 ? `${counterexamplesCount} findings` : undefined,
+      badgeVariant: "deny",
     },
     {
       id: "tests",
-      label: "Regression Suite",
-      icon: FlaskConical,
-      badge:
-        failedContractsCount > 0
-          ? { text: `${failedContractsCount} Failed`, variant: "deny" }
-          : { text: "18/18 Pass", variant: "allow" },
+      label: "Security Contracts",
+      icon: ShieldCheck,
+      badgeText: failedContractsCount > 0 ? `${failedContractsCount} fail` : "Pass",
+      badgeVariant: failedContractsCount > 0 ? "blocked" : "allow",
     },
     {
       id: "deployments",
       label: "Deployments",
       icon: Rocket,
     },
+    {
+      id: "audit",
+      label: "Strands Audit",
+      icon: ShieldAlert,
+    },
   ]
 
   return (
-    <aside className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-border bg-card/50 backdrop-blur-sm p-3 md:p-4 flex md:flex-col justify-between overflow-x-auto md:overflow-y-auto">
-      <div className="space-y-1 w-full flex md:flex-col gap-1 md:gap-0">
-        <div className="hidden md:block px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Workspace Navigation
-        </div>
+    <aside className="w-full md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-border bg-card/60 flex md:flex-col justify-between p-2 md:p-3 overflow-x-auto md:overflow-y-auto select-none">
+      <div className="space-y-4 w-full">
+        <div className="space-y-0.5">
+          <div className="hidden md:block px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            Workspace
+          </div>
 
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = activeTab === item.id
+          <nav className="flex md:flex-col gap-0.5" aria-label="Main Navigation">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.id
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelectTab(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Icon
-                  className={`h-4 w-4 ${
-                    isActive ? "text-primary-foreground" : "text-muted-foreground"
-                  }`}
-                />
-                <span className="truncate whitespace-nowrap">{item.label}</span>
-              </div>
-
-              {item.badge && (
-                <Badge
-                  variant={item.badge.variant}
-                  className={`text-[9px] px-1.5 py-0 font-bold hidden sm:inline-block ${
-                    isActive ? "border-primary-foreground/30 bg-primary-foreground/20 text-primary-foreground" : ""
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelectTab(item.id)}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors ${
+                    isActive
+                      ? "bg-accent text-foreground font-semibold border-l-2 border-primary -ml-[2px] pl-[10px]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60 font-medium"
                   }`}
                 >
-                  {item.badge.text}
-                </Badge>
-              )}
-            </button>
-          )
-        })}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Icon
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    />
+                    <span className="truncate whitespace-nowrap">{item.label}</span>
+                  </div>
+
+                  {item.badgeText && (
+                    <Badge
+                      variant={item.badgeVariant || "outline"}
+                      className="text-[9px] px-1.5 py-0 h-4 font-mono ml-1 shrink-0"
+                    >
+                      {item.badgeText}
+                    </Badge>
+                  )}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
       </div>
 
-      {/* Sidebar Footer: Production Target Info */}
-      <div className="hidden md:block pt-4 border-t border-border mt-6">
-        <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-1 text-[11px]">
-          <span className="text-muted-foreground block text-[10px] uppercase font-bold">
-            Target Policy Store
-          </span>
-          <p className="font-mono font-semibold text-foreground truncate">
-            ps-acmepay-prod
-          </p>
-          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-[10px] pt-0.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>AVP Connected</span>
+      {/* Contextual Bottom Section: Current Review Status */}
+      <div className="hidden md:block pt-3 border-t border-border mt-4">
+        <div className="p-2.5 rounded-md bg-muted/40 border border-border space-y-1.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Current Review
+            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-status-deny animate-pulse" />
+          </div>
+
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="font-mono font-medium text-foreground">v13 draft</span>
+            <span className="text-status-deny font-medium">Gate blocked</span>
+          </div>
+
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <AlertTriangle className="h-3 w-3 text-status-deny shrink-0" />
+            <span>3 contract regressions</span>
           </div>
         </div>
       </div>

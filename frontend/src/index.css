@@ -4,114 +4,114 @@
 
 @layer base {
   :root {
-    /* Light Mode (Default) */
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* Workstation Light Mode Palette */
+    --background: 90 6% 97%;           /* #F7F8F6 */
+    --foreground: 129 16% 11%;         /* #172018 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card-foreground: 129 16% 11%;    /* #172018 */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;              /* #FFFFFF */
+    --popover-foreground: 129 16% 11%; /* #172018 */
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 152 48% 20%;            /* #1B4B2E - Muted deep emerald */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 90 7% 95%;            /* #F1F3F0 */
+    --secondary-foreground: 129 16% 11%;
 
-    --muted: 210 40% 93.5%;
-    --muted-foreground: 215.4 16.3% 42%;
+    --muted: 90 7% 95%;                /* #F1F3F0 */
+    --muted-foreground: 127 5% 42%;    /* #667067 */
 
-    --accent: 210 40% 94%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 90 6% 92%;               /* #EAECEA */
+    --accent-foreground: 129 16% 11%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 66% 46%;          /* #C62828 */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 88%;
-    --input: 214.3 31.8% 88%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --border: 120 7% 86%;              /* #D9DED9 */
+    --input: 120 7% 86%;               /* #D9DED9 */
+    --ring: 152 48% 20%;
+    --radius: 0.375rem;                /* 6px default */
 
-    /* Light Security Status */
-    --status-allow: 152 76% 36%;
-    --status-allow-foreground: 152 80% 96%;
-    --status-allow-border: 152 65% 45%;
+    /* Security Status Semantics (Light) */
+    --status-allow: 149 71% 30%;       /* #16834A - Verified / Safe */
+    --status-allow-foreground: 149 80% 96%;
+    --status-allow-border: 149 50% 70%;
 
-    --status-deny: 0 84% 50%;
+    --status-deny: 0 66% 46%;          /* #C62828 - Critical / Denied */
     --status-deny-foreground: 0 85% 97%;
-    --status-deny-border: 0 75% 60%;
+    --status-deny-border: 0 60% 75%;
 
-    --status-warning: 38 92% 44%;
+    --status-warning: 38 100% 33%;      /* #A66A00 - Warning */
     --status-warning-foreground: 48 96% 96%;
-    --status-warning-border: 38 85% 50%;
+    --status-warning-border: 38 80% 70%;
 
-    --status-blocked: 346 84% 48%;
-    --status-blocked-foreground: 346 84% 97%;
-    --status-blocked-border: 346 80% 55%;
+    --status-blocked: 0 66% 46%;       /* #C62828 - Blocked Gate */
+    --status-blocked-foreground: 0 85% 97%;
+    --status-blocked-border: 0 60% 75%;
 
-    --ai-brand: 263 70% 50%;
-    --ai-brand-foreground: 263 70% 97%;
-    --ai-brand-border: 263 60% 65%;
+    --ai-brand: 152 48% 20%;
+    --ai-brand-foreground: 0 0% 100%;
+    --ai-brand-border: 152 30% 75%;
 
     --surface-elevated: 0 0% 100%;
-    --surface-subtle: 210 40% 95%;
+    --surface-subtle: 90 7% 95%;
   }
 
   .dark {
-    /* Dark Mode */
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
+    /* Workstation Dark Mode Palette */
+    --background: 135 15% 6%;          /* #0D110E */
+    --foreground: 120 12% 92%;         /* #E8EEE8 */
 
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
+    --card: 132 14% 8%;                /* #121813 */
+    --card-foreground: 120 12% 92%;    /* #E8EEE8 */
 
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 130 11% 11%;            /* #171E18 */
+    --popover-foreground: 120 12% 92%; /* #E8EEE8 */
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 149 50% 38%;            /* #257F4D - Muted emerald */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 14%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 130 11% 11%;          /* #171E18 */
+    --secondary-foreground: 120 12% 92%;
 
-    --muted: 217.2 32.6% 14%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 130 11% 11%;              /* #171E18 */
+    --muted-foreground: 133 7% 59%;    /* #8F9C92 */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 130 11% 14%;             /* #1E271F */
+    --accent-foreground: 120 12% 92%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 66% 48%;          /* #C62828 */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 127 12% 17%;             /* #263128 */
+    --input: 127 12% 17%;              /* #263128 */
+    --ring: 149 50% 38%;
 
-    /* Dark Security Status */
-    --status-allow: 152 76% 40%;
-    --status-allow-foreground: 142 76% 96%;
-    --status-allow-border: 152 76% 40%;
+    /* Security Status Semantics (Dark) */
+    --status-allow: 149 60% 42%;       /* #2B9356 */
+    --status-allow-foreground: 149 70% 96%;
+    --status-allow-border: 149 40% 28%;
 
-    --status-deny: 0 84% 60%;
-    --status-deny-foreground: 0 84% 96%;
-    --status-deny-border: 0 84% 60%;
+    --status-deny: 0 70% 55%;          /* #D33D3D */
+    --status-deny-foreground: 0 80% 96%;
+    --status-deny-border: 0 50% 32%;
 
-    --status-warning: 38 92% 50%;
+    --status-warning: 38 90% 48%;      /* #E09000 */
     --status-warning-foreground: 48 96% 96%;
-    --status-warning-border: 38 92% 50%;
+    --status-warning-border: 38 60% 28%;
 
-    --status-blocked: 346 84% 53%;
-    --status-blocked-foreground: 346 84% 96%;
-    --status-blocked-border: 346 84% 53%;
+    --status-blocked: 0 70% 55%;       /* #D33D3D */
+    --status-blocked-foreground: 0 80% 96%;
+    --status-blocked-border: 0 50% 32%;
 
-    --ai-brand: 263 70% 55%;
-    --ai-brand-foreground: 263 70% 96%;
-    --ai-brand-border: 263 70% 60%;
+    --ai-brand: 149 50% 38%;
+    --ai-brand-foreground: 0 0% 100%;
+    --ai-brand-border: 149 40% 28%;
 
-    --surface-elevated: 222 47% 10%;
-    --surface-subtle: 224 71% 6%;
+    --surface-elevated: 130 11% 11%;
+    --surface-subtle: 135 15% 6%;
   }
 
   * {
@@ -119,15 +119,15 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased transition-colors duration-200;
+    @apply bg-background text-foreground antialiased transition-colors duration-150;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Scrollbar styles */
+/* Scrollbar styles - Clean & Minimal */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -135,15 +135,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 9999px;
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(var(--muted-foreground) / 0.45);
 }
 
-/* Custom Cedar Code Highlighting Tokens */
+/* Cedar Code Syntax Tokens - High Readability */
 .cedar-keyword {
   color: #7C3AED;
   font-weight: 600;
@@ -176,9 +176,9 @@
 }
 
 .cedar-action {
-  color: #EA580C;
+  color: #D97706;
   font-weight: 500;
 }
 .dark .cedar-action {
-  color: #FB923C;
+  color: #FBBF24;
 }
