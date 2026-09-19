@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/common/StatusBadge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AVPReadinessResponse,
@@ -159,17 +160,15 @@ export const DeploymentScreen: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
-              <Server className="h-3 w-3" />
+              <Server className="h-3 w-3 text-primary" />
               Target: Amazon Verified Permissions ({readiness?.adapterMode || "DETERMINISTIC_FAKE"})
             </span>
             <span className="text-muted-foreground/40">·</span>
-            <Badge variant={isBlocked ? "blocked" : "allow"} className="text-[10px] font-mono">
-              {isBlocked ? "Gate: BLOCKED" : "Gate: VERIFIED"}
-            </Badge>
+            <StatusBadge status={isBlocked ? "BLOCKED" : "PASS"} size="xs" label={isBlocked ? "Gate: BLOCKED" : "Gate: VERIFIED"} />
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
             <Rocket className="h-5 w-5 text-primary" />
-            Verified Permissions Deployment Gate
+            Verified Permissions Release & Deployment Gate
           </h1>
         </div>
 
@@ -219,7 +218,7 @@ export const DeploymentScreen: React.FC = () => {
               )}
               <CardTitle className="text-xs font-semibold">
                 {isBlocked
-                  ? "Deployment Blocked — Unresolved Security Invariants"
+                  ? "Deployment Restricted — Unresolved Security Contract Violations"
                   : "Deployment Readiness Verified — Awaiting Operator Sign-Off"}
               </CardTitle>
             </div>
@@ -244,7 +243,7 @@ export const DeploymentScreen: React.FC = () => {
                 <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
                 <span className="font-medium text-foreground">1. Cedar Syntax & Schema Compilation</span>
               </div>
-              <Badge variant="allow" className="text-[9px] font-mono">PASSED</Badge>
+              <StatusBadge status="PASS" size="xs" label="PASSED" />
             </div>
 
             <div className="p-2.5 flex items-center justify-between">
@@ -252,7 +251,7 @@ export const DeploymentScreen: React.FC = () => {
                 <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
                 <span className="font-medium text-foreground">2. Bounded Scenario Diff (432 Combinations)</span>
               </div>
-              <Badge variant="allow" className="text-[9px] font-mono">EVALUATED</Badge>
+              <StatusBadge status="PASS" size="xs" label="EVALUATED" />
             </div>
 
             <div className="p-2.5 flex items-center justify-between">
@@ -267,9 +266,9 @@ export const DeploymentScreen: React.FC = () => {
                 </span>
               </div>
               {isBlocked ? (
-                <Badge variant="blocked" className="text-[9px] font-mono">SC-04 FAILED</Badge>
+                <StatusBadge status="BLOCKED" size="xs" label="SC-04 FAILED" />
               ) : (
-                <Badge variant="allow" className="text-[9px] font-mono">18/18 PASS</Badge>
+                <StatusBadge status="PASS" size="xs" label="18/18 PASS" />
               )}
             </div>
 
@@ -285,9 +284,9 @@ export const DeploymentScreen: React.FC = () => {
                 </span>
               </div>
               {isBlocked ? (
-                <Badge variant="blocked" className="text-[9px] font-mono">1 CRITICAL ACTIVE</Badge>
+                <StatusBadge status="BLOCKED" size="xs" label="1 CRITICAL ACTIVE" />
               ) : (
-                <Badge variant="allow" className="text-[9px] font-mono">0 ACTIVE</Badge>
+                <StatusBadge status="PASS" size="xs" label="0 ACTIVE" />
               )}
             </div>
           </div>
@@ -296,16 +295,16 @@ export const DeploymentScreen: React.FC = () => {
             <div className="p-2.5 rounded bg-status-blocked/10 border border-status-blocked/20 text-status-deny flex items-start gap-2">
               <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
               <div className="space-y-0.5 text-xs">
-                <span className="font-semibold">Deployment Gate Blocked:</span>
+                <span className="font-semibold">Release Gate Blocked:</span>
                 <p className="text-[11px] text-foreground/80">
                   {prepResult?.rejectionReasons?.[0] ||
-                    'Security Contract SC-04 ("Contractors cannot delete payroll reports") failed assertion. Policy cannot be deployed to Amazon Verified Permissions until regression is resolved.'}
+                    'Security Contract SC-04 ("Contractors cannot delete payroll reports") failed assertion. Policy synchronization to Amazon Verified Permissions is strictly restricted by the deterministic gate.'}
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-3 pt-1">
-              {/* Operator Approval Sign-Off */}
+              {/* Human Operator Sign-Off */}
               <div className="p-3 rounded border border-border bg-card space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
@@ -317,7 +316,7 @@ export const DeploymentScreen: React.FC = () => {
                       <Key className="h-3 w-3" /> Token: {approval.approvalToken.substring(0, 12)}...
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-[9px]">Required</Badge>
+                    <StatusBadge status="PENDING" size="xs" label="Approval Required" />
                   )}
                 </div>
 
@@ -403,7 +402,7 @@ export const DeploymentScreen: React.FC = () => {
             <div className="p-2.5 rounded bg-status-allow/10 border border-status-allow/20 text-status-allow space-y-1 text-xs font-mono">
               <div className="flex items-center gap-1.5 font-sans font-semibold">
                 <Check className="h-3.5 w-3.5 shrink-0" />
-                <span>Synchronized with Amazon Verified Permissions!</span>
+                <span>Synchronized with Amazon Verified Permissions Policy Store!</span>
               </div>
               <p className="text-[11px] text-muted-foreground">
                 Deployment ID: {submitResult.deploymentId} · Store: {submitResult.targetPolicyStoreId}
@@ -431,7 +430,7 @@ export const DeploymentScreen: React.FC = () => {
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <code className="font-mono font-bold text-foreground">{d.versionTag}</code>
-                    <Badge variant="allow" className="text-[9px] font-mono">{d.status}</Badge>
+                    <StatusBadge status="SYNCHRONIZED" size="xs" />
                     <span className="text-muted-foreground text-[11px]">
                       Store: <code className="font-mono text-foreground">{d.targetStoreId}</code>
                     </span>

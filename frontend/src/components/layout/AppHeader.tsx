@@ -2,60 +2,78 @@ import React from "react"
 import {
   Sun,
   Moon,
-  ShieldAlert,
 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { StatusBadge } from "@/components/common/StatusBadge"
 import { useTheme } from "@/theme/ThemeProvider"
 
 interface AppHeaderProps {
   activeProject?: string
   activeVersion?: string
+  candidateVersion?: string
+  gateStatus?: "PASS" | "BLOCKED" | "INCOMPLETE"
+  environment?: "Production" | "Staging"
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
-  activeProject = "AcmePay / Authorization",
+  activeProject = "AcmePay-Core-Authz",
   activeVersion = "v12",
+  candidateVersion = "v13",
+  gateStatus = "BLOCKED",
+  environment = "Production",
 }) => {
   const { theme, toggleTheme } = useTheme()
 
   return (
-    <header className="border-b border-border bg-card text-foreground sticky top-0 z-40 h-11 px-4 flex items-center justify-between transition-colors">
+    <header className="border-b border-border bg-card text-foreground sticky top-0 z-40 h-11 px-4 flex items-center justify-between transition-colors select-none">
       {/* Left: Workbench Identifier & Project Context */}
       <div className="flex items-center gap-2.5 text-xs">
         {/* Monogram / Logotype */}
         <div className="flex items-center gap-2 font-semibold">
-          <span className="flex h-5 w-5 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground select-none">
+          <span className="flex h-5 w-5 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
             PL
           </span>
-          <span className="font-semibold tracking-tight text-foreground">
+          <span className="font-semibold tracking-tight text-foreground text-xs">
             PolicyLab
           </span>
         </div>
 
-        <span className="text-muted-foreground/50">/</span>
+        <span className="text-muted-foreground/40">/</span>
 
-        <span className="text-foreground font-medium hidden sm:inline">
+        {/* Project Name */}
+        <span className="text-foreground font-medium hidden sm:inline text-xs">
           {activeProject}
         </span>
 
-        <span className="text-muted-foreground/50 hidden md:inline">/</span>
+        <span className="text-muted-foreground/40 hidden md:inline">/</span>
 
-        <div className="hidden md:flex items-center gap-1.5 text-muted-foreground">
-          <span>Env: <strong className="text-foreground font-medium">Production</strong></span>
-          <span className="text-muted-foreground/40">·</span>
-          <span>Baseline: <code className="font-mono text-foreground font-medium">{activeVersion}</code></span>
+        {/* Environment Tag */}
+        <div className="hidden md:flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            {environment}
+          </span>
+        </div>
+
+        <span className="text-muted-foreground/40 hidden lg:inline">·</span>
+
+        {/* Versions Context */}
+        <div className="hidden lg:flex items-center gap-2 text-muted-foreground text-[11px] font-mono">
+          <span>Baseline: <strong className="text-foreground">{activeVersion}</strong></span>
+          <span className="text-muted-foreground/40">➔</span>
+          <span>Review: <strong className="text-status-deny">{candidateVersion} (Draft)</strong></span>
         </div>
       </div>
 
-      {/* Right: Validation Gate Status & Theme Toggle */}
-      <div className="flex items-center gap-3">
+      {/* Right: Gate Status & Controls */}
+      <div className="flex items-center gap-2.5">
         {/* Contextual Pre-deployment Gate Indicator */}
         <div className="flex items-center gap-1.5">
-          <Badge variant="blocked" className="text-[10px] py-0.5 px-2 gap-1 font-mono">
-            <ShieldAlert className="h-3 w-3 text-status-blocked" />
-            <span>Gate: Blocked (SC-04)</span>
-          </Badge>
+          <StatusBadge
+            status={gateStatus}
+            label={`Gate: ${gateStatus} (SC-04)`}
+            size="sm"
+          />
         </div>
 
         <div className="h-3.5 w-[1px] bg-border" />

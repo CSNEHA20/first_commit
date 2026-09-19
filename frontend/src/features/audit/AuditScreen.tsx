@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/common/StatusBadge"
 import { Progress } from "@/components/ui/progress"
 import { AUDIT_RUN_MOCK } from "@/fixtures/acmepay"
 
@@ -45,7 +45,7 @@ export const AuditScreen: React.FC = () => {
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
             <ShieldAlert className="h-5 w-5 text-primary" />
-            Policy Audit & Governance Report
+            Strands Audit & Governance Intelligence
           </h1>
         </div>
 
@@ -55,7 +55,7 @@ export const AuditScreen: React.FC = () => {
           className="text-xs gap-1.5 h-7 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
         >
           <Play className="h-3 w-3 fill-current" />
-          <span>{isRunningAudit ? "Orchestrating..." : "Trigger Full Audit"}</span>
+          <span>{isRunningAudit ? "Orchestrating Audit..." : "Trigger Full Audit"}</span>
         </Button>
       </div>
 
@@ -73,38 +73,50 @@ export const AuditScreen: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
         <div className="p-3 rounded-md border border-status-blocked/30 bg-status-blocked/[0.03]">
           <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
-            Gate Status
+            Audit Gate Status
           </span>
-          <span className="text-lg font-bold text-status-deny mt-0.5 block">
-            BLOCKED
-          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-base font-bold text-status-deny">
+              BLOCKED
+            </span>
+            <StatusBadge status="BLOCKED" size="xs" />
+          </div>
         </div>
 
         <div className="p-3 rounded-md border border-border bg-card">
           <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
             Critical Findings
           </span>
-          <span className="text-lg font-bold text-status-deny mt-0.5 block">
-            {AUDIT_RUN_MOCK.criticalFindingsCount} Critical
-          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-base font-bold text-status-deny">
+              {AUDIT_RUN_MOCK.criticalFindingsCount} Critical
+            </span>
+            <StatusBadge status="CRITICAL" size="xs" />
+          </div>
         </div>
 
         <div className="p-3 rounded-md border border-border bg-card">
           <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
             Contracts Failed
           </span>
-          <span className="text-lg font-bold text-status-warning mt-0.5 block">
-            {AUDIT_RUN_MOCK.contractsFailedCount} / {AUDIT_RUN_MOCK.contractsFailedCount + AUDIT_RUN_MOCK.contractsPassedCount}
-          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-base font-bold text-status-warning">
+              {AUDIT_RUN_MOCK.contractsFailedCount} / {AUDIT_RUN_MOCK.contractsFailedCount + AUDIT_RUN_MOCK.contractsPassedCount}
+            </span>
+            <StatusBadge status="MEDIUM" size="xs" label="Violations" />
+          </div>
         </div>
 
         <div className="p-3 rounded-md border border-border bg-card">
           <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
             Counterexamples
           </span>
-          <span className="text-lg font-bold text-foreground mt-0.5 block">
-            {AUDIT_RUN_MOCK.counterexamplesCount} Proved
-          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-base font-bold text-foreground">
+              {AUDIT_RUN_MOCK.counterexamplesCount} Proved
+            </span>
+            <StatusBadge status="VERIFIED" size="xs" />
+          </div>
         </div>
       </div>
 
@@ -129,7 +141,7 @@ export const AuditScreen: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <Badge variant="allow" className="text-[9px] font-mono">PASSED (0.4ms)</Badge>
+              <StatusBadge status="PASS" size="xs" label="PASSED (0.4ms)" />
             </div>
 
             <div className="p-3 flex items-center justify-between">
@@ -142,7 +154,7 @@ export const AuditScreen: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <Badge variant="allow" className="text-[9px] font-mono">PASSED (1.8s)</Badge>
+              <StatusBadge status="PASS" size="xs" label="PASSED (1.8s)" />
             </div>
 
             <div className="p-3 flex items-center justify-between">
@@ -155,7 +167,7 @@ export const AuditScreen: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <Badge variant="warning" className="text-[9px] font-mono">3 FLAGGED</Badge>
+              <StatusBadge status="MEDIUM" size="xs" label="3 FLAGGED" />
             </div>
 
             <div className="p-3 flex items-center justify-between">
@@ -168,7 +180,7 @@ export const AuditScreen: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <Badge variant="blocked" className="text-[9px] font-mono">1 FAILED</Badge>
+              <StatusBadge status="BLOCKED" size="xs" label="1 FAILED" />
             </div>
 
             <div className="p-3 flex items-center justify-between">
@@ -181,7 +193,7 @@ export const AuditScreen: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <Badge variant="outline" className="text-[9px] font-mono">SYNTHESIZED</Badge>
+              <StatusBadge status="VERIFIED" size="xs" label="SYNTHESIZED" />
             </div>
           </div>
         </CardContent>
@@ -193,7 +205,7 @@ export const AuditScreen: React.FC = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Executive Audit Synthesis
+              Executive Audit Synthesis Narrative
             </CardTitle>
           </div>
         </CardHeader>

@@ -4,11 +4,13 @@ import {
   Play,
   ArrowRight,
   Code2,
+  Bookmark,
+  HelpCircle,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { DecisionBadge } from "@/components/common/DecisionBadge"
+import { StatusBadge } from "@/components/common/StatusBadge"
 import { AuthorizationDecision } from "@/types/authz"
 
 const SAMPLE_PRINCIPALS = [
@@ -27,10 +29,37 @@ const SAMPLE_ACTIONS = [
 ]
 
 const SAMPLE_RESOURCES = [
-  { id: 'PayrollReport::"payroll_2026_q1"', type: "PayrollReport", label: 'PayrollReport::"payroll_2026_q1"' },
-  { id: 'Invoice::"inv_9082"', type: "Invoice", label: 'Invoice::"inv_9082"' },
-  { id: 'SupportTicket::"ticket_102"', type: "SupportTicket", label: 'SupportTicket::"ticket_102"' },
-  { id: 'CustomerRecord::"cust_401"', type: "CustomerRecord", label: 'CustomerRecord::"cust_401"' },
+  { id: 'PayrollReport::"payroll_2026_q1"', type: "PayrollReport", label: 'PayrollReport::"payroll_2026_q1" (Confidential)' },
+  { id: 'Invoice::"inv_9082"', type: "Invoice", label: 'Invoice::"inv_9082" (Billing Record)' },
+  { id: 'SupportTicket::"ticket_102"', type: "SupportTicket", label: 'SupportTicket::"ticket_102" (Support Item)' },
+  { id: 'CustomerRecord::"cust_401"', type: "CustomerRecord", label: 'CustomerRecord::"cust_401" (PII Record)' },
+]
+
+const QUICK_TEMPLATES = [
+  {
+    name: "Contractor Delete Payroll (Buggy Flip)",
+    principal: 'User::"contractor_alice"',
+    action: 'Action::"delete"',
+    resource: 'PayrollReport::"payroll_2026_q1"',
+  },
+  {
+    name: "Editor Delete Invoice",
+    principal: 'User::"editor_bob"',
+    action: 'Action::"delete"',
+    resource: 'Invoice::"inv_9082"',
+  },
+  {
+    name: "Admin View All",
+    principal: 'User::"admin_root"',
+    action: 'Action::"view"',
+    resource: 'PayrollReport::"payroll_2026_q1"',
+  },
+  {
+    name: "Contractor View Ticket",
+    principal: 'User::"contractor_alice"',
+    action: 'Action::"view"',
+    resource: 'SupportTicket::"ticket_102"',
+  },
 ]
 
 export const SimulatorScreen: React.FC = () => {
@@ -117,6 +146,9 @@ export const SimulatorScreen: React.FC = () => {
   }
 
   const result = evaluateAccess(selectedPrincipal, selectedAction, selectedResource, policyVersion)
+  const baselineResult = evaluateAccess(selectedPrincipal, selectedAction, selectedResource, "v12")
+  const candidateResult = evaluateAccess(selectedPrincipal, selectedAction, selectedResource, "v13")
+  const isDecisionFlip = baselineResult.decision !== candidateResult.decision
 
   const handleSimulate = () => {
     setIsSimulating(true)
@@ -126,6 +158,13 @@ export const SimulatorScreen: React.FC = () => {
     }, 150)
   }
 
+  const applyTemplate = (tpl: typeof QUICK_TEMPLATES[0]) => {
+    setSelectedPrincipal(tpl.principal)
+    setSelectedAction(tpl.action)
+    setSelectedResource(tpl.resource)
+    setHasEvaluated(true)
+  }
+
   return (
     <div className="space-y-4">
       {/* Simulator Header */}
@@ -133,6 +172,8 @@ export const SimulatorScreen: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-muted-foreground font-mono">Cedar Request Debugger</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="text-xs text-muted-foreground">Interactive Evaluation</span>
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
             <Zap className="h-5 w-5 text-status-warning" />
@@ -142,7 +183,7 @@ export const SimulatorScreen: React.FC = () => {
 
         {/* Policy Version Switcher */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Evaluating Against:</span>
+          <span className="text-xs text-muted-foreground">Target Version:</span>
           <div className="flex items-center p-0.5 rounded-md bg-muted border border-border">
             <button
               onClick={() => setPolicyVersion("v12")}
@@ -166,6 +207,23 @@ export const SimulatorScreen: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Quick Scenario Templates Bar */}
+      <div className="p-2.5 rounded-md border border-border bg-card flex items-center gap-2 overflow-x-auto text-xs">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase flex items-center gap-1 shrink-0 font-mono">
+          <Bookmark className="h-3 w-3 text-primary" />
+          Templates:
+        </span>
+        {QUICK_TEMPLATES.map((tpl, idx) => (
+          <button
+            key={idx}
+            onClick={() => applyTemplate(tpl)}
+            className="px-2 py-1 rounded bg-muted/40 hover:bg-muted text-foreground text-[11px] font-medium border border-border whitespace-nowrap transition-colors shrink-0"
+          >
+            {tpl.name}
+          </button>
+        ))}
       </div>
 
       {/* Grid: Request Vector (7 cols) & Outcome Inspector (5 cols) */}
@@ -256,32 +314,30 @@ export const SimulatorScreen: React.FC = () => {
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-xs gap-1.5 h-8 mt-1"
               >
                 <Play className="h-3 w-3 fill-current" />
-                {isSimulating ? "Evaluating..." : "Evaluate Request"}
+                {isSimulating ? "Evaluating in Cedar WASM..." : "Evaluate Request Vector"}
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Output Result */}
+        {/* Right Column: Output Result & Delta Comparison */}
         <div className="lg:col-span-5 space-y-3">
           <Card className="border-border bg-card">
             <CardHeader className="p-3.5 pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-semibold">Simulation Result</CardTitle>
-                <Badge variant="outline" className="font-mono text-[10px]">
-                  {policyVersion}
-                </Badge>
+                <CardTitle className="text-xs font-semibold">Evaluation Outcome</CardTitle>
+                <StatusBadge status={result.decision} size="xs" />
               </div>
             </CardHeader>
 
             <CardContent className="p-3.5 pt-1 space-y-3 text-xs">
-              {hasEvaluated && (
+              {hasEvaluated ? (
                 <>
-                  {/* Decision Result */}
+                  {/* Decision Hero Banner */}
                   <div className="p-3 rounded-md border border-border bg-muted/30 flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-muted-foreground uppercase font-semibold block mb-0.5">
-                        Cedar Decision
+                        Target Decision ({policyVersion})
                       </span>
                       <DecisionBadge decision={result.decision} size="lg" />
                     </div>
@@ -296,10 +352,10 @@ export const SimulatorScreen: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Matched Policy Diagnostics */}
+                  {/* Matched Policy Trace */}
                   <div className="p-2.5 rounded bg-background border border-border space-y-1 text-xs">
                     <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
-                      Determining Policy
+                      Determining Policy Statement
                     </span>
                     <div className="flex items-center gap-1.5 font-mono text-xs text-foreground font-semibold">
                       <Code2 className="h-3 w-3 text-primary" />
@@ -310,34 +366,36 @@ export const SimulatorScreen: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Version Comparison Delta */}
+                  {/* Side-by-Side Baseline vs Candidate Comparison */}
                   <div className="p-2.5 rounded bg-muted/40 border border-border space-y-1.5">
-                    <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
-                      Version Comparison Delta
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                        Version Comparison Delta
+                      </span>
+                      {isDecisionFlip && (
+                        <span className="text-[9px] font-mono font-bold text-status-deny px-1 rounded bg-status-deny/10 border border-status-deny/20">
+                          DECISION FLIP
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center justify-between text-xs pt-0.5">
                       <div className="text-center flex-1">
-                        <span className="text-[10px] text-muted-foreground block mb-0.5">v12 (Production)</span>
-                        <DecisionBadge
-                          decision={
-                            evaluateAccess(selectedPrincipal, selectedAction, selectedResource, "v12").decision
-                          }
-                          size="sm"
-                        />
+                        <span className="text-[10px] text-muted-foreground block mb-0.5 font-mono">v12 (Production)</span>
+                        <DecisionBadge decision={baselineResult.decision} size="sm" />
                       </div>
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground mx-2" />
                       <div className="text-center flex-1">
-                        <span className="text-[10px] text-muted-foreground block mb-0.5">v13 (Candidate)</span>
-                        <DecisionBadge
-                          decision={
-                            evaluateAccess(selectedPrincipal, selectedAction, selectedResource, "v13").decision
-                          }
-                          size="sm"
-                        />
+                        <span className="text-[10px] text-muted-foreground block mb-0.5 font-mono">v13 (Candidate)</span>
+                        <DecisionBadge decision={candidateResult.decision} size="sm" />
                       </div>
                     </div>
                   </div>
                 </>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground text-xs space-y-1">
+                  <HelpCircle className="h-5 w-5 mx-auto text-muted-foreground/50" />
+                  <p>Configure a request vector and click Evaluate to execute Cedar authorization.</p>
+                </div>
               )}
             </CardContent>
           </Card>

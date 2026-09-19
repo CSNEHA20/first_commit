@@ -8,10 +8,11 @@ import {
   FileSearch,
   Code2,
   ChevronRight,
+  Info,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/common/StatusBadge"
 import { DecisionBadge } from "@/components/common/DecisionBadge"
 import { SeverityBadge } from "@/components/common/SeverityBadge"
 import { EvidenceDrawer } from "@/components/common/EvidenceDrawer"
@@ -64,28 +65,36 @@ export const ChangeAnalysisScreen: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-muted-foreground font-mono">
-              v12 (Production) ➔ v13 (Draft)
+              Baseline: v12 (Production) ➔ Candidate: v13 (Draft)
             </span>
             <span className="text-muted-foreground/40">·</span>
-            <Badge variant="blocked" className="text-[10px] font-mono">
-              Gate: BLOCKED
-            </Badge>
+            <StatusBadge status="BLOCKED" size="xs" />
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
             <GitCompare className="h-5 w-5 text-status-deny" />
-            Authorization Change Analysis
+            Authorization Change & Blast Radius Analysis
           </h1>
           <p className="text-xs text-muted-foreground">
-            Evaluating effective authorization behavior deltas and deterministic counterexamples.
+            Evaluating effective authorization deltas and deterministic counterexamples across declared security contracts.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-          <span>Universe: {BLAST_RADIUS_RESULT.universeSize} Scenarios</span>
+          <span className="px-2 py-1 rounded bg-muted/40 border border-border">
+            Bounded Universe: {BLAST_RADIUS_RESULT.universeSize} Scenarios
+          </span>
         </div>
       </div>
 
-      {/* Blast Radius Summary Bar (Compact Metrics) */}
+      {/* Bounded Analysis Disclosure Notice */}
+      <div className="p-2.5 rounded-md bg-muted/30 border border-border flex items-center gap-2 text-xs text-muted-foreground">
+        <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+        <span>
+          <strong>Scope Disclosure:</strong> Blast radius and counterexample discovery are bounded to the declared scenario universe (432 combinations across 5 principal roles, 4 actions, and 4 resource archetypes).
+        </span>
+      </div>
+
+      {/* Blast Radius Summary Bar */}
       <div className="p-3.5 rounded-lg border border-status-blocked/30 bg-status-blocked/[0.02] flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-4 text-xs">
           <div>
@@ -93,7 +102,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
               Transitions
             </span>
             <span className="font-mono font-bold text-status-deny text-sm">
-              {BLAST_RADIUS_RESULT.newlyAuthorizedCount} Newly Authorized
+              +{BLAST_RADIUS_RESULT.newlyAuthorizedCount} Newly Authorized
             </span>
           </div>
 
@@ -132,9 +141,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <Badge variant="blocked" className="text-[10px] font-mono">
-            3 Invariants Violated
-          </Badge>
+          <StatusBadge status="BLOCKED" label="3 Invariants Violated" size="sm" />
         </div>
       </div>
 
@@ -162,37 +169,37 @@ export const ChangeAnalysisScreen: React.FC = () => {
               </div>
 
               <div className="p-2 rounded bg-muted/40 text-muted-foreground border border-border text-[11px] mt-2">
-                // Version 13 (Candidate Draft - Clause Broadened):
+                // Version 13 (Candidate Draft - Wildcard Broadening):
               </div>
               <div className="p-2.5 rounded bg-status-allow/10 text-status-allow border border-status-allow/20 text-[11px] leading-relaxed">
-                + action, // Wildcard: matches view, edit, delete, export!
+                + action, // Broadened across view, edit, delete, export
               </div>
 
               <div className="pt-2 text-[11px] text-muted-foreground font-sans leading-relaxed border-t border-border mt-3">
-                <strong>Mechanism:</strong> Removing the explicit action constraint broadened the permit statement across all 4 declared actions in the schema, overriding implicit default-deny for contractors.
+                <strong>Mechanism:</strong> Removing the explicit action constraint broadened the permit statement across all 4 declared actions in the schema, overriding the implicit default-deny for contractors.
               </div>
             </CardContent>
           </Card>
 
-          {/* Quick Context Card */}
+          {/* Violated Contracts List */}
           <Card className="border-border bg-card">
             <CardHeader className="p-3.5 pb-1">
-              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
-                Determining Invariants
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground font-mono">
+                Violated Security Invariants
               </span>
             </CardHeader>
             <CardContent className="p-3.5 pt-1 space-y-1.5 text-xs">
               <div className="p-2 rounded bg-muted/30 border border-border flex items-center justify-between">
                 <span className="font-mono font-medium text-foreground">SC-04: Contractor payroll deletion</span>
-                <Badge variant="blocked" className="text-[9px]">FAIL</Badge>
+                <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
               <div className="p-2 rounded bg-muted/30 border border-border flex items-center justify-between">
                 <span className="font-mono font-medium text-foreground">SC-05: Contractor financial export</span>
-                <Badge variant="blocked" className="text-[9px]">FAIL</Badge>
+                <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
               <div className="p-2 rounded bg-muted/30 border border-border flex items-center justify-between">
                 <span className="font-mono font-medium text-foreground">SC-03: Editor invoice deletion</span>
-                <Badge variant="blocked" className="text-[9px]">FAIL</Badge>
+                <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
             </CardContent>
           </Card>
@@ -243,7 +250,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
                         className="text-[11px] gap-1 h-6 text-foreground"
                       >
                         <RefreshCw className={`h-3 w-3 ${isReplaying ? "animate-spin" : ""}`} />
-                        <span>{isReplaying ? "Evaluating..." : "Replay"}</span>
+                        <span>{isReplaying ? "Evaluating..." : "Replay in Cedar"}</span>
                       </Button>
 
                       <Button
@@ -262,7 +269,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Live Replay Confirmation */}
+                  {/* Live Replay Confirmation Status */}
                   {replay && (
                     <div
                       className={`p-2 rounded text-[11px] flex items-center justify-between font-mono ${
@@ -279,13 +286,11 @@ export const ChangeAnalysisScreen: React.FC = () => {
                         )}
                         <span>
                           {replay.isReproduced
-                            ? `Reproduced in Cedar (${replay.replayedBaselineDecision} ➔ ${replay.replayedCandidateDecision})`
+                            ? `100% Deterministically Reproduced by Cedar WASM (${replay.replayedBaselineDecision} ➔ ${replay.replayedCandidateDecision})`
                             : `Mismatch: ${replay.mismatchReason}`}
                         </span>
                       </div>
-                      <span className="font-bold">
-                        {replay.isReproduced ? "100% MATCH" : "DIFF"}
-                      </span>
+                      <StatusBadge status={replay.isReproduced ? "VERIFIED" : "BLOCKED"} size="xs" />
                     </div>
                   )}
 
@@ -326,10 +331,10 @@ export const ChangeAnalysisScreen: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Violated Contract Info */}
+                  {/* Violated Contract Label */}
                   {cx.violatedContractId && (
                     <div className="text-[11px] text-status-deny font-mono pt-0.5">
-                      Violates: <strong>{cx.violatedContractId}</strong> — {cx.violatedContractTitle}
+                      Violates: <strong>{cx.violatedContractId}</strong> — "{cx.violatedContractTitle}"
                     </div>
                   )}
                 </div>

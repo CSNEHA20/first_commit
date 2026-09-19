@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/common/StatusBadge"
 import { SeverityBadge } from "@/components/common/SeverityBadge"
 import {
   SECURITY_CONTRACTS,
@@ -109,13 +109,15 @@ export const RegressionScreen: React.FC = () => {
               Suite: AcmePay Security Invariants
             </span>
             <span className="text-muted-foreground/40">·</span>
-            <Badge variant={failedCount > 0 ? "blocked" : "allow"} className="text-[10px] font-mono">
-              {failedCount > 0 ? `${failedCount} Failures` : "All Passed"}
-            </Badge>
+            <StatusBadge
+              status={failedCount > 0 ? "BLOCKED" : "PASS"}
+              label={failedCount > 0 ? `${failedCount} Failures` : "18/18 Pass"}
+              size="xs"
+            />
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            Security Contract Regression Suite
+            Security Contract Invariants & Regression Suite
           </h1>
         </div>
 
@@ -160,7 +162,7 @@ export const RegressionScreen: React.FC = () => {
             ) : (
               <Play className="h-3 w-3 fill-current" />
             )}
-            <span>{isRunning ? "Evaluating..." : "Run Test Suite"}</span>
+            <span>{isRunning ? "Evaluating in Cedar..." : "Run Test Suite"}</span>
           </Button>
         </div>
       </div>
@@ -192,21 +194,19 @@ export const RegressionScreen: React.FC = () => {
               <span className="font-semibold text-foreground">
                 Pre-Deployment Gate: {gateStatus === "PASS" ? "VERIFIED (PASS)" : "BLOCKED"}
               </span>
-              <Badge variant={gateStatus === "PASS" ? "allow" : "blocked"} className="text-[9px] font-mono">
-                {gateStatus}
-              </Badge>
+              <StatusBadge status={gateStatus} size="xs" />
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {gateDecision?.reasons?.[0] ||
                 (gateStatus === "PASS"
-                  ? "All organizational security contracts satisfied. Zero blocking violations."
+                  ? "All 6 organizational security contracts satisfied. Zero blocking violations."
                   : "Blocking Invariant SC-04 failed: Contractor payroll deletion prohibited.")}
             </p>
           </div>
         </div>
 
         <div className="text-right text-[11px] font-mono text-muted-foreground shrink-0">
-          Suite Time: {executionDurationMs}ms
+          Duration: {executionDurationMs}ms · Cedar Engine
         </div>
       </div>
 
@@ -241,19 +241,19 @@ export const RegressionScreen: React.FC = () => {
 
         <div className="p-3 rounded-md border border-border bg-card">
           <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
-            Cedar Engine
+            Execution Mode
           </span>
           <span className="text-xs font-bold text-foreground mt-1 block">
-            WASM v4.13
+            DETERMINISTIC
           </span>
         </div>
       </div>
 
-      {/* Dense Security Contracts Table */}
+      {/* Dense Security Contracts Invariant Table */}
       <Card className="border-border bg-card">
         <CardHeader className="p-3.5 pb-2 border-b border-border">
           <CardTitle className="text-xs font-semibold">
-            Security Invariant Contracts (6 Active Invariants)
+            Organizational Security Invariant Contracts (6 Active Invariants)
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -291,9 +291,7 @@ export const RegressionScreen: React.FC = () => {
 
                   <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                     <SeverityBadge severity={c.severity} />
-                    <Badge variant={isFailing ? "blocked" : "allow"} className="text-[10px] font-mono">
-                      {isFailing ? "FAIL" : "PASS"}
-                    </Badge>
+                    <StatusBadge status={isFailing ? "BLOCKED" : "PASS"} size="xs" label={isFailing ? "FAIL" : "PASS"} />
                   </div>
                 </div>
               )
@@ -307,7 +305,7 @@ export const RegressionScreen: React.FC = () => {
         <CardHeader className="p-3.5 pb-2 border-b border-border">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <CardTitle className="text-xs font-semibold">
-              Executable Scenario Assertions
+              Executable Scenario Assertions ({filteredScenarios.length} Scenarios)
             </CardTitle>
 
             {/* Filter Tags */}
@@ -367,9 +365,7 @@ export const RegressionScreen: React.FC = () => {
                       </strong>
                     </div>
 
-                    <Badge variant={isPass ? "allow" : "blocked"} className="text-[9px] font-mono">
-                      {isPass ? "PASS" : "FAIL"}
-                    </Badge>
+                    <StatusBadge status={isPass ? "PASS" : "BLOCKED"} size="xs" label={isPass ? "PASS" : "FAIL"} />
                   </div>
                 </div>
               )
