@@ -57,6 +57,22 @@ from .entity import (
     FixtureEntityProvider,
     IEntityProvider,
 )
+from .explanation import (
+    AIExplanationRequest,
+    AIExplanationResponse,
+)
+from .deployment import (
+    AVPReadinessResponse,
+    DeploymentPrepareRequest,
+    DeploymentPrepareResponse,
+    DeploymentRecord,
+    DeploymentStatus,
+    DeploymentSubmitRequest,
+    DeploymentSubmitResponse,
+    DeploymentTargetEnv,
+    HumanApprovalRequest,
+    HumanApprovalResponse,
+)
 
 __all__ = [
     "AuthorizationDecision",
@@ -100,4 +116,16 @@ __all__ = [
     "RegressionRunRequest",
     "FixtureEntityProvider",
     "IEntityProvider",
+    "AIExplanationRequest",
+    "AIExplanationResponse",
+    "AVPReadinessResponse",
+    "DeploymentPrepareRequest",
+    "DeploymentPrepareResponse",
+    "DeploymentRecord",
+    "DeploymentStatus",
+    "DeploymentSubmitRequest",
+    "DeploymentSubmitResponse",
+    "DeploymentTargetEnv",
+    "HumanApprovalRequest",
+    "HumanApprovalResponse",
 ]

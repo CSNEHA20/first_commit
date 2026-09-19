@@ -2,10 +2,11 @@
 PolicyLab Backend API Service
 FastAPI REST interface exposing deterministic Cedar validation, single evaluation,
 batch scenario simulation, policy diff comparison, counterexample extraction & replay,
-security contract evaluation, and pre-deployment regression gates.
+security contract evaluation, pre-deployment regression gates, grounded AI explanations,
+and human-approved Amazon Verified Permissions (AVP) deployment.
 """
 
-from typing import List
+from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -36,6 +37,20 @@ from .domain.models.regression import (
     RegressionReport,
     RegressionRunRequest,
 )
+from .domain.models.explanation import (
+    AIExplanationRequest,
+    AIExplanationResponse,
+)
+from .domain.models.deployment import (
+    AVPReadinessResponse,
+    DeploymentPrepareRequest,
+    DeploymentPrepareResponse,
+    DeploymentRecord,
+    DeploymentSubmitRequest,
+    DeploymentSubmitResponse,
+    HumanApprovalRequest,
+    HumanApprovalResponse,
+)
 from .domain.cedar.validation import CedarValidationService
 from .domain.cedar.evaluation import CedarEvaluationService
 from .domain.cedar.runner import ScenarioRunner
@@ -44,11 +59,13 @@ from .domain.cedar.counterexample import CounterexampleEngine
 from .domain.cedar.contract import SecurityContractService
 from .domain.cedar.regression import RegressionEngine
 from .domain.cedar.engine import LocalCedarAdapter
+from .domain.ai.explanation import AIExplanationService
+from .domain.avp.adapter import DeploymentService
 
 app = FastAPI(
-    title="PolicyLab Deterministic Authorization, Verification & Regression API",
-    description="Deterministic Cedar policy validation, evaluation, scenario runner, diff engine, counterexamples, contracts, and regression gate.",
-    version="1.3.0",
+    title="PolicyLab Deterministic Authorization, Verification, AI & AVP Deployment API",
+    description="Deterministic Cedar policy verification, counterexamples, contracts, regression gates, Bedrock explanations, and AVP synchronization.",
+    version="1.4.0",
 )
 
 app.add_middleware(
@@ -76,6 +93,8 @@ regression_engine = RegressionEngine(
     validation_service=validation_service,
 )
 cedar_adapter = LocalCedarAdapter()
+explanation_service = AIExplanationService()
+deployment_service = DeploymentService()
 
 
 @app.get("/health")
@@ -249,3 +268,102 @@ def run_regression(request: RegressionRunRequest):
             status_code=500,
             detail=f"Regression engine error: {str(ex)}",
         )
+
+
+# --- Phase 5 Endpoints ---
+
+
+@app.post("/explanations", response_model=AIExplanationResponse)
+def generate_explanation(request: AIExplanationRequest):
+    """
+    Synthesizes a structured, grounded AI explanation and remediation proposal
+    from supplied deterministic authorization evidence.
+    """
+    try:
+        explanation = explanation_service.explain(request)
+        return explanation
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid evidence payload: {str(ve)}",
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Explanation generation error: {str(ex)}",
+        )
+
+
+@app.get("/deployment/readiness", response_model=AVPReadinessResponse)
+def get_deployment_readiness(region: str = "us-east-1", store_id: str = "ps-acmepay-prod"):
+    """
+    Checks AWS environment connection and Amazon Verified Permissions readiness.
+    """
+    try:
+        return deployment_service.check_readiness(region=region, store_id=store_id)
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Readiness check failed: {str(ex)}",
+        )
+
+
+@app.post("/deployment/prepare", response_model=DeploymentPrepareResponse)
+def prepare_deployment(request: DeploymentPrepareRequest):
+    """
+    Evaluates pre-deployment gate eligibility, calculates cryptographic policy hash,
+    and creates a deployment preparation record.
+    """
+    try:
+        return deployment_service.prepare_deployment(request)
+    except Exception as ex:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Deployment preparation failed: {str(ex)}",
+        )
+
+
+@app.post("/deployment/approve", response_model=HumanApprovalResponse)
+def approve_deployment(request: HumanApprovalRequest):
+    """
+    Registers explicit human operator sign-off for a specific prepared deployment and policy hash.
+    """
+    try:
+        return deployment_service.register_approval(request)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=str(ve),
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Human approval registration error: {str(ex)}",
+        )
+
+
+@app.post("/deployment/submit", response_model=DeploymentSubmitResponse)
+def submit_deployment(request: DeploymentSubmitRequest):
+    """
+    Submits an approved policy set to Amazon Verified Permissions after validating human approval.
+    """
+    try:
+        return deployment_service.submit_deployment(request)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=str(ve),
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Deployment submission error: {str(ex)}",
+        )
+
+
+@app.get("/deployment/history", response_model=List[DeploymentRecord])
+def get_deployment_history():
+    """
+    Retrieves the audit trail ledger of verified deployments.
+    """
+    return deployment_service.get_history()

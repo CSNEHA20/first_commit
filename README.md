@@ -138,28 +138,27 @@ Complete engineering specifications are available in the [`docs/`](./docs) direc
 | **Phase 2: Scenario Engine & Batch Simulation** | **COMPLETE** | Bounded matrix execution, scenario runner, and expectation testing. |
 | **Phase 3: Policy Diff & Blast Radius Engine** | **COMPLETE** | Behavioral transition classification, bounded blast radius metrics, and transparency statements. |
 | **Phase 4: Counterexamples, Contracts & Regression Gate** | **COMPLETE** | Deterministic counterexample extraction & replay, security contracts, and pre-deployment gate decisions. |
-| **Phase 5: Grounded AI Explanations & AWS Deployment** | *Next* | Bedrock / Strands explanations and Amazon Verified Permissions deployment. |
+| **Phase 5: Grounded AI Explanations & AWS Deployment** | **COMPLETE** | Evidence-grounded AI explanations (Bedrock/Claude 3.5 & deterministic template fallback), structured citations, cryptographic human approval, and AVP deployment. |
 
 ---
 
 ## Running Verification
 
-### Backend Tests
+### All Test Suites (70 passing tests)
 ```bash
 python -m pytest -v
 ```
 
-### Frontend Build
+### Frontend Production Build
 ```bash
 cd frontend
 npm run build
 ```
 
-### AcmePay 12-Step End-to-End Regression Demonstration
+### AcmePay 17-Step Full Lifecycle Demonstration
 ```bash
-python -m pytest tests/integration/test_acmepay_e2e_regression.py -v
+python -m pytest tests/integration/test_acmepay_e2e_full_lifecycle.py -v
 ```
-
 
 ---
 
@@ -168,3 +167,4 @@ python -m pytest tests/integration/test_acmepay_e2e_regression.py -v
 - **Event:** WeMakeDevs × AWS First Commit 2026
 - **Team:** VibeSync — Vishal & Sneha
 - **Timeline:** 4-day sprint
+

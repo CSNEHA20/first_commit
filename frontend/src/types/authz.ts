@@ -199,6 +199,116 @@ export interface BedrockExplanation {
   remediationCedar: string
 }
 
+export interface AIExplanationRequest {
+  baselineDecision?: AuthorizationDecision | null
+  candidateDecision?: AuthorizationDecision | null
+  transition?: string | null
+  scenarioId?: string | null
+  scenarioTitle?: string | null
+  principal?: string | null
+  action?: string | null
+  resource?: string | null
+  context?: Record<string, unknown>
+  violatedContractId?: string | null
+  violatedContractTitle?: string | null
+  counterexampleId?: string | null
+  matchedPolicyId?: string | null
+  baselineDeterminingPolicies?: string[]
+  candidateDeterminingPolicies?: string[]
+  baselineDiagnostics?: { errors: string[]; warnings: string[] }
+  candidateDiagnostics?: { errors: string[]; warnings: string[] }
+  reproduced?: boolean | null
+  mismatchReason?: string | null
+  regressionGateStatus?: string | null
+  regressionGateReasons?: string[]
+  policyExcerpt?: string | null
+  providerPreference?: "BEDROCK" | "LOCAL_FALLBACK" | "AUTO"
+}
+
+export interface AIExplanationResponse {
+  summary: string
+  observedTransition: string
+  rootCause: string
+  securityImpact: string
+  remediationSuggestion?: string | null
+  remediationCedar?: string | null
+  evidenceCitations: string[]
+  limitations: string[]
+  isFactGrounded: boolean
+  isDeterministicFallback: boolean
+  providerUsed: string
+  modelId?: string | null
+}
+
+export interface AVPReadinessResponse {
+  isConfigured: boolean
+  isReadyForDeployment: boolean
+  awsRegion?: string | null
+  configuredPolicyStores: Record<string, string>
+  adapterMode: "LIVE_BOTO3" | "DETERMINISTIC_FAKE"
+  missingRequirements: string[]
+  checklist: Array<{ item: string; satisfied: boolean; description: string }>
+}
+
+export interface DeploymentPrepareRequest {
+  candidatePolicyText: string
+  schemaText?: string
+  targetEnv: "staging" | "production"
+  regressionReport: RegressionReport
+}
+
+export interface DeploymentPrepareResponse {
+  isDeployable: boolean
+  targetEnv: string
+  targetPolicyStoreId: string
+  candidatePolicyHashSha256: string
+  regressionGateStatus: string
+  rejectionReasons: string[]
+  requiresHumanApproval: boolean
+  approvalTokenRequired: boolean
+}
+
+export interface HumanApprovalRequest {
+  candidatePolicyHashSha256: string
+  targetEnv: "staging" | "production"
+  approverName: string
+  approverEmail?: string | null
+  ticketReference?: string | null
+  approvalNotes?: string | null
+}
+
+export interface HumanApprovalResponse {
+  isApproved: boolean
+  approvalToken: string
+  candidatePolicyHashSha256: string
+  targetEnv: string
+  approverName: string
+  approvedAt: string
+  expiresAt: string
+}
+
+export interface DeploymentSubmitRequest {
+  candidatePolicyText: string
+  schemaText?: string
+  targetEnv: "staging" | "production"
+  approvalToken: string
+  regressionRunId: string
+  candidateLabel?: string
+}
+
+export interface DeploymentSubmitResponse {
+  deploymentId: string
+  status: "SUBMITTED" | "VERIFIED_REMOTELY" | "REJECTED" | "FAILED"
+  targetEnv: string
+  targetPolicyStoreId: string
+  candidatePolicyHashSha256: string
+  deployedAt: string
+  deployedBy: string
+  verificationProof: string
+  remoteVerified: boolean
+  details?: string | null
+}
+
 export interface AuditRun {
   id: string
   baselineVersion: string
@@ -215,13 +325,14 @@ export interface AuditRun {
 
 export interface DeploymentRecord {
   id: string
-  policyVersionId: string
+  policyVersionId?: string
   versionTag: string
   policyHash: string
   targetStoreId: string
   environment: "staging" | "production"
-  status: "SYNCHRONIZED" | "BLOCKED" | "PENDING"
+  status: "SYNCHRONIZED" | "BLOCKED" | "PENDING" | "SUBMITTED" | "VERIFIED_REMOTELY"
   deployedBy: string
   deployedAt: string
   verificationProof: string
 }
+

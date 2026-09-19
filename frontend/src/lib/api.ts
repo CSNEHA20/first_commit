@@ -335,3 +335,82 @@ export async function runRegression(payload: {
   }
   return res.json()
 }
+
+export async function explainAuthorizationFinding(
+  payload: import("../types/authz").AIExplanationRequest
+): Promise<import("../types/authz").AIExplanationResponse> {
+  const res = await fetch(`${API_BASE_URL}/explanations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "AI explanation generation failed")
+  }
+  return res.json()
+}
+
+export async function getAVPReadiness(): Promise<import("../types/authz").AVPReadinessResponse> {
+  const res = await fetch(`${API_BASE_URL}/deployment/readiness`)
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Failed to check AVP readiness")
+  }
+  return res.json()
+}
+
+export async function prepareDeployment(
+  payload: import("../types/authz").DeploymentPrepareRequest
+): Promise<import("../types/authz").DeploymentPrepareResponse> {
+  const res = await fetch(`${API_BASE_URL}/deployment/prepare`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Deployment preparation failed")
+  }
+  return res.json()
+}
+
+export async function approveDeployment(
+  payload: import("../types/authz").HumanApprovalRequest
+): Promise<import("../types/authz").HumanApprovalResponse> {
+  const res = await fetch(`${API_BASE_URL}/deployment/approve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Human approval registration failed")
+  }
+  return res.json()
+}
+
+export async function submitDeployment(
+  payload: import("../types/authz").DeploymentSubmitRequest
+): Promise<import("../types/authz").DeploymentSubmitResponse> {
+  const res = await fetch(`${API_BASE_URL}/deployment/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Deployment submission failed")
+  }
+  return res.json()
+}
+
+export async function getDeploymentHistory(): Promise<import("../types/authz").DeploymentRecord[]> {
+  const res = await fetch(`${API_BASE_URL}/deployment/history`)
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Failed to fetch deployment history")
+  }
+  return res.json()
+}
+

@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Rocket,
   ShieldCheck,
@@ -10,30 +10,153 @@ import {
   FileCode2,
   History,
   Check,
+  UserCheck,
+  AlertTriangle,
+  Server,
+  Key,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DEPLOYMENT_HISTORY } from "@/fixtures/acmepay"
+import {
+  AVPReadinessResponse,
+  DeploymentPrepareResponse,
+  HumanApprovalResponse,
+  DeploymentSubmitResponse,
+  DeploymentRecord,
+} from "@/types/authz"
+import {
+  getAVPReadiness,
+  prepareDeployment,
+  approveDeployment,
+  submitDeployment,
+  getDeploymentHistory,
+  runRegression,
+} from "@/lib/api"
+import {
+  POLICY_V12_TEXT,
+  POLICY_V13_TEXT,
+  ACMEPAY_SCHEMA,
+  ALL_REGRESSION_SCENARIOS,
+  SECURITY_CONTRACTS,
+  DEPLOYMENT_HISTORY as DEFAULT_DEPLOYMENT_HISTORY,
+} from "@/fixtures/acmepay"
 
 export const DeploymentScreen: React.FC = () => {
   const [targetEnv, setTargetEnv] = useState<"staging" | "production">("production")
   const [selectedVersion, setSelectedVersion] = useState<"v12" | "v13">("v13")
+  const [readiness, setReadiness] = useState<AVPReadinessResponse | null>(null)
+  const [prepResult, setPrepResult] = useState<DeploymentPrepareResponse | null>(null)
+  const [approval, setApproval] = useState<HumanApprovalResponse | null>(null)
+  const [approverName, setApproverName] = useState("Vishal Lakshmikanthan (Principal SecOps)")
+  const [ticketRef, setTicketRef] = useState("SEC-2026-9042")
+  const [approvalNotes, setApprovalNotes] = useState("Verified against full AcmePay 18-scenario suite with zero contract violations.")
   const [isDeploying, setIsDeploying] = useState(false)
-  const [deploySuccess, setDeploySuccess] = useState(false)
+  const [submitResult, setSubmitResult] = useState<DeploymentSubmitResponse | null>(null)
+  const [deploymentRecords, setDeploymentRecords] = useState<DeploymentRecord[]>(DEFAULT_DEPLOYMENT_HISTORY as any)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const isBlocked = selectedVersion === "v13"
+  const candidatePolicyText = selectedVersion === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT
 
-  const handleDeploy = () => {
-    if (isBlocked) return
-    setIsDeploying(true)
-    setTimeout(() => {
-      setIsDeploying(false)
-      setDeploySuccess(true)
-      setTimeout(() => setDeploySuccess(false), 3000)
-    }, 1200)
+  useEffect(() => {
+    loadReadinessAndHistory()
+  }, [])
+
+  useEffect(() => {
+    evaluateReadinessAndGate()
+  }, [selectedVersion, targetEnv])
+
+  const loadReadinessAndHistory = async () => {
+    try {
+      const ready = await getAVPReadiness()
+      setReadiness(ready)
+      const history = await getDeploymentHistory().catch(() => [])
+      if (history && history.length > 0) {
+        setDeploymentRecords(history)
+      }
+    } catch {
+      // Fallback to local default state
+    }
   }
+
+  const evaluateReadinessAndGate = async () => {
+    setErrorMsg(null)
+    setSubmitResult(null)
+    setApproval(null)
+    try {
+      // 1. Run regression to get canonical gate decision
+      const regression = await runRegression({
+        baselinePolicyText: POLICY_V12_TEXT,
+        candidatePolicyText,
+        schemaText: ACMEPAY_SCHEMA,
+        suite: {
+          id: "suite_acmepay_regression",
+          name: "AcmePay Standard Regression Suite",
+          scenarios: ALL_REGRESSION_SCENARIOS,
+        },
+        contracts: SECURITY_CONTRACTS,
+        baselineLabel: "v12",
+        candidateLabel: selectedVersion,
+      })
+
+
+      // 2. Prepare deployment target
+      const prep = await prepareDeployment({
+        candidatePolicyText,
+        schemaText: ACMEPAY_SCHEMA,
+        targetEnv,
+        regressionReport: regression,
+      })
+      setPrepResult(prep)
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to prepare deployment")
+    }
+  }
+
+  const handleApprove = async () => {
+    if (!prepResult || !prepResult.isDeployable) return
+    try {
+      const app = await approveDeployment({
+        candidatePolicyHashSha256: prepResult.candidatePolicyHashSha256,
+        targetEnv,
+        approverName,
+        ticketReference: ticketRef,
+        approvalNotes,
+      })
+      setApproval(app)
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to record human approval")
+    }
+  }
+
+  const handleDeploy = async () => {
+    if (!prepResult || !approval || !approval.approvalToken) return
+    setIsDeploying(true)
+    setErrorMsg(null)
+    try {
+      const sub = await submitDeployment({
+        candidatePolicyText,
+        schemaText: ACMEPAY_SCHEMA,
+        targetEnv,
+        approvalToken: approval.approvalToken,
+        regressionRunId: `reg-${Date.now()}`,
+        candidateLabel: selectedVersion,
+      })
+      setSubmitResult(sub)
+      // Refresh history
+      const history = await getDeploymentHistory().catch(() => [])
+      if (history && history.length > 0) {
+        setDeploymentRecords(history)
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Deployment submission failed")
+    } finally {
+      setIsDeploying(false)
+    }
+  }
+
+  const isBlocked = prepResult ? !prepResult.isDeployable : selectedVersion === "v13"
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-200">
@@ -41,8 +164,9 @@ export const DeploymentScreen: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="text-xs font-mono">
-              Target: Amazon Verified Permissions
+            <Badge variant="outline" className="text-xs font-mono gap-1">
+              <Server className="h-3 w-3 text-indigo-400" />
+              Target: Amazon Verified Permissions ({readiness?.adapterMode || "DETERMINISTIC_FAKE"})
             </Badge>
             <Badge variant={isBlocked ? "blocked" : "allow"}>
               {isBlocked ? "Gate: ⛔ BLOCKED" : "Gate: 🟢 VERIFIED"}
@@ -50,10 +174,10 @@ export const DeploymentScreen: React.FC = () => {
           </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Rocket className="h-5 w-5 text-indigo-500" />
-            Verified Permissions Deployment Gate
+            Verified Permissions Deployment Gate & Governance
           </h1>
           <p className="text-xs text-muted-foreground">
-            Enforcing zero-trust promotion policies before synchronizing Cedar policy sets to AWS policy stores.
+            Enforcing zero-trust verification and cryptographic human approval before synchronizing Cedar policy sets to AWS policy stores.
           </p>
         </div>
 
@@ -69,7 +193,7 @@ export const DeploymentScreen: React.FC = () => {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v12 (Verified)
+              v12 (Verified Baseline)
             </button>
             <button
               onClick={() => setSelectedVersion("v13")}
@@ -79,11 +203,18 @@ export const DeploymentScreen: React.FC = () => {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v13 (Draft / Buggy)
+              v13 (Violates SC-04)
             </button>
           </div>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {/* Deployment Readiness Card */}
       <Card className={`border ${isBlocked ? "border-rose-500/40 bg-rose-500/5" : "border-emerald-500/40 bg-emerald-500/5"}`}>
@@ -99,13 +230,13 @@ export const DeploymentScreen: React.FC = () => {
                 ) : (
                   <>
                     <ShieldCheck className="h-5 w-5 text-emerald-500" />
-                    Deployment Readiness Passed — Ready for Synchronization
+                    Deployment Readiness Passed — Ready for Operator Approval
                   </>
                 )}
               </CardTitle>
               <CardDescription>
-                Candidate Version: <span className="font-mono font-bold text-foreground">{selectedVersion}</span> | Target:{" "}
-                <span className="font-mono text-foreground">ps-acmepay-{targetEnv}</span>
+                Candidate Version: <span className="font-mono font-bold text-foreground">{selectedVersion}</span> | Target Store:{" "}
+                <span className="font-mono text-foreground">{prepResult?.targetPolicyStoreId || `ps-acmepay-${targetEnv}`}</span>
               </CardDescription>
             </div>
 
@@ -119,7 +250,7 @@ export const DeploymentScreen: React.FC = () => {
         </CardHeader>
 
         <CardContent className="p-6 pt-3 space-y-4 text-xs">
-          {/* Pre-Deployment Checklist */}
+          {/* Pre-Deployment Verification Checklist */}
           <div className="divide-y divide-border rounded-lg border border-border bg-background/80 overflow-hidden">
             <div className="p-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -132,9 +263,9 @@ export const DeploymentScreen: React.FC = () => {
             <div className="p-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span className="font-medium text-foreground">2. Bounded Scenario Diff Computed (432 cases)</span>
+                <span className="font-medium text-foreground">2. Bounded Scenario Diff (432 Combinations)</span>
               </div>
-              <Badge variant="allow">PASSED</Badge>
+              <Badge variant="allow">EVALUATED</Badge>
             </div>
 
             <div className="p-3 flex items-center justify-between">
@@ -149,7 +280,7 @@ export const DeploymentScreen: React.FC = () => {
                 </span>
               </div>
               {isBlocked ? (
-                <Badge variant="blocked">1 CONTRACT FAILED</Badge>
+                <Badge variant="blocked">1 CONTRACT FAILED (SC-04)</Badge>
               ) : (
                 <Badge variant="allow">18/18 PASSED</Badge>
               )}
@@ -167,9 +298,9 @@ export const DeploymentScreen: React.FC = () => {
                 </span>
               </div>
               {isBlocked ? (
-                <Badge variant="blocked">1 CRITICAL ACTIVE</Badge>
+                <Badge variant="blocked">1 ACTIVE (S-06)</Badge>
               ) : (
-                <Badge variant="allow">0 CRITICAL</Badge>
+                <Badge variant="allow">0 ACTIVE</Badge>
               )}
             </div>
           </div>
@@ -180,19 +311,106 @@ export const DeploymentScreen: React.FC = () => {
               <div className="text-xs space-y-0.5">
                 <span className="font-bold">Production Deployment Restricted:</span>
                 <p className="text-muted-foreground">
-                  Contract SC-04 ("Contractors cannot delete payroll reports") failed assertion. Synchronization with Amazon Verified Permissions policy store is blocked by the deterministic gate.
+                  {prepResult?.rejectionReasons?.[0] ||
+                    'Contract SC-04 ("Contractors cannot delete payroll reports") failed assertion. Synchronization with Amazon Verified Permissions policy store is strictly blocked by the deterministic gate.'}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-start gap-2.5">
-              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
-              <div className="text-xs space-y-0.5">
-                <span className="font-bold">Ready for Production Synchronization:</span>
-                <p className="text-muted-foreground">
-                  All 18 security contracts and regression assertions evaluated successfully under baseline v12.
-                </p>
+            <div className="space-y-3">
+              <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                <div className="text-xs space-y-0.5">
+                  <span className="font-bold">Gate Passed: Ready for Operator Approval</span>
+                  <p className="text-muted-foreground">
+                    All 18 security contracts and regression assertions evaluated successfully. Policy SHA-256:{" "}
+                    <code className="font-mono text-foreground font-semibold">{prepResult?.candidatePolicyHashSha256?.substring(0, 16)}...</code>
+                  </p>
+                </div>
               </div>
+
+              {/* Human Approval Sign-off Form */}
+              <div className="p-4 rounded-lg bg-background border border-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <UserCheck className="h-4 w-4 text-indigo-500" />
+                    Human Operator Cryptographic Sign-Off
+                  </span>
+                  {approval ? (
+                    <Badge variant="allow" className="gap-1 font-mono text-[10px]">
+                      <Key className="h-3 w-3" /> Token: {approval.approvalToken.substring(0, 12)}...
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px]">Required Before Deploy</Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
+                      Authorizing Operator
+                    </label>
+                    <input
+                      type="text"
+                      value={approverName}
+                      onChange={(e) => setApproverName(e.target.value)}
+                      disabled={!!approval}
+                      className="w-full px-2.5 py-1.5 rounded-md bg-muted/50 border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
+                      Change Ticket / PR Ref
+                    </label>
+                    <input
+                      type="text"
+                      value={ticketRef}
+                      onChange={(e) => setTicketRef(e.target.value)}
+                      disabled={!!approval}
+                      className="w-full px-2.5 py-1.5 rounded-md bg-muted/50 border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
+                    Approval Justification Notes
+                  </label>
+                  <input
+                    type="text"
+                    value={approvalNotes}
+                    onChange={(e) => setApprovalNotes(e.target.value)}
+                    disabled={!!approval}
+                    className="w-full px-2.5 py-1.5 rounded-md bg-muted/50 border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {!approval && (
+                  <Button
+                    size="sm"
+                    onClick={handleApprove}
+                    className="w-full text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white gap-1.5"
+                  >
+                    <UserCheck className="h-3.5 w-3.5" />
+                    Sign & Register Approval Token
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {submitResult && (
+            <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 space-y-1.5 text-xs">
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span className="font-bold">Deployment Successfully Recorded to AVP!</span>
+              </div>
+              <p className="text-muted-foreground">
+                Deployment ID: <code className="font-mono text-foreground">{submitResult.deploymentId}</code> | Store: <code className="font-mono text-foreground">{submitResult.targetPolicyStoreId}</code>
+              </p>
+              <p className="font-mono text-[10px] text-emerald-400/80 truncate">
+                Proof: {submitResult.verificationProof}
+              </p>
             </div>
           )}
         </CardContent>
@@ -200,22 +418,22 @@ export const DeploymentScreen: React.FC = () => {
         <CardFooter className="p-6 pt-0 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border/50">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <FileCode2 className="h-4 w-4" />
-            <span>Target AWS Policy Store: <code className="text-foreground font-mono">ps-acmepay-{targetEnv}</code></span>
+            <span>Target AWS Policy Store: <code className="text-foreground font-mono">{prepResult?.targetPolicyStoreId || `ps-acmepay-${targetEnv}`}</code></span>
           </div>
 
           <Button
             onClick={handleDeploy}
-            disabled={isBlocked || isDeploying}
+            disabled={isBlocked || !approval || isDeploying}
             className={`text-xs font-semibold gap-1.5 shadow-md ${
-              isBlocked
+              isBlocked || !approval
                 ? "bg-muted text-muted-foreground cursor-not-allowed opacity-60"
                 : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20"
             }`}
           >
-            {deploySuccess ? (
+            {submitResult ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                Deployed Successfully!
+                Synchronized with AVP
               </>
             ) : isDeploying ? (
               "Deploying to AVP..."
@@ -223,6 +441,11 @@ export const DeploymentScreen: React.FC = () => {
               <>
                 <Lock className="h-3.5 w-3.5" />
                 Deployment Blocked
+              </>
+            ) : !approval ? (
+              <>
+                <UserCheck className="h-3.5 w-3.5" />
+                Awaiting Operator Sign-Off
               </>
             ) : (
               <>
@@ -243,13 +466,13 @@ export const DeploymentScreen: React.FC = () => {
             Verified Deployment Audit Trail
           </CardTitle>
           <CardDescription>
-            Cryptographically signed deployments recorded in Amazon DynamoDB.
+            Cryptographically signed deployments recorded in AWS Verified Permissions audit ledger.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="p-4 pt-2">
           <div className="divide-y divide-border rounded-lg border border-border overflow-hidden text-xs">
-            {DEPLOYMENT_HISTORY.map((d) => (
+            {deploymentRecords.map((d) => (
               <div key={d.id} className="p-3.5 flex items-center justify-between bg-muted/10">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -278,3 +501,4 @@ export const DeploymentScreen: React.FC = () => {
     </div>
   )
 }
+

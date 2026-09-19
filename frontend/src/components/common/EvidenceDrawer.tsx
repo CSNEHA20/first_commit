@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   X,
   ShieldAlert,
@@ -9,6 +9,10 @@ import {
   Lock,
   ArrowRight,
   FileCheck,
+  AlertTriangle,
+  Info,
+  Layers,
+  Cpu,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,44 +20,88 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { DecisionBadge } from "./DecisionBadge"
 import { SeverityBadge } from "./SeverityBadge"
-import { Counterexample } from "@/types/authz"
-import { BEDROCK_EXPLANATION_DATA } from "@/fixtures/acmepay"
+import { Counterexample, AIExplanationResponse } from "@/types/authz"
+import { explainAuthorizationFinding } from "@/lib/api"
 
 interface EvidenceDrawerProps {
   counterexample: Counterexample | null
   isOpen: boolean
   onClose: () => void
+  onApplyRemediation?: (cedarCode: string) => void
 }
 
 export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
   counterexample,
   isOpen,
   onClose,
+  onApplyRemediation,
 }) => {
   const [copied, setCopied] = useState(false)
+  const [applied, setApplied] = useState(false)
   const [isExplaining, setIsExplaining] = useState(false)
+  const [explanation, setExplanation] = useState<AIExplanationResponse | null>(null)
+  const [explanationError, setExplanationError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isOpen && counterexample) {
+      loadExplanation("AUTO")
+    } else {
+      setExplanation(null)
+      setExplanationError(null)
+    }
+  }, [isOpen, counterexample?.id])
+
+  const loadExplanation = async (preference: "BEDROCK" | "LOCAL_FALLBACK" | "AUTO") => {
+    if (!counterexample) return
+    setIsExplaining(true)
+    setExplanationError(null)
+    try {
+      const res = await explainAuthorizationFinding({
+        baselineDecision: counterexample.baselineDecision,
+        candidateDecision: counterexample.candidateDecision,
+        transition: counterexample.transition,
+        scenarioId: counterexample.scenarioId || counterexample.id,
+        scenarioTitle: counterexample.scenarioTitle || counterexample.title,
+        principal: counterexample.principal,
+        action: counterexample.action,
+        resource: counterexample.resource,
+        context: counterexample.context as Record<string, unknown>,
+        violatedContractId: counterexample.violatedContractId || undefined,
+        violatedContractTitle: counterexample.violatedContractTitle || undefined,
+        counterexampleId: counterexample.id,
+        matchedPolicyId: counterexample.matchedPolicyId || undefined,
+        baselineDeterminingPolicies: counterexample.baselineDeterminingPolicies,
+        candidateDeterminingPolicies: counterexample.candidateDeterminingPolicies,
+        reproduced: true,
+        providerPreference: preference,
+      })
+      setExplanation(res)
+    } catch (err: any) {
+      setExplanationError(err.message || "Failed to generate explanation")
+    } finally {
+      setIsExplaining(false)
+    }
+  }
 
   if (!isOpen || !counterexample) return null
 
-  const bedrockData =
-    BEDROCK_EXPLANATION_DATA[counterexample.id] || {
-      findingId: counterexample.id,
-      summary: "Deterministic transition detected from baseline policy restriction.",
-      rootCause: `Evaluating the candidate version under scenario '${counterexample.id}' resulted in an unexpected ALLOW decision matching policy ${counterexample.matchedPolicyId}.`,
-      securityRisk: "Unintended permission expansion enables unauthorized principal operations without security contract enforcement.",
-      remediationCedar: `// Recommended Fix: Re-constrain the action scope in Cedar:\npermit (\n    principal in Role::"${counterexample.principalRole}",\n    action == Action::"view",\n    resource in ResourceType::"${counterexample.resourceType}"\n);`,
-    }
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(bedrockData.remediationCedar)
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleTriggerBedrock = () => {
-    setIsExplaining(true)
-    setTimeout(() => setIsExplaining(false), 800)
+  const handleApplyFix = (code: string) => {
+    if (onApplyRemediation) {
+      onApplyRemediation(code)
+      setApplied(true)
+      setTimeout(() => setApplied(false), 2000)
+    }
   }
+
+  const fallbackRemediation = `// Recommended Fix: Re-constrain the action scope in Cedar:\npermit (\n    principal in Role::"${counterexample.principalRole || "user"}",\n    action == Action::"view",\n    resource in ResourceType::"${counterexample.resourceType || "resource"}"\n);`
+
+  const remediationCode = explanation?.remediationCedar || fallbackRemediation
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
@@ -66,7 +114,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">
-                Why Did This Authorization Change?
+                Evidence Workspace & AI Findings
               </h2>
               <p className="text-xs text-muted-foreground">
                 Finding ID: <span className="font-mono">{counterexample.id}</span>
@@ -95,7 +143,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                 Behavioral Transition
               </span>
               <Badge variant="destructive">
-                Unintended Expansion
+                {counterexample.transition === "NEWLY_AUTHORIZED" ? "Unintended Authorization Expansion" : counterexample.transition}
               </Badge>
             </div>
             <h3 className="text-base font-semibold text-foreground">
@@ -105,7 +153,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
             <div className="flex items-center gap-4 pt-2">
               <div className="flex-1 p-2.5 rounded-lg bg-background border border-border text-center">
                 <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                  Baseline (v12)
+                  Baseline Policy
                 </span>
                 <DecisionBadge decision={counterexample.baselineDecision} />
               </div>
@@ -116,7 +164,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
 
               <div className="flex-1 p-2.5 rounded-lg bg-background border border-border text-center">
                 <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                  Proposed (v13)
+                  Candidate Policy
                 </span>
                 <DecisionBadge decision={counterexample.candidateDecision} />
               </div>
@@ -171,7 +219,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
 
               <div className="p-3 rounded-lg bg-muted/40 border border-border">
                 <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
-                  Evaluation Time
+                  Evaluation Duration
                 </span>
                 <span className="font-mono text-emerald-500 font-bold">
                   {counterexample.evidence?.executionDurationMs ?? 0.85} ms
@@ -187,7 +235,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                   <Code2 className="h-3.5 w-3.5 text-indigo-500" />
-                  Matched Policy ID:{" "}
+                  Determining Policy ID:{" "}
                   <code className="text-indigo-500 font-mono">
                     {counterexample.matchedPolicyId || counterexample.candidateDeterminingPolicies?.[0] || "policy_candidate"}
                   </code>
@@ -226,71 +274,146 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
           {/* Section 2: AI Reasoning & Grounded Explanation */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-purple-500 flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                2. Amazon Bedrock Grounded Explanation
-              </h4>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTriggerBedrock}
-                disabled={isExplaining}
-                className="h-7 text-[11px] border-purple-500/30 text-purple-500 hover:bg-purple-500/10"
-              >
-                {isExplaining ? "Reasoning..." : "Re-explain with Claude 3.5"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-500 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                  2. Grounded AI Explanation
+                </h4>
+                {explanation && (
+                  <Badge variant="outline" className="text-[10px] font-mono gap-1 border-purple-500/30 text-purple-400">
+                    <Cpu className="h-3 w-3" />
+                    {explanation.isDeterministicFallback ? "Deterministic Template" : explanation.providerUsed}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loadExplanation("BEDROCK")}
+                  disabled={isExplaining}
+                  className="h-7 text-[11px] border-purple-500/30 text-purple-500 hover:bg-purple-500/10"
+                >
+                  {isExplaining ? "Analyzing..." : "Refresh Explanation"}
+                </Button>
+              </div>
             </div>
 
-            <Card className="border-purple-500/30 bg-purple-500/5">
-              <CardContent className="p-4 space-y-3 text-xs">
-                <div>
-                  <span className="font-bold text-purple-400 block mb-1">
-                    Root Cause Analysis:
-                  </span>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {bedrockData.rootCause}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="font-bold text-rose-400 block mb-1">
-                    Security & Operational Impact:
-                  </span>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {bedrockData.securityRisk}
-                  </p>
-                </div>
-
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-bold text-emerald-400">
-                      Suggested Cedar Remediation:
+            {explanationError ? (
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>Explanation error: {explanationError}</span>
+              </div>
+            ) : explanation ? (
+              <Card className="border-purple-500/30 bg-purple-500/5">
+                <CardContent className="p-4 space-y-3.5 text-xs">
+                  <div>
+                    <span className="font-bold text-purple-400 block mb-1">
+                      Summary & Authorization Transition:
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopyCode}
-                      className="h-6 text-[10px] text-muted-foreground hover:text-foreground gap-1"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="h-3 w-3 text-emerald-400" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3 w-3" />
-                          Copy Fix
-                        </>
-                      )}
-                    </Button>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {explanation.summary}
+                    </p>
                   </div>
-                  <pre className="p-3 rounded-lg bg-background border border-border font-mono text-[11px] text-emerald-400 overflow-x-auto">
-                    {bedrockData.remediationCedar}
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
+
+                  <div>
+                    <span className="font-bold text-purple-400 block mb-1">
+                      Root Cause Analysis:
+                    </span>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {explanation.rootCause}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="font-bold text-rose-400 block mb-1">
+                      Security & Operational Impact:
+                    </span>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {explanation.securityImpact}
+                    </p>
+                  </div>
+
+                  {/* Evidence Citations */}
+                  {explanation.evidenceCitations && explanation.evidenceCitations.length > 0 && (
+                    <div className="p-2.5 rounded-lg bg-background/80 border border-border space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                        <Layers className="h-3 w-3 text-purple-400" />
+                        Traceable Evidence Citations:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {explanation.evidenceCitations.map((cite, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-[10px] font-mono">
+                            {cite}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Limitations and Missing Evidence Notice */}
+                  {explanation.limitations && explanation.limitations.length > 0 && (
+                    <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400 text-[11px] flex items-start gap-1.5">
+                      <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <span className="font-semibold block">Analysis Boundary & Caveats:</span>
+                        {explanation.limitations.map((lim, idx) => (
+                          <p key={idx} className="text-muted-foreground text-[10px] leading-tight">
+                            • {lim}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Suggested Cedar Remediation */}
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-bold text-emerald-400">
+                        Suggested Cedar Remediation:
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {onApplyRemediation && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleApplyFix(remediationCode)}
+                            className="h-6 text-[10px] text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 gap-1"
+                          >
+                            {applied ? "Applied!" : "Apply to Editor"}
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyCode(remediationCode)}
+                          className="h-6 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="h-3 w-3 text-emerald-400" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3 w-3" />
+                              Copy Fix
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <pre className="p-3 rounded-lg bg-background border border-border font-mono text-[11px] text-emerald-400 overflow-x-auto">
+                      {remediationCode}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="p-4 rounded-lg bg-muted/20 border border-border text-center text-xs text-muted-foreground">
+                Click "Refresh Explanation" to analyze this finding.
+              </div>
+            )}
           </div>
         </div>
 
@@ -307,3 +430,4 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
     </div>
   )
 }
+
