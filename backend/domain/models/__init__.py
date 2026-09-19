@@ -24,6 +24,14 @@ from .scenario import (
     SimulationRun,
     SimulationRunStatus,
 )
+from .diff import (
+    BehavioralTransition,
+    BoundedImpactSummary,
+    PolicyDiffReport,
+    PolicyDiffRequest,
+    ScenarioComparisonStatus,
+    ScenarioDiffResult,
+)
 
 __all__ = [
     "AuthorizationDecision",
@@ -44,4 +52,10 @@ __all__ = [
     "BatchSimulationRequest",
     "SimulationRun",
     "SimulationRunStatus",
+    "BehavioralTransition",
+    "BoundedImpactSummary",
+    "PolicyDiffReport",
+    "PolicyDiffRequest",
+    "ScenarioComparisonStatus",
+    "ScenarioDiffResult",
 ]

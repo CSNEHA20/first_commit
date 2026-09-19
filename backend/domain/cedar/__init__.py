@@ -6,6 +6,7 @@ from .engine import ICedarEngine, CedarWasmAdapter, LocalCedarAdapter
 from .validation import CedarValidationService
 from .evaluation import CedarEvaluationService
 from .runner import ScenarioRunner
+from .diff import CedarPolicyDiffService
 
 __all__ = [
     "ICedarEngine",
@@ -14,4 +15,5 @@ __all__ = [
     "CedarValidationService",
     "CedarEvaluationService",
     "ScenarioRunner",
+    "CedarPolicyDiffService",
 ]

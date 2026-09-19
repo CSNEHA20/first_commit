@@ -1,6 +1,7 @@
 """
 PolicyLab Backend API Service
-FastAPI REST interface exposing deterministic Cedar validation, single evaluation, and batch scenario simulation.
+FastAPI REST interface exposing deterministic Cedar validation, single evaluation,
+batch scenario simulation, and policy diff comparison.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -16,15 +17,20 @@ from .domain.models.scenario import (
     BatchSimulationRequest,
     SimulationRun,
 )
+from .domain.models.diff import (
+    PolicyDiffReport,
+    PolicyDiffRequest,
+)
 from .domain.cedar.validation import CedarValidationService
 from .domain.cedar.evaluation import CedarEvaluationService
 from .domain.cedar.runner import ScenarioRunner
+from .domain.cedar.diff import CedarPolicyDiffService
 from .domain.cedar.engine import LocalCedarAdapter
 
 app = FastAPI(
-    title="PolicyLab Deterministic Authorization & Scenario Engine API",
-    description="Deterministic Cedar policy validation, authorization evaluation, and scenario runner service.",
-    version="1.1.0",
+    title="PolicyLab Deterministic Authorization & Policy Diff API",
+    description="Deterministic Cedar policy validation, evaluation, scenario runner, and diff engine.",
+    version="1.2.0",
 )
 
 app.add_middleware(
@@ -38,6 +44,9 @@ app.add_middleware(
 validation_service = CedarValidationService()
 evaluation_service = CedarEvaluationService()
 scenario_runner = ScenarioRunner()
+diff_service = CedarPolicyDiffService(
+    scenario_runner=scenario_runner, validation_service=validation_service
+)
 cedar_adapter = LocalCedarAdapter()
 
 
@@ -104,4 +113,26 @@ def simulate_batch(request: BatchSimulationRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Simulation runner execution failed: {str(ex)}",
+        )
+
+
+@app.post("/policies/diff", response_model=PolicyDiffReport)
+def compare_policies(request: PolicyDiffRequest):
+    """
+    Deterministically compares baseline vs. candidate Cedar policy sets across
+    the declared scenario universe, classifying behavioral transitions and
+    computing bounded impact metrics.
+    """
+    try:
+        report = diff_service.compare(request)
+        return report
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Policy comparison failed: {str(ve)}",
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Diff engine execution error: {str(ex)}",
         )

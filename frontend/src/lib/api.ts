@@ -69,6 +69,66 @@ export interface SimulationRunResponse {
   results: ScenarioResult[]
 }
 
+export type BehavioralTransition =
+  | "UNCHANGED_ALLOW"
+  | "UNCHANGED_DENY"
+  | "NEWLY_FORBIDDEN"
+  | "NEWLY_AUTHORIZED"
+
+export interface ScenarioDiffResult {
+  scenarioId: string
+  scenarioTitle?: string | null
+  principal: string
+  action: string
+  resource: string
+  context: Record<string, unknown>
+  status: "COMPARABLE" | "UNCOMPARABLE"
+  transition?: BehavioralTransition | null
+  baselineDecision?: "ALLOW" | "DENY" | null
+  candidateDecision?: "ALLOW" | "DENY" | null
+  baselineDeterminingPolicies: string[]
+  candidateDeterminingPolicies: string[]
+  baselineDiagnostics: { errors: string[]; warnings: string[] }
+  candidateDiagnostics: { errors: string[]; warnings: string[] }
+  error?: string | null
+}
+
+export interface BoundedImpactSummary {
+  totalScenariosDeclared: number
+  totalScenariosCompared: number
+  uncomparableScenariosCount: number
+  unchangedAllowCount: number
+  unchangedDenyCount: number
+  newlyForbiddenCount: number
+  newlyAuthorizedCount: number
+  baselineExecutionErrorsCount: number
+  candidateExecutionErrorsCount: number
+  comparisonCoveragePct: number
+  newlyForbiddenRatePct: number
+  newlyAuthorizedRatePct: number
+  unchangedRatePct: number
+  deltaPrincipals: number
+  deltaActions: number
+  deltaResources: number
+  affectedPrincipals: string[]
+  affectedActions: string[]
+  affectedResources: string[]
+  isBoundedUniverse: boolean
+  boundaryStatement: string
+}
+
+export interface PolicyDiffReport {
+  reportId: string
+  timestamp: string
+  engine: string
+  baselineLabel: string
+  candidateLabel: string
+  impactSummary: BoundedImpactSummary
+  scenarioDiffs: ScenarioDiffResult[]
+  newlyAuthorizedScenarios: ScenarioDiffResult[]
+  newlyForbiddenScenarios: ScenarioDiffResult[]
+}
+
 export async function checkBackendHealth(): Promise<{
   status: string
   engine: string
@@ -132,6 +192,33 @@ export async function simulateBatchScenarios(payload: {
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(errorBody.detail || "Batch simulation failed")
+  }
+  return res.json()
+}
+
+export async function comparePolicies(payload: {
+  baselinePolicyText: string
+  candidatePolicyText: string
+  schemaText?: string
+  entities?: Array<Record<string, unknown>>
+  suite: {
+    id: string
+    name: string
+    description?: string
+    version?: string
+    scenarios: Scenario[]
+  }
+  baselineLabel?: string
+  candidateLabel?: string
+}): Promise<PolicyDiffReport> {
+  const res = await fetch(`${API_BASE_URL}/policies/diff`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Policy diff comparison failed")
   }
   return res.json()
 }
