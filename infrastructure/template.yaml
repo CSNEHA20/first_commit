@@ -13,7 +13,6 @@ Globals:
     Environment:
       Variables:
         ENVIRONMENT: !Ref EnvironmentName
-        AWS_REGION: !Ref AWS::Region
         POLICYLAB_DYNAMODB_TABLE: !Ref PolicyLabTable
         POLICYLAB_ARTIFACT_BUCKET: !Ref PolicyLabArtifactsBucket
         POLICYLAB_ENTITY_TABLE: !Ref PolicyLabTable
