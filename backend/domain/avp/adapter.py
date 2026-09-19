@@ -391,7 +391,9 @@ class DeploymentService:
         self._approvals[approval_id] = approval
         return approval
 
-    def submit_deployment(self, request: DeploymentSubmitRequest) -> DeploymentSubmitResponse:
+    def submit_deployment(
+        self, request: DeploymentSubmitRequest, deployed_by: Optional[str] = None
+    ) -> DeploymentSubmitResponse:
         """
         Submits an approved deployment to Amazon Verified Permissions.
         Validates that human approval exists and matches the policy hash.
@@ -419,6 +421,7 @@ class DeploymentService:
 
         target_store = request.targetStoreId or f"ps-acmepay-{request.targetEnv or 'prod'}"
         target_env = request.targetEnv or (request.environment.value if request.environment else "production")
+        operator_deployer = deployed_by if (deployed_by and deployed_by != "local_developer") else approval.approvedBy
 
         # Submit to AVP adapter
         submit_res = self.avp_adapter.submit_policy_set(
@@ -428,6 +431,7 @@ class DeploymentService:
             approved_by=approval.approvedBy,
             environment=target_env,
         )
+        submit_res.deployedBy = operator_deployer
 
         if submit_res.status == DeploymentStatus.SYNCHRONIZED:
             record = DeploymentRecord(
@@ -437,7 +441,7 @@ class DeploymentService:
                 targetStoreId=target_store,
                 environment=target_env,
                 status=DeploymentStatus.SYNCHRONIZED,
-                deployedBy=approval.approvedBy,
+                deployedBy=operator_deployer,
                 deployedAt=submit_res.deployedAt,
                 verificationProof=submit_res.verificationProof or "avp-sync-proof",
             )

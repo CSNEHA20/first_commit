@@ -33,8 +33,9 @@ def client():
 
 @pytest.fixture
 def auth_tokens(monkeypatch):
-    monkeypatch.setenv("AUTH_STRICT", "true")
-    monkeypatch.setenv("ENVIRONMENT", "prod")
+    monkeypatch.setenv("ENVIRONMENT", "dev")
+    monkeypatch.setenv("AUTH_STRICT", "false")
+    monkeypatch.setenv("AUTH_ALLOW_LOCAL_DEV", "false")
     return {
         "viewer": create_token_for_testing(sub="usr_viewer", username="auditor", roles=["viewer"], expires_in_seconds=3600),
         "engineer": create_token_for_testing(sub="usr_eng", username="dev_eng", roles=["engineer"], expires_in_seconds=3600),

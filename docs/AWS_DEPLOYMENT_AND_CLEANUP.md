@@ -78,7 +78,9 @@ sam build --template-file infrastructure/template.yaml --region us-east-1
 The SAM template provisions a fully self-contained authentication architecture:
 - **`PolicyLabUserPool`**: Amazon Cognito User Pool with strict password policies and self-service registration controls.
 - **`PolicyLabUserPoolClient`**: Web App client (PKCE-ready, secretless for browser SPAs).
-- **`CognitoJwtAuthorizer`**: API Gateway HTTP API v2 Default Authorizer that verifies JWT issuer and audience at the edge before traffic touches Lambda.
+- **`CognitoJwtAuthorizer`**: API Gateway HTTP API v2 Default Authorizer that cryptographically verifies JWT signature, issuer, audience, and expiration at the edge before traffic touches Lambda.
+- **Fail-Closed Backend Trust Boundary**: In production (`ENVIRONMENT=prod` or `AUTH_STRICT=true`), the Lambda backend trusts only claims forwarded through the verified API Gateway authorizer context (`requestContext.authorizer.jwt.claims`). Standalone unverified Bearer tokens fail closed with HTTP 401.
+- **Least-Privilege RBAC**: Unassigned users safely default to `viewer` (read-only least privilege). Mutation and deployment actions enforce server-side role checks (`engineer`, `approver`, `deployer`, `admin`).
 - **Public Exemption**: Only `GET /health` has `Authorizer: NONE` for synthetic uptime checks.
 
 ```bash

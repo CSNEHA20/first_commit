@@ -6,6 +6,7 @@ security contract evaluation, pre-deployment regression gates, grounded AI expla
 and human-approved Amazon Verified Permissions (AVP) deployment.
 """
 
+import os
 from typing import Any, Dict, List, Optional
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -88,15 +89,22 @@ from .domain.ai.agent import AuditWorkflowReport, PolicyAuditAgent
 from .domain.ai.report_export import AuditExportResponse, AuditReportExportService
 from .domain.avp.adapter import DeploymentService
 
+env = os.environ.get("ENVIRONMENT", "dev").lower()
+is_prod = env == "prod"
+
 app = FastAPI(
     title="PolicyLab Deterministic Authorization, Verification, AI & AVP Deployment API",
     description="Deterministic Cedar policy verification, counterexamples, contracts, regression gates, Bedrock explanations, and AVP synchronization.",
     version="1.5.0",
+    docs_url=None if is_prod else "/docs",
+    redoc_url=None if is_prod else "/redoc",
+    openapi_url=None if is_prod else "/openapi.json",
 )
 
+allowed_origins = [os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")] if is_prod else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -381,7 +389,7 @@ def get_deployment_readiness(
 @app.post("/deployment/prepare", response_model=DeploymentPrepareResponse)
 def prepare_deployment(
     request: DeploymentPrepareRequest,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_roles(["engineer", "approver", "deployer", "admin"])),
 ):
     """
     Evaluates pre-deployment gate eligibility, calculates cryptographic policy hash,
@@ -445,7 +453,7 @@ def submit_deployment(
     Requires 'deployer' or 'admin' platform role.
     """
     try:
-        submit_res = deployment_service.submit_deployment(request)
+        submit_res = deployment_service.submit_deployment(request, deployed_by=current_user.username)
         log_operational_metric(
             "DeploymentSubmitted", 1.0, unit="Count", dimensions={"Status": submit_res.status.value}
         )
@@ -514,7 +522,7 @@ def validate_inputs(
 @app.post("/policies/generate", response_model=PolicyGenerationResponse)
 def generate_policy(
     request: PolicyGenerationRequest,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_roles(["engineer", "admin"])),
 ):
     """
     Synthesizes a candidate Cedar policy draft from natural language requirements
@@ -688,17 +696,18 @@ class RecordVersionRequest(BaseModel):
 def record_policy_version(
     set_id: str,
     request: RecordVersionRequest,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_roles(["engineer", "admin"])),
 ):
     """
     Records a new immutable policy version in the repository.
+    Requires 'engineer' or 'admin' platform role.
     """
     try:
         return timeline_service.record_version(
             set_id=set_id,
             version_tag=request.versionTag,
             policy_text=request.policyText,
-            author=request.author or current_user.username,
+            author=current_user.username,
             change_summary=request.changeSummary,
             gate_status=request.gateStatus,
         )
@@ -718,7 +727,7 @@ class CreateSnapshotRequest(BaseModel):
 @app.post("/entity-snapshots", response_model=EntitySnapshot)
 def create_entity_snapshot(
     request: CreateSnapshotRequest,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_roles(["engineer", "admin"])),
 ):
     """
     Creates an immutable, bounded entity snapshot with SHA-256 integrity verification.

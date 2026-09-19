@@ -54,10 +54,17 @@ To defend against denial-of-service, memory exhaustion, and regex injection, Pol
 
 ### 8. Production API Authentication & Cognito Identity Provider Integration
 - **Implementation:** `infrastructure/template.yaml` declares a dedicated, self-contained Amazon Cognito User Pool (`PolicyLabUserPool`) and SPA User Pool Client (`PolicyLabUserPoolClient`). The HTTP API Gateway v2 enforces edge JWT authentication (`CognitoJwtAuthorizer`) as the default authorizer across all business and deployment endpoints.
-- **Fail-Closed Runtime:** The FastAPI backend security module (`backend/core/auth.py`) extracts edge-verified claims (`requestContext.authorizer.jwt.claims`) or validates incoming bearer tokens, strictly enforcing HTTP 401 Unauthorized for missing, malformed, or expired credentials when `ENVIRONMENT=prod` or `AUTH_STRICT=true`.
-- **Role-Based Access Control (RBAC):** Sensitive endpoints enforce platform roles (`approver` or `admin` for `/deployment/approve`; `deployer` or `admin` for `/deployment/submit`), returning HTTP 403 Forbidden for unauthorized identities.
+- **Cryptographic Trust Boundary:** Cryptographic verification of JWT signatures (via Cognito JWKS), token expiration, issuer (`iss`), and audience (`aud`) is performed at the cloud edge by AWS API Gateway HTTP API v2. In production (`ENVIRONMENT=prod` or `AUTH_STRICT=true`), the backend trusts only claims delivered through the verified authorizer context (`requestContext.authorizer.jwt.claims`). Standalone unverified Bearer tokens are strictly rejected with HTTP 401 Unauthorized.
+- **Least-Privilege Role Defaults:** When `cognito:groups` is missing, empty, or unassigned in the verified identity token, callers default safely to `viewer` (read-only least privilege). Malformed or unrecognized groups are safely discarded.
+- **Route-Level Role-Based Access Control (RBAC):** Privileged mutation routes enforce server-side role gating:
+  - `/deployment/approve`: Requires `approver` or `admin` role. Approver display identity defaults to authenticated caller if unspecified.
+  - `/deployment/submit`: Requires `deployer` or `admin` role AND a valid approval token matching the exact candidate policy digest. Possession of an approval token cannot bypass caller authentication.
+  - `/deployment/prepare`: Requires `engineer`, `approver`, `deployer`, or `admin` role (blocks `viewer`).
+  - `/policies/{set_id}/versions`: Requires `engineer` or `admin` role (blocks `viewer`).
+  - `/entity-snapshots`: Requires `engineer` or `admin` role (blocks `viewer`).
+  - `/policies/generate`: Requires `engineer` or `admin` role (blocks `viewer`).
 - **Local Development Continuity:** Local development (`ENVIRONMENT=dev`, `AUTH_ALLOW_LOCAL_DEV=true`) provides an offline fallback session with seamless in-browser role emulation (`UserSessionBadge`), permitting full end-to-end testing without external network dependencies.
-- **Live User Signup Status:** While the SAM infrastructure template and backend/frontend logic are 100% verified locally, live Amazon Cognito user registration will be executed upon initial stack deployment.
+- **Live User Signup Status:** While the SAM infrastructure template, backend RBAC, and frontend client logic are 100% verified locally with 154 automated tests, live Amazon Cognito user registration and group assignment will be executed upon initial cloud deployment.
 
 ### 9. Lambda Packaging & Cross-Platform Native Dependencies
 - **Packaging Structure:** `infrastructure/template.yaml` specifies `CodeUri: ../backend` and uses SAM's native `ParentPackageMode: explicit` (`ParentPackages: backend`). This guarantees that `backend/requirements.txt` is resolved by `pip` while preserving the `backend.lambda_handler.handler` package structure and excluding `frontend/node_modules/`.

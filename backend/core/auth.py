@@ -17,6 +17,9 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger("policylab.auth")
 
 
+ALLOWED_PLATFORM_ROLES = {"viewer", "engineer", "approver", "deployer", "admin"}
+
+
 class AuthenticatedUser(BaseModel):
     """
     Standardized canonical identity representation for authenticated callers.
@@ -25,7 +28,7 @@ class AuthenticatedUser(BaseModel):
     username: str = Field(description="Unique human-readable username or email")
     email: Optional[str] = Field(default=None, description="Verified email address")
     roles: List[str] = Field(
-        default_factory=lambda: ["engineer"],
+        default_factory=lambda: ["viewer"],
         description="Assigned platform authorization roles (e.g. viewer, engineer, approver, deployer, admin)",
     )
     auth_source: str = Field(
@@ -45,6 +48,21 @@ class AuthenticatedUser(BaseModel):
         return bool(user_roles.intersection(set(r.lower() for r in allowed_roles)))
 
 
+def _extract_and_validate_roles(raw_groups: Any) -> List[str]:
+    """
+    Extracts, normalizes, and filters roles from cognito:groups claim.
+    Defaults to ['viewer'] (least privilege) if empty, missing, or unrecognized.
+    """
+    extracted: List[str] = []
+    if isinstance(raw_groups, str):
+        extracted = [g.strip().lower() for g in raw_groups.split(",") if g.strip()]
+    elif isinstance(raw_groups, (list, tuple)):
+        extracted = [str(g).strip().lower() for g in raw_groups if str(g).strip()]
+
+    valid_roles = [r for r in extracted if r in ALLOWED_PLATFORM_ROLES]
+    return valid_roles if valid_roles else ["viewer"]
+
+
 def _base64url_decode(input_str: str) -> bytes:
     """Decodes a base64url-encoded string with padding normalization."""
     rem = len(input_str) % 4
@@ -62,6 +80,7 @@ def parse_jwt_payload_unverified(token: str) -> Dict[str, Any]:
     """
     Decodes the JSON payload from a JWT structure (header.payload.signature).
     Raises HTTPException(401) on malformed token structure.
+    WARNING: Does NOT verify cryptographic signature. FOR TEST/LOCAL DEV ONLY.
     """
     parts = token.strip().split(".")
     if len(parts) != 3:
@@ -87,6 +106,8 @@ def create_token_for_testing(
     email: str = "test@policylab.internal",
     roles: Optional[List[str]] = None,
     expires_in_seconds: int = 3600,
+    issuer: str = "https://cognito-idp.us-east-1.amazonaws.com/test-pool",
+    audience: str = "test-client-id",
 ) -> str:
     """
     Test helper: Creates a formatted JWT string with explicit expiration and claims.
@@ -104,8 +125,8 @@ def create_token_for_testing(
         "cognito:groups": roles,
         "iat": now,
         "exp": now + expires_in_seconds,
-        "iss": "https://cognito-idp.us-east-1.amazonaws.com/test-pool",
-        "aud": "test-client-id",
+        "iss": issuer,
+        "aud": audience,
     }
 
     h_str = _base64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8"))
@@ -114,16 +135,84 @@ def create_token_for_testing(
     return f"{h_str}.{p_str}.{sig_str}"
 
 
+def create_api_gateway_event_for_testing(
+    method: str = "GET",
+    path: str = "/aws/status",
+    claims: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    body: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Test helper: Creates a faithful AWS API Gateway HTTP API v2 payload
+    with edge-verified authorizer claims.
+    """
+    if claims is None:
+        claims = {
+            "sub": "test_user_001",
+            "cognito:username": "test_user",
+            "email": "test@policylab.internal",
+            "cognito:groups": ["engineer"],
+        }
+
+    hdrs = {"content-type": "application/json"}
+    if headers:
+        hdrs.update(headers)
+
+    return {
+        "version": "2.0",
+        "routeKey": f"{method} {path}",
+        "rawPath": path,
+        "rawQueryString": "",
+        "headers": hdrs,
+        "requestContext": {
+            "accountId": "123456789012",
+            "apiId": "policylab-api",
+            "domainName": "policylab.execute-api.us-east-1.amazonaws.com",
+            "domainPrefix": "policylab",
+            "http": {
+                "method": method,
+                "path": path,
+                "protocol": "HTTP/1.1",
+                "sourceIp": "127.0.0.1",
+                "userAgent": "PolicyLab-TestClient/1.0",
+            },
+            "requestId": "req-test-uuid",
+            "routeKey": f"{method} {path}",
+            "stage": "prod",
+            "time": "19/Sep/2026:12:00:00 +0000",
+            "timeEpoch": 1789819200000,
+            "authorizer": {
+                "jwt": {
+                    "claims": claims,
+                    "scopes": None,
+                }
+            },
+        },
+        "body": body,
+        "isBase64Encoded": False,
+    }
+
+
 def get_current_user(request: Request) -> AuthenticatedUser:
     """
     Centralized FastAPI security dependency.
-    Extracts authenticated user claims from:
-    1. AWS API Gateway HTTP API v2 authorizer claims (requestContext.authorizer.jwt.claims)
-    2. HTTP Authorization: Bearer <token> header (when running standalone or in tests)
-    3. Controlled local development fallback (ONLY when ENVIRONMENT=dev and AUTH_ALLOW_LOCAL_DEV=true)
+    Enforces fail-closed identity verification and least-privilege RBAC.
 
-    Fails closed with HTTP 401 Unauthorized in production if missing, invalid, or expired.
+    In production mode (ENVIRONMENT=prod or AUTH_STRICT=true):
+      - MUST be authenticated via AWS API Gateway HTTP API v2 JWT authorizer context
+        (requestContext.authorizer.jwt.claims edge-verified by Cognito JWKS).
+      - Standalone unverified Bearer tokens are strictly rejected with HTTP 401 Unauthorized.
+      - Fails closed immediately if verified authorizer context is missing.
+
+    In local development / test mode (ENVIRONMENT=dev and not AUTH_STRICT):
+      - Accepts Bearer tokens for offline testability with strict format and expiry verification.
+      - Provides controlled local developer session when AUTH_ALLOW_LOCAL_DEV=true.
     """
+    env = os.environ.get("ENVIRONMENT", "dev").lower()
+    strict_auth = os.environ.get("AUTH_STRICT", "false").lower() in ("true", "1")
+    allow_local = os.environ.get("AUTH_ALLOW_LOCAL_DEV", "true").lower() in ("true", "1")
+    is_production = (env == "prod") or strict_auth
+
     # -------------------------------------------------------------------------
     # 1. Check API Gateway v2 HTTP API Authorizer claims (Edge-verified by AWS)
     # -------------------------------------------------------------------------
@@ -133,34 +222,38 @@ def get_current_user(request: Request) -> AuthenticatedUser:
         jwt_authorizer = rc.get("authorizer", {}).get("jwt", {})
         claims = jwt_authorizer.get("claims")
         if isinstance(claims, dict) and claims.get("sub"):
-            sub = claims["sub"]
-            username = (
+            sub = str(claims["sub"]).strip()
+            username = str(
                 claims.get("cognito:username")
                 or claims.get("username")
                 or claims.get("email")
                 or sub
-            )
+            ).strip()
             email = claims.get("email")
-
-            # Extract roles / Cognito groups
-            raw_groups = claims.get("cognito:groups", [])
-            if isinstance(raw_groups, str):
-                roles = [g.strip() for g in raw_groups.split(",") if g.strip()]
-            elif isinstance(raw_groups, list):
-                roles = [str(g) for g in raw_groups]
-            else:
-                roles = ["engineer"]
+            roles = _extract_and_validate_roles(claims.get("cognito:groups"))
 
             return AuthenticatedUser(
                 sub=sub,
                 username=username,
                 email=email,
-                roles=roles if roles else ["engineer"],
+                roles=roles,
                 auth_source="API_GATEWAY_JWT",
             )
 
     # -------------------------------------------------------------------------
-    # 2. Check HTTP Authorization Header: Bearer <token>
+    # 2. Production Fail-Closed Boundary: Reject unverified standalone tokens
+    # -------------------------------------------------------------------------
+    if is_production:
+        # In production mode, unverified standalone Bearer tokens must NEVER authenticate callers.
+        # Verified authorizer context from API Gateway is strictly mandatory.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Production requests must be authenticated via verified API Gateway authorizer.",
+            headers={"WWW-Authenticate": "Bearer error=\"invalid_token\""},
+        )
+
+    # -------------------------------------------------------------------------
+    # 3. Local Development / Test Mode: Optional Bearer token parsing
     # -------------------------------------------------------------------------
     auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
     if auth_header and auth_header.strip().lower().startswith("bearer "):
@@ -186,47 +279,35 @@ def get_current_user(request: Request) -> AuthenticatedUser:
                         headers={"WWW-Authenticate": "Bearer error=\"invalid_token\""},
                     )
 
-            sub = payload.get("sub", "anonymous_sub")
-            username = (
+            sub = str(payload.get("sub", "local_dev_user")).strip()
+            username = str(
                 payload.get("cognito:username")
                 or payload.get("username")
                 or payload.get("email")
                 or sub
-            )
+            ).strip()
             email = payload.get("email")
-
-            raw_roles = payload.get("cognito:groups") or payload.get("roles") or ["engineer"]
-            if isinstance(raw_roles, str):
-                roles = [r.strip() for r in raw_roles.split(",") if r.strip()]
-            elif isinstance(raw_roles, list):
-                roles = [str(r) for r in raw_roles]
-            else:
-                roles = ["engineer"]
+            raw_groups = payload.get("cognito:groups") or payload.get("roles")
+            roles = _extract_and_validate_roles(raw_groups)
 
             return AuthenticatedUser(
                 sub=sub,
                 username=username,
                 email=email,
-                roles=roles if roles else ["engineer"],
+                roles=roles,
                 auth_source="BEARER_JWT",
             )
 
     # -------------------------------------------------------------------------
-    # 3. Fail-Closed Enforcement vs. Local Development Fallback
+    # 4. Local Development Fallback Session (Explicit dev mode only)
     # -------------------------------------------------------------------------
-    env = os.environ.get("ENVIRONMENT", "dev").lower()
-    strict_auth = os.environ.get("AUTH_STRICT", "false").lower() in ("true", "1")
-    allow_local = os.environ.get("AUTH_ALLOW_LOCAL_DEV", "true").lower() in ("true", "1")
-
-    # In production or strict mode, ALWAYS fail closed immediately
-    if env == "prod" or strict_auth or not allow_local:
+    if not allow_local:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required. Missing, invalid, or expired bearer token.",
+            detail="Authentication required. Missing bearer token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Local development mode fallback: allows local developer testing without Cognito
     logger.warning(
         "Unauthenticated request accepted under local development mode (ENVIRONMENT=dev). "
         "Providing default developer session."
