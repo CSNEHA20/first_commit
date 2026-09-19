@@ -35,7 +35,10 @@ export function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-150">
+    <div className="min-h-screen bg-[#090A0D] text-foreground flex flex-col font-sans relative overflow-x-hidden">
+      {/* Top Atmospheric Horizon Ambient Flare Glow */}
+      <div className="absolute top-0 inset-x-0 h-96 ambient-horizon-glow pointer-events-none z-0" />
+
       {/* Workbench Titlebar Header */}
       <AppHeader
         activeProject="AcmePay / Authorization"
@@ -43,7 +46,7 @@ export function AppContent() {
       />
 
       {/* Main Split Workspace Layout */}
-      <div className="flex-1 flex flex-col md:flex-row w-full min-w-0">
+      <div className="flex-1 flex flex-col md:flex-row w-full min-w-0 relative z-10">
         {/* Workspace Sidebar */}
         <AppSidebar
           activeTab={activeTab}
@@ -63,7 +66,7 @@ export function AppContent() {
 
 export function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="policylab-ui-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="policylab-ui-theme">
       <AppContent />
     </ThemeProvider>
   )

@@ -69,6 +69,27 @@ export default {
           foreground: "hsl(var(--status-blocked-foreground))",
           border: "hsl(var(--status-blocked-border))",
         },
+        // Cybersecurity Brand Tokens
+        orange: {
+          DEFAULT: "#FF6A24",
+          light: "#FF8A42",
+          dark: "#E05514",
+          glow: "rgba(255, 106, 36, 0.18)",
+        },
+        amber: {
+          DEFAULT: "#F5B544",
+          light: "#FCD34D",
+          dark: "#D97706",
+        },
+        // Smoked Glass Surfaces
+        glass: {
+          base: "rgba(13, 16, 21, 0.85)",
+          smoked: "rgba(24, 28, 36, 0.72)",
+          elevated: "rgba(32, 36, 46, 0.76)",
+          border: "rgba(255, 255, 255, 0.09)",
+          borderStrong: "rgba(255, 255, 255, 0.16)",
+          borderOrange: "rgba(255, 106, 36, 0.35)",
+        },
       },
       borderRadius: {
         none: "0",
@@ -76,7 +97,8 @@ export default {
         DEFAULT: "4px",
         md: "6px",
         lg: "8px",
-        xl: "10px",
+        xl: "12px",
+        "2xl": "16px",
       },
       fontFamily: {
         sans: [
@@ -88,13 +110,18 @@ export default {
           "sans-serif",
         ],
         mono: [
-          "'IBM Plex Mono'",
           "'JetBrains Mono'",
+          "'IBM Plex Mono'",
           "'Geist Mono'",
           "'Fira Code'",
           "Menlo",
           "monospace",
         ],
+      },
+      boxShadow: {
+        "orange-glow": "0 0 24px -4px rgba(255, 106, 36, 0.35)",
+        "orange-sm": "0 0 12px -2px rgba(255, 106, 36, 0.25)",
+        "glass-panel": "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
       },
     },
   },

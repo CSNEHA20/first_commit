@@ -7,11 +7,13 @@ import {
   XCircle,
   Filter,
   RefreshCw,
+  Clock,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/common/StatusBadge"
 import { SeverityBadge } from "@/components/common/SeverityBadge"
+import { GlassStatCard } from "@/components/common/GlassStatCard"
 import {
   SECURITY_CONTRACTS,
   ALL_REGRESSION_SCENARIOS,
@@ -102,36 +104,36 @@ export const RegressionScreen: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs text-muted-foreground font-mono">
+            <span className="text-xs text-orange-400 font-mono">
               Suite: AcmePay Security Invariants
             </span>
             <span className="text-muted-foreground/40">·</span>
             <StatusBadge
               status={failedCount > 0 ? "BLOCKED" : "PASS"}
-              label={failedCount > 0 ? `${failedCount} Failures` : "18/18 Pass"}
+              label={failedCount > 0 ? `${failedCount} Violations` : "18/18 Pass"}
               size="xs"
             />
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-orange-400" />
             Security Contract Invariants & Regression Suite
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Version Switcher */}
-          <div className="flex items-center p-0.5 rounded-md bg-muted border border-border">
+          <div className="flex items-center p-0.5 rounded-lg bg-black/40 border border-white/[0.08]">
             <button
               onClick={() => {
                 setSelectedVersion("v12")
                 setRegressionReport(null)
               }}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 selectedVersion === "v12"
-                  ? "bg-background text-foreground shadow-sm font-semibold"
+                  ? "bg-white/[0.1] text-white shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -142,20 +144,20 @@ export const RegressionScreen: React.FC = () => {
                 setSelectedVersion("v13")
                 setRegressionReport(null)
               }}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 selectedVersion === "v13"
-                  ? "bg-background text-foreground shadow-sm font-semibold"
+                  ? "bg-[#FF6A24] text-white shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v13 (Draft)
+              v13 (Candidate Draft)
             </button>
           </div>
 
           <Button
             onClick={handleRunSuite}
             disabled={isRunning}
-            className="text-xs gap-1.5 h-7 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+            className="text-xs gap-1.5 h-7 bg-[#FF6A24] text-white hover:bg-[#FF8A42] font-semibold shadow-[0_0_15px_rgba(255,106,36,0.3)]"
           >
             {isRunning ? (
               <RefreshCw className="h-3 w-3 animate-spin" />
@@ -169,18 +171,18 @@ export const RegressionScreen: React.FC = () => {
 
       {/* Pre-Deployment Gate Status Banner */}
       <div
-        className={`p-3.5 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+        className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs backdrop-blur-md ${
           gateStatus === "PASS"
-            ? "border-status-allow/30 bg-status-allow/[0.03]"
-            : "border-status-blocked/30 bg-status-blocked/[0.03]"
+            ? "border-emerald-500/30 bg-emerald-500/[0.04]"
+            : "border-red-500/30 bg-red-500/[0.04]"
         }`}
       >
         <div className="flex items-center gap-3">
           <div
-            className={`p-1.5 rounded ${
+            className={`p-2 rounded-lg ${
               gateStatus === "PASS"
-                ? "bg-status-allow/15 text-status-allow"
-                : "bg-status-blocked/15 text-status-deny"
+                ? "bg-emerald-500/15 text-emerald-400"
+                : "bg-red-500/15 text-red-400"
             }`}
           >
             {gateStatus === "PASS" ? (
@@ -196,7 +198,7 @@ export const RegressionScreen: React.FC = () => {
               </span>
               <StatusBadge status={gateStatus} size="xs" />
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-[11px] text-muted-foreground mt-0.5 font-sans">
               {gateDecision?.reasons?.[0] ||
                 (gateStatus === "PASS"
                   ? "All 6 organizational security contracts satisfied. Zero blocking violations."
@@ -205,59 +207,68 @@ export const RegressionScreen: React.FC = () => {
           </div>
         </div>
 
-        <div className="text-right text-[11px] font-mono text-muted-foreground shrink-0">
-          Duration: {executionDurationMs}ms · Cedar Engine
+        <div className="text-right text-[11px] font-mono text-muted-foreground shrink-0 flex items-center gap-1">
+          <Clock className="h-3 w-3 text-orange-400" />
+          <span>Duration: {executionDurationMs}ms · Cedar Engine</span>
         </div>
       </div>
 
       {/* Scoreboard Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-        <div className="p-3 rounded-md border border-border bg-card">
-          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
-            Total Scenarios
-          </span>
-          <span className="text-lg font-bold text-foreground mt-0.5 block">
-            {scenarios.length}
-          </span>
-        </div>
-
-        <div className="p-3 rounded-md border border-border bg-card">
-          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
-            Passed
-          </span>
-          <span className="text-lg font-bold text-status-allow mt-0.5 block">
-            {passedCount}
-          </span>
-        </div>
-
-        <div className="p-3 rounded-md border border-border bg-card">
-          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
-            Regressions
-          </span>
-          <span className="text-lg font-bold text-status-deny mt-0.5 block">
-            {failedCount}
-          </span>
-        </div>
-
-        <div className="p-3 rounded-md border border-border bg-card">
-          <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase block">
-            Execution Mode
-          </span>
-          <span className="text-xs font-bold text-foreground mt-1 block">
-            DETERMINISTIC
-          </span>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <GlassStatCard
+          label="Total Scenarios"
+          value={scenarios.length}
+          subValue="AcmePay Test Suite"
+          deltaText="100% Executed"
+          deltaType="neutral"
+          statusColor="orange"
+          chartType="sparkline"
+          chartData={[10, 12, 14, 16, 18, 18]}
+        />
+        <GlassStatCard
+          label="Verified Passed"
+          value={passedCount}
+          subValue="Assertions Satisfied"
+          deltaText={`${Math.round((passedCount / scenarios.length) * 100)}% Pass`}
+          deltaType="positive"
+          statusColor="emerald"
+          chartType="bars"
+          chartData={[10, 12, 14, 15, 15]}
+        />
+        <GlassStatCard
+          label="Regressions"
+          value={failedCount}
+          subValue="Invariant Violations"
+          deltaText={failedCount > 0 ? "BLOCKING" : "CLEAR"}
+          deltaType={failedCount > 0 ? "negative" : "positive"}
+          statusColor={failedCount > 0 ? "red" : "emerald"}
+          chartType="bars"
+          chartData={[0, 1, 2, 3, 3]}
+        />
+        <GlassStatCard
+          label="Engine Mode"
+          value="Cedar WASM"
+          subValue="Deterministic AST"
+          deltaText="Sub-millisecond"
+          deltaType="neutral"
+          statusColor="cyan"
+          chartType="sparkline"
+          chartData={[5, 7, 8, 10, 12]}
+        />
       </div>
 
-      {/* Dense Security Contracts Invariant Table */}
-      <Card className="border-border bg-card">
-        <CardHeader className="p-3.5 pb-2 border-b border-border">
-          <CardTitle className="text-xs font-semibold">
-            Organizational Security Invariant Contracts (6 Active Invariants)
+      {/* Dense Security Contracts Invariant Table (Inspired by CY·FOCUS Compliance View in Ref Image 4) */}
+      <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+        <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
+          <CardTitle className="text-xs font-semibold flex items-center justify-between">
+            <span>Organizational Security Invariant Contracts (6 Active Invariants)</span>
+            <span className="text-[10px] font-mono text-muted-foreground font-normal">
+              AcmePay Governance Policy Store
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-border text-xs">
+          <div className="divide-y divide-white/[0.06] text-xs">
             {SECURITY_CONTRACTS.map((c) => {
               const liveContract = regressionReport?.contractResults?.find((r) => r.contractId === c.id)
               const isFailing = liveContract
@@ -267,29 +278,29 @@ export const RegressionScreen: React.FC = () => {
               return (
                 <div
                   key={c.id}
-                  className={`p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors ${
-                    isFailing ? "bg-status-blocked/[0.03]" : "hover:bg-muted/30"
+                  className={`p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors ${
+                    isFailing ? "bg-red-500/[0.04]" : "hover:bg-white/[0.02]"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     {isFailing ? (
-                      <XCircle className="h-4 w-4 text-status-deny shrink-0" />
+                      <XCircle className="h-4 w-4 text-red-400 shrink-0 shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
                     ) : (
-                      <CheckCircle2 className="h-4 w-4 text-status-allow shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 shadow-[0_0_6px_rgba(24,184,104,0.5)]" />
                     )}
 
                     <div>
                       <div className="flex items-center gap-2">
-                        <code className="font-mono font-bold text-foreground">{c.id}</code>
-                        <span className="font-semibold text-foreground">{c.title}</span>
+                        <code className="font-mono font-bold text-foreground text-xs">{c.id}</code>
+                        <span className="font-semibold text-foreground text-xs">{c.title}</span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5 font-sans">
                         {c.description}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                  <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                     <SeverityBadge severity={c.severity} />
                     <StatusBadge status={isFailing ? "BLOCKED" : "PASS"} size="xs" label={isFailing ? "FAIL" : "PASS"} />
                   </div>
@@ -301,8 +312,8 @@ export const RegressionScreen: React.FC = () => {
       </Card>
 
       {/* Executable Scenario Assertions Table */}
-      <Card className="border-border bg-card">
-        <CardHeader className="p-3.5 pb-2 border-b border-border">
+      <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+        <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <CardTitle className="text-xs font-semibold">
               Executable Scenario Assertions ({filteredScenarios.length} Scenarios)
@@ -315,10 +326,10 @@ export const RegressionScreen: React.FC = () => {
                 <button
                   key={tag}
                   onClick={() => setFilterTag(tag)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                  className={`px-2.5 py-0.5 rounded-md text-[10px] font-medium transition-colors font-mono ${
                     filterTag === tag
-                      ? "bg-foreground text-background font-semibold"
-                      : "text-muted-foreground hover:bg-muted"
+                      ? "bg-[#FF6A24] text-white font-semibold"
+                      : "text-muted-foreground hover:bg-white/[0.05]"
                   }`}
                 >
                   {tag}
@@ -329,26 +340,26 @@ export const RegressionScreen: React.FC = () => {
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="divide-y divide-border text-xs">
+          <div className="divide-y divide-white/[0.06] text-xs">
             {filteredScenarios.map((s) => {
               const isPass = s.actualDecision === s.expectedDecision
               return (
                 <div
                   key={s.id}
                   className={`p-3 flex items-center justify-between gap-2 transition-colors ${
-                    isPass ? "hover:bg-muted/30" : "bg-status-blocked/[0.04]"
+                    isPass ? "hover:bg-white/[0.02]" : "bg-red-500/[0.05]"
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     {isPass ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                     ) : (
-                      <XCircle className="h-3.5 w-3.5 text-status-deny shrink-0" />
+                      <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
                     )}
 
                     <div className="space-y-0.5 min-w-0">
                       <div className="flex items-center gap-1.5 truncate">
-                        <code className="font-mono text-[10px] text-muted-foreground">[{s.id}]</code>
+                        <code className="font-mono text-[10px] text-orange-400">[{s.id}]</code>
                         <span className="font-medium text-foreground truncate">{s.title}</span>
                       </div>
                       <div className="font-mono text-[10px] text-muted-foreground truncate">
@@ -359,8 +370,8 @@ export const RegressionScreen: React.FC = () => {
 
                   <div className="flex items-center gap-3 shrink-0">
                     <div className="text-right text-[10px] font-mono hidden sm:block">
-                      <span className="text-muted-foreground">Exp: {s.expectedDecision} · Act: </span>
-                      <strong className={isPass ? "text-status-allow" : "text-status-deny"}>
+                      <span className="text-muted-foreground">Expected: {s.expectedDecision} · Actual: </span>
+                      <strong className={isPass ? "text-emerald-400" : "text-red-400"}>
                         {s.actualDecision}
                       </strong>
                     </div>

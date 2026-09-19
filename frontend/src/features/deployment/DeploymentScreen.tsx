@@ -156,113 +156,113 @@ export const DeploymentScreen: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
-              <Server className="h-3 w-3 text-primary" />
+            <span className="text-xs text-orange-400 font-mono flex items-center gap-1.5">
+              <Server className="h-3.5 w-3.5 text-orange-400" />
               Target: Amazon Verified Permissions ({readiness?.adapterMode || "DETERMINISTIC_FAKE"})
             </span>
             <span className="text-muted-foreground/40">·</span>
             <StatusBadge status={isBlocked ? "BLOCKED" : "PASS"} size="xs" label={isBlocked ? "Gate: BLOCKED" : "Gate: VERIFIED"} />
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-            <Rocket className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Rocket className="h-5 w-5 text-orange-400 shadow-[0_0_10px_rgba(255,106,36,0.5)]" />
             Verified Permissions Release & Deployment Gate
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Candidate:</span>
-          <div className="flex items-center p-0.5 rounded-md bg-muted border border-border">
+          <span className="text-xs text-muted-foreground">Candidate Version:</span>
+          <div className="flex items-center p-0.5 rounded-lg bg-black/40 border border-white/[0.08]">
             <button
               onClick={() => setSelectedVersion("v12")}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 selectedVersion === "v12"
-                  ? "bg-background text-foreground shadow-sm font-semibold"
+                  ? "bg-white/[0.1] text-white shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v12 (Verified)
+              v12 (Verified Baseline)
             </button>
             <button
               onClick={() => setSelectedVersion("v13")}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 selectedVersion === "v13"
-                  ? "bg-background text-foreground shadow-sm font-semibold"
+                  ? "bg-[#FF6A24] text-white shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v13 (Violates SC-04)
+              v13 (Candidate - Violates SC-04)
             </button>
           </div>
         </div>
       </div>
 
       {errorMsg && (
-        <div className="p-2.5 rounded bg-status-deny/10 border border-status-deny/20 text-status-deny text-xs flex items-center gap-2">
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2 font-mono">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Deployment Gate Checklist & Approval Card */}
-      <Card className="border-border bg-card">
-        <CardHeader className="p-3.5 pb-2 border-b border-border">
+      <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+        <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               {isBlocked ? (
-                <ShieldAlert className="h-4 w-4 text-status-deny" />
+                <ShieldAlert className="h-4 w-4 text-red-400 shrink-0 shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
               ) : (
-                <ShieldCheck className="h-4 w-4 text-status-allow" />
+                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 shadow-[0_0_6px_rgba(24,184,104,0.5)]" />
               )}
               <CardTitle className="text-xs font-semibold">
                 {isBlocked
-                  ? "Deployment Restricted — Unresolved Security Contract Violations"
-                  : "Deployment Readiness Verified — Awaiting Operator Sign-Off"}
+                  ? "Deployment Restricted — Unresolved Security Invariant Violations"
+                  : "Deployment Readiness Verified — Awaiting Cryptographic Operator Sign-Off"}
               </CardTitle>
             </div>
 
             <Tabs value={targetEnv} onValueChange={(v) => setTargetEnv(v as any)}>
-              <TabsList className="h-6 bg-muted">
-                <TabsTrigger value="staging" className="text-xs h-5 px-2">Staging</TabsTrigger>
-                <TabsTrigger value="production" className="text-xs h-5 px-2">Production</TabsTrigger>
+              <TabsList className="h-6 bg-black/40 border border-white/[0.08]">
+                <TabsTrigger value="staging" className="text-xs h-5 px-2.5 text-muted-foreground data-[state=active]:text-white data-[state=active]:bg-white/[0.1]">Staging</TabsTrigger>
+                <TabsTrigger value="production" className="text-xs h-5 px-2.5 text-muted-foreground data-[state=active]:text-white data-[state=active]:bg-white/[0.1]">Production</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
           <CardDescription className="text-[11px] text-muted-foreground font-mono">
-            Candidate: {selectedVersion} · Policy Store: {prepResult?.targetPolicyStoreId || `ps-acmepay-${targetEnv}`}
+            Candidate: <strong className="text-orange-400">{selectedVersion}</strong> · Policy Store: <code className="text-foreground font-semibold">{prepResult?.targetPolicyStoreId || `ps-acmepay-${targetEnv}`}</code>
           </CardDescription>
         </CardHeader>
 
         <CardContent className="p-3.5 space-y-3 text-xs">
           {/* Pre-Deployment Verification Checklist */}
-          <div className="divide-y divide-border rounded border border-border bg-muted/20">
+          <div className="divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-black/30">
             <div className="p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                 <span className="font-medium text-foreground">1. Cedar Syntax & Schema Compilation</span>
               </div>
-              <StatusBadge status="PASS" size="xs" label="PASSED" />
+              <StatusBadge status="PASS" size="xs" label="PASSED (0.4ms)" />
             </div>
 
             <div className="p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
-                <span className="font-medium text-foreground">2. Bounded Scenario Diff (432 Combinations)</span>
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <span className="font-medium text-foreground">2. Bounded Scenario Diff Matrix (432 Combinations)</span>
               </div>
-              <StatusBadge status="PASS" size="xs" label="EVALUATED" />
+              <StatusBadge status="PASS" size="xs" label="EVALUATED (1.8s)" />
             </div>
 
             <div className="p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {isBlocked ? (
-                  <XCircle className="h-3.5 w-3.5 text-status-deny shrink-0" />
+                  <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
                 ) : (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                 )}
                 <span className="font-medium text-foreground">
-                  3. Security Contract Invariants (18 Scenarios)
+                  3. Security Contract Invariants (18 Executable Scenarios)
                 </span>
               </div>
               {isBlocked ? (
@@ -275,9 +275,9 @@ export const DeploymentScreen: React.FC = () => {
             <div className="p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {isBlocked ? (
-                  <XCircle className="h-3.5 w-3.5 text-status-deny shrink-0" />
+                  <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
                 ) : (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-status-allow shrink-0" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                 )}
                 <span className="font-medium text-foreground">
                   4. Deterministic Counterexample Resolution
@@ -292,11 +292,11 @@ export const DeploymentScreen: React.FC = () => {
           </div>
 
           {isBlocked ? (
-            <div className="p-2.5 rounded bg-status-blocked/10 border border-status-blocked/20 text-status-deny flex items-start gap-2">
-              <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-start gap-2.5">
+              <Lock className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
               <div className="space-y-0.5 text-xs">
-                <span className="font-semibold">Release Gate Blocked:</span>
-                <p className="text-[11px] text-foreground/80">
+                <span className="font-bold uppercase font-mono">Release Gate Blocked:</span>
+                <p className="text-[11px] text-foreground/80 font-sans leading-relaxed">
                   {prepResult?.rejectionReasons?.[0] ||
                     'Security Contract SC-04 ("Contractors cannot delete payroll reports") failed assertion. Policy synchronization to Amazon Verified Permissions is strictly restricted by the deterministic gate.'}
                 </p>
@@ -305,24 +305,24 @@ export const DeploymentScreen: React.FC = () => {
           ) : (
             <div className="space-y-3 pt-1">
               {/* Human Operator Sign-Off */}
-              <div className="p-3 rounded border border-border bg-card space-y-2.5">
+              <div className="p-3.5 rounded-xl border border-white/[0.08] bg-black/40 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
-                    <UserCheck className="h-3.5 w-3.5 text-primary" />
+                    <UserCheck className="h-4 w-4 text-orange-400" />
                     Human Operator Cryptographic Sign-Off
                   </span>
                   {approval ? (
-                    <Badge variant="allow" className="gap-1 font-mono text-[9px]">
+                    <Badge variant="allow" className="gap-1 font-mono text-[9px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                       <Key className="h-3 w-3" /> Token: {approval.approvalToken.substring(0, 12)}...
                     </Badge>
                   ) : (
-                    <StatusBadge status="PENDING" size="xs" label="Approval Required" />
+                    <StatusBadge status="PENDING" size="xs" label="Sign-Off Required" />
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div>
-                    <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5">
+                    <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5 font-mono">
                       Authorizing Operator
                     </label>
                     <input
@@ -330,11 +330,11 @@ export const DeploymentScreen: React.FC = () => {
                       value={approverName}
                       onChange={(e) => setApproverName(e.target.value)}
                       disabled={!!approval}
-                      className="w-full px-2 py-1 rounded bg-muted/40 border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.1] text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
                     />
                   </div>
                   <div>
-                    <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5">
+                    <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5 font-mono">
                       Change Ticket / PR Ref
                     </label>
                     <input
@@ -342,13 +342,13 @@ export const DeploymentScreen: React.FC = () => {
                       value={ticketRef}
                       onChange={(e) => setTicketRef(e.target.value)}
                       disabled={!!approval}
-                      className="w-full px-2 py-1 rounded bg-muted/40 border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.1] text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5">
+                  <label className="text-[9px] text-muted-foreground uppercase font-semibold block mb-0.5 font-mono">
                     Justification
                   </label>
                   <input
@@ -356,7 +356,7 @@ export const DeploymentScreen: React.FC = () => {
                     value={approvalNotes}
                     onChange={(e) => setApprovalNotes(e.target.value)}
                     disabled={!!approval}
-                    className="w-full px-2 py-1 rounded bg-muted/40 border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.1] text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
                   />
                 </div>
 
@@ -364,9 +364,9 @@ export const DeploymentScreen: React.FC = () => {
                   <Button
                     size="sm"
                     onClick={handleApprove}
-                    className="w-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 h-7"
+                    className="w-full text-xs font-semibold bg-[#FF6A24] text-white hover:bg-[#FF8A42] gap-1.5 h-8 shadow-[0_0_15px_rgba(255,106,36,0.3)]"
                   >
-                    <UserCheck className="h-3 w-3" />
+                    <UserCheck className="h-3.5 w-3.5" />
                     Sign & Register Approval Token
                   </Button>
                 )}
@@ -377,14 +377,14 @@ export const DeploymentScreen: React.FC = () => {
                 <Button
                   onClick={handleDeploy}
                   disabled={isBlocked || !approval || isDeploying}
-                  className="text-xs font-medium gap-1.5 h-8 bg-status-allow text-white hover:bg-status-allow/90 disabled:opacity-50"
+                  className="text-xs font-semibold gap-1.5 h-8 bg-emerald-600 text-white hover:bg-emerald-500 shadow-[0_0_15px_rgba(24,184,104,0.3)] disabled:opacity-50"
                 >
                   {isDeploying ? (
                     "Deploying to AVP..."
                   ) : submitResult ? (
                     <>
                       <Check className="h-3.5 w-3.5" />
-                      Deployed Successfully
+                      Synchronized Successfully
                     </>
                   ) : (
                     <>
@@ -399,7 +399,7 @@ export const DeploymentScreen: React.FC = () => {
           )}
 
           {submitResult && (
-            <div className="p-2.5 rounded bg-status-allow/10 border border-status-allow/20 text-status-allow space-y-1 text-xs font-mono">
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 space-y-1 text-xs font-mono">
               <div className="flex items-center gap-1.5 font-sans font-semibold">
                 <Check className="h-3.5 w-3.5 shrink-0" />
                 <span>Synchronized with Amazon Verified Permissions Policy Store!</span>
@@ -413,8 +413,8 @@ export const DeploymentScreen: React.FC = () => {
       </Card>
 
       {/* Verified Deployment Audit Trail */}
-      <Card className="border-border bg-card">
-        <CardHeader className="p-3.5 pb-2 border-b border-border">
+      <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+        <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
           <CardTitle className="text-xs font-semibold">
             Verified Deployment Audit Trail
           </CardTitle>
@@ -424,15 +424,15 @@ export const DeploymentScreen: React.FC = () => {
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="divide-y divide-border text-xs">
+          <div className="divide-y divide-white/[0.06] text-xs">
             {deploymentRecords.map((d) => (
-              <div key={d.id} className="p-3 flex items-center justify-between gap-2">
+              <div key={d.id} className="p-3.5 flex items-center justify-between gap-2 hover:bg-white/[0.02] transition-colors">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <code className="font-mono font-bold text-foreground">{d.versionTag}</code>
+                    <code className="font-mono font-bold text-orange-400">{d.versionTag}</code>
                     <StatusBadge status="SYNCHRONIZED" size="xs" />
                     <span className="text-muted-foreground text-[11px]">
-                      Store: <code className="font-mono text-foreground">{d.targetStoreId}</code>
+                      Store: <code className="font-mono text-foreground font-medium">{d.targetStoreId}</code>
                     </span>
                   </div>
                   <div className="font-mono text-[10px] text-muted-foreground truncate max-w-md">
@@ -441,8 +441,8 @@ export const DeploymentScreen: React.FC = () => {
                 </div>
 
                 <div className="text-right text-muted-foreground text-[11px] shrink-0">
-                  <span>by {d.deployedBy}</span>
-                  <p className="text-[10px] text-muted-foreground/70 font-mono">
+                  <span className="text-foreground/80 font-medium">by {d.deployedBy}</span>
+                  <p className="text-[10px] text-muted-foreground/60 font-mono">
                     {new Date(d.deployedAt).toLocaleString()}
                   </p>
                 </div>

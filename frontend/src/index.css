@@ -4,114 +4,114 @@
 
 @layer base {
   :root {
-    /* Workstation Light Mode Palette */
-    --background: 90 6% 97%;           /* #F7F8F6 */
-    --foreground: 129 16% 11%;         /* #172018 */
+    /* Cybersecurity Workstation Light Mode Palette */
+    --background: 220 14% 96%;          /* #F3F4F6 */
+    --foreground: 220 24% 8%;           /* #0F1216 */
 
     --card: 0 0% 100%;                 /* #FFFFFF */
-    --card-foreground: 129 16% 11%;    /* #172018 */
+    --card-foreground: 220 24% 8%;
 
-    --popover: 0 0% 100%;              /* #FFFFFF */
-    --popover-foreground: 129 16% 11%; /* #172018 */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 24% 8%;
 
-    --primary: 152 48% 20%;            /* #1B4B2E - Muted deep emerald */
+    --primary: 20 100% 57%;            /* #FF6A24 - High-vis Cybersecurity Orange */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 90 7% 95%;            /* #F1F3F0 */
-    --secondary-foreground: 129 16% 11%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 24% 8%;
 
-    --muted: 90 7% 95%;                /* #F1F3F0 */
-    --muted-foreground: 127 5% 42%;    /* #667067 */
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 90 6% 92%;               /* #EAECEA */
-    --accent-foreground: 129 16% 11%;
+    --accent: 220 14% 90%;
+    --accent-foreground: 220 24% 8%;
 
-    --destructive: 0 66% 46%;          /* #C62828 */
+    --destructive: 0 74% 50%;          /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 120 7% 86%;              /* #D9DED9 */
-    --input: 120 7% 86%;               /* #D9DED9 */
-    --ring: 152 48% 20%;
-    --radius: 0.375rem;                /* 6px default */
+    --border: 220 13% 86%;
+    --input: 220 13% 86%;
+    --ring: 20 100% 57%;
+    --radius: 0.5rem;                  /* 8px */
 
     /* Security Status Semantics (Light) */
     --status-allow: 149 71% 30%;       /* #16834A - Verified / Safe */
     --status-allow-foreground: 149 80% 96%;
     --status-allow-border: 149 50% 70%;
 
-    --status-deny: 0 66% 46%;          /* #C62828 - Critical / Denied */
+    --status-deny: 0 74% 50%;          /* #DC2626 - Critical / Denied */
     --status-deny-foreground: 0 85% 97%;
     --status-deny-border: 0 60% 75%;
 
-    --status-warning: 38 100% 33%;      /* #A66A00 - Warning */
+    --status-warning: 39 90% 48%;      /* #F59E0B - Warning */
     --status-warning-foreground: 48 96% 96%;
     --status-warning-border: 38 80% 70%;
 
-    --status-blocked: 0 66% 46%;       /* #C62828 - Blocked Gate */
+    --status-blocked: 0 74% 50%;       /* #DC2626 - Blocked Gate */
     --status-blocked-foreground: 0 85% 97%;
     --status-blocked-border: 0 60% 75%;
 
-    --ai-brand: 152 48% 20%;
+    --ai-brand: 20 100% 57%;
     --ai-brand-foreground: 0 0% 100%;
-    --ai-brand-border: 152 30% 75%;
+    --ai-brand-border: 20 80% 75%;
 
     --surface-elevated: 0 0% 100%;
-    --surface-subtle: 90 7% 95%;
+    --surface-subtle: 220 14% 94%;
   }
 
   .dark {
-    /* Workstation Dark Mode Palette */
-    --background: 135 15% 6%;          /* #0D110E */
-    --foreground: 120 12% 92%;         /* #E8EEE8 */
+    /* Cybersecurity Workstation Dark Mode Palette (#090A0D canvas, #0D1015 secondary) */
+    --background: 228 18% 4%;          /* #090A0D - Dark atmospheric canvas */
+    --foreground: 220 14% 96%;         /* #F3F4F6 */
 
-    --card: 132 14% 8%;                /* #121813 */
-    --card-foreground: 120 12% 92%;    /* #E8EEE8 */
+    --card: 220 24% 7%;                /* #0D1015 - Secondary surface */
+    --card-foreground: 220 14% 96%;
 
-    --popover: 130 11% 11%;            /* #171E18 */
-    --popover-foreground: 120 12% 92%; /* #E8EEE8 */
+    --popover: 218 23% 10%;            /* #13171E - Raised glass surface */
+    --popover-foreground: 220 14% 96%;
 
-    --primary: 149 50% 38%;            /* #257F4D - Muted emerald */
+    --primary: 20 100% 57%;            /* #FF6A24 - Brand Cyber Orange */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 130 11% 11%;          /* #171E18 */
-    --secondary-foreground: 120 12% 92%;
+    --secondary: 218 23% 10%;          /* #13171E */
+    --secondary-foreground: 220 14% 96%;
 
-    --muted: 130 11% 11%;              /* #171E18 */
-    --muted-foreground: 133 7% 59%;    /* #8F9C92 */
+    --muted: 218 23% 10%;              /* #13171E */
+    --muted-foreground: 220 10% 60%;   /* #8E95A5 - Muted slate text */
 
-    --accent: 130 11% 14%;             /* #1E271F */
-    --accent-foreground: 120 12% 92%;
+    --accent: 219 22% 13%;             /* #191E27 - Elevated hover */
+    --accent-foreground: 220 14% 98%;
 
-    --destructive: 0 66% 48%;          /* #C62828 */
+    --destructive: 0 84% 60%;          /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 127 12% 17%;             /* #263128 */
-    --input: 127 12% 17%;              /* #263128 */
-    --ring: 149 50% 38%;
+    --border: 220 18% 16%;             /* #1F2633 */
+    --input: 220 18% 16%;
+    --ring: 20 100% 57%;
 
     /* Security Status Semantics (Dark) */
-    --status-allow: 149 60% 42%;       /* #2B9356 */
-    --status-allow-foreground: 149 70% 96%;
-    --status-allow-border: 149 40% 28%;
+    --status-allow: 152 76% 40%;       /* #18B868 - Verified / Safe */
+    --status-allow-foreground: 152 80% 98%;
+    --status-allow-border: 152 50% 25%;
 
-    --status-deny: 0 70% 55%;          /* #D33D3D */
-    --status-deny-foreground: 0 80% 96%;
-    --status-deny-border: 0 50% 32%;
+    --status-deny: 0 84% 60%;          /* #EF4444 - Critical / Denied */
+    --status-deny-foreground: 0 85% 98%;
+    --status-deny-border: 0 60% 28%;
 
-    --status-warning: 38 90% 48%;      /* #E09000 */
-    --status-warning-foreground: 48 96% 96%;
-    --status-warning-border: 38 60% 28%;
+    --status-warning: 39 90% 55%;      /* #F5B544 - Warm Amber */
+    --status-warning-foreground: 48 96% 98%;
+    --status-warning-border: 39 60% 26%;
 
-    --status-blocked: 0 70% 55%;       /* #D33D3D */
-    --status-blocked-foreground: 0 80% 96%;
-    --status-blocked-border: 0 50% 32%;
+    --status-blocked: 0 84% 60%;       /* #EF4444 - Blocked Gate */
+    --status-blocked-foreground: 0 85% 98%;
+    --status-blocked-border: 0 60% 28%;
 
-    --ai-brand: 149 50% 38%;
+    --ai-brand: 20 100% 57%;
     --ai-brand-foreground: 0 0% 100%;
-    --ai-brand-border: 149 40% 28%;
+    --ai-brand-border: 20 50% 28%;
 
-    --surface-elevated: 130 11% 11%;
-    --surface-subtle: 135 15% 6%;
+    --surface-elevated: 219 22% 13%;   /* #191E27 */
+    --surface-subtle: 220 24% 7%;
   }
 
   * {
@@ -122,6 +122,45 @@
     @apply bg-background text-foreground antialiased transition-colors duration-150;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+}
+
+/* Atmospheric Ambient Horizon Glow & Glassmorphism Utilities */
+.ambient-horizon-glow {
+  background: radial-gradient(
+    ellipse 85% 35% at 50% -12%,
+    rgba(255, 106, 36, 0.16),
+    rgba(245, 181, 68, 0.05) 50%,
+    transparent 80%
+  );
+}
+
+.glass-panel {
+  background: rgba(13, 16, 21, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-elevated {
+  background: rgba(24, 28, 36, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+}
+
+.glass-card {
+  background: rgba(19, 23, 30, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-card:hover {
+  background: rgba(25, 30, 39, 0.85);
+  border-color: rgba(255, 106, 36, 0.28);
 }
 
 /* Scrollbar styles - Clean & Minimal */
@@ -135,25 +174,25 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.25);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.45);
+  background: rgba(255, 106, 36, 0.4);
 }
 
-/* Cedar Code Syntax Tokens - High Readability */
+/* Cedar Code Syntax Tokens - High Precision Dark Contrast */
 .cedar-keyword {
-  color: #7C3AED;
+  color: #C084FC;
   font-weight: 600;
 }
 .dark .cedar-keyword {
-  color: #A78BFA;
+  color: #C084FC;
 }
 
 .cedar-entity {
-  color: #0284C7;
+  color: #38BDF8;
   font-weight: 500;
 }
 .dark .cedar-entity {
@@ -161,7 +200,7 @@
 }
 
 .cedar-string {
-  color: #059669;
+  color: #34D399;
 }
 .dark .cedar-string {
   color: #34D399;
@@ -172,13 +211,13 @@
   font-style: italic;
 }
 .dark .cedar-comment {
-  color: #94A3B8;
+  color: #64748B;
 }
 
 .cedar-action {
-  color: #D97706;
+  color: #FF8A42;
   font-weight: 500;
 }
 .dark .cedar-action {
-  color: #FBBF24;
+  color: #FF8A42;
 }

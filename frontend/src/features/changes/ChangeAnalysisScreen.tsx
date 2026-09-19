@@ -9,6 +9,7 @@ import {
   Code2,
   ChevronRight,
   Info,
+  ShieldAlert,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -61,17 +62,17 @@ export const ChangeAnalysisScreen: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Hero Header & Version Transition */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-muted-foreground font-mono">
               Baseline: v12 (Production) ➔ Candidate: v13 (Draft)
             </span>
             <span className="text-muted-foreground/40">·</span>
-            <StatusBadge status="BLOCKED" size="xs" />
+            <StatusBadge status="BLOCKED" size="xs" label="Gate: BLOCKED" />
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-            <GitCompare className="h-5 w-5 text-status-deny" />
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <GitCompare className="h-5 w-5 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
             Authorization Change & Blast Radius Analysis
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -80,36 +81,36 @@ export const ChangeAnalysisScreen: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-          <span className="px-2 py-1 rounded bg-muted/40 border border-border">
+          <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.08] text-orange-400">
             Bounded Universe: {BLAST_RADIUS_RESULT.universeSize} Scenarios
           </span>
         </div>
       </div>
 
       {/* Bounded Analysis Disclosure Notice */}
-      <div className="p-2.5 rounded-md bg-muted/30 border border-border flex items-center gap-2 text-xs text-muted-foreground">
-        <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+      <div className="p-3 rounded-xl bg-orange-500/[0.05] border border-orange-500/20 flex items-center gap-2.5 text-xs text-muted-foreground">
+        <Info className="h-4 w-4 text-orange-400 shrink-0" />
         <span>
-          <strong>Scope Disclosure:</strong> Blast radius and counterexample discovery are bounded to the declared scenario universe (432 combinations across 5 principal roles, 4 actions, and 4 resource archetypes).
+          <strong className="text-foreground">Scope Disclosure:</strong> Blast radius and counterexample discovery are bounded to the declared scenario universe (432 combinations across 5 principal roles, 4 actions, and 4 resource archetypes).
         </span>
       </div>
 
       {/* Blast Radius Summary Bar */}
-      <div className="p-3.5 rounded-lg border border-status-blocked/30 bg-status-blocked/[0.02] flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-4 text-xs">
+      <div className="p-4 rounded-xl border border-red-500/30 bg-gradient-to-r from-red-500/[0.08] via-[#0D1015]/90 to-[#0D1015]/90 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-5 text-xs">
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
               Transitions
             </span>
-            <span className="font-mono font-bold text-status-deny text-sm">
+            <span className="font-mono font-bold text-red-400 text-sm">
               +{BLAST_RADIUS_RESULT.newlyAuthorizedCount} Newly Authorized
             </span>
           </div>
 
-          <div className="h-6 w-[1px] bg-border hidden sm:block" />
+          <div className="h-6 w-[1px] bg-white/[0.1] hidden sm:block" />
 
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
               Action Scope
             </span>
             <span className="font-mono font-bold text-foreground text-sm">
@@ -117,10 +118,10 @@ export const ChangeAnalysisScreen: React.FC = () => {
             </span>
           </div>
 
-          <div className="h-6 w-[1px] bg-border hidden sm:block" />
+          <div className="h-6 w-[1px] bg-white/[0.1] hidden sm:block" />
 
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
               Exposed Resources
             </span>
             <span className="font-mono font-bold text-foreground text-sm">
@@ -128,10 +129,10 @@ export const ChangeAnalysisScreen: React.FC = () => {
             </span>
           </div>
 
-          <div className="h-6 w-[1px] bg-border hidden sm:block" />
+          <div className="h-6 w-[1px] bg-white/[0.1] hidden sm:block" />
 
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
               Affected Principals
             </span>
             <span className="font-mono font-bold text-foreground text-sm">
@@ -149,11 +150,11 @@ export const ChangeAnalysisScreen: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Code Clause Diff (5 cols) */}
         <div className="lg:col-span-5 space-y-3">
-          <Card className="border-border bg-card">
-            <CardHeader className="p-3.5 pb-2 border-b border-border">
+          <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+            <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
-                  <Code2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Code2 className="h-3.5 w-3.5 text-orange-400" />
                   Policy Clause Diff (v12 vs v13)
                 </CardTitle>
                 <span className="text-[10px] font-mono text-muted-foreground">Line 24</span>
@@ -161,43 +162,44 @@ export const ChangeAnalysisScreen: React.FC = () => {
             </CardHeader>
 
             <CardContent className="p-3 font-mono text-xs space-y-2">
-              <div className="p-2 rounded bg-muted/40 text-muted-foreground border border-border text-[11px]">
+              <div className="p-2 rounded bg-black/40 text-muted-foreground border border-white/[0.06] text-[11px]">
                 // Version 12 (Production Baseline):
               </div>
-              <div className="p-2.5 rounded bg-status-deny/10 text-status-deny border border-status-deny/20 text-[11px] leading-relaxed">
+              <div className="p-2.5 rounded bg-red-500/15 text-red-400 border border-red-500/30 text-[11px] leading-relaxed">
                 - action == Action::"view",
               </div>
 
-              <div className="p-2 rounded bg-muted/40 text-muted-foreground border border-border text-[11px] mt-2">
+              <div className="p-2 rounded bg-black/40 text-muted-foreground border border-white/[0.06] text-[11px] mt-2">
                 // Version 13 (Candidate Draft - Wildcard Broadening):
               </div>
-              <div className="p-2.5 rounded bg-status-allow/10 text-status-allow border border-status-allow/20 text-[11px] leading-relaxed">
+              <div className="p-2.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] leading-relaxed">
                 + action, // Broadened across view, edit, delete, export
               </div>
 
-              <div className="pt-2 text-[11px] text-muted-foreground font-sans leading-relaxed border-t border-border mt-3">
-                <strong>Mechanism:</strong> Removing the explicit action constraint broadened the permit statement across all 4 declared actions in the schema, overriding the implicit default-deny for contractors.
+              <div className="pt-2 text-[11px] text-muted-foreground font-sans leading-relaxed border-t border-white/[0.06] mt-3">
+                <strong className="text-foreground">Mechanism:</strong> Removing the explicit action constraint broadened the permit statement across all 4 declared actions in the schema, overriding the implicit default-deny for contractors.
               </div>
             </CardContent>
           </Card>
 
           {/* Violated Contracts List */}
-          <Card className="border-border bg-card">
+          <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
             <CardHeader className="p-3.5 pb-1">
-              <span className="text-[10px] font-semibold uppercase text-muted-foreground font-mono">
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground font-mono flex items-center gap-1.5">
+                <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
                 Violated Security Invariants
               </span>
             </CardHeader>
             <CardContent className="p-3.5 pt-1 space-y-1.5 text-xs">
-              <div className="p-2 rounded bg-muted/30 border border-border flex items-center justify-between">
+              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
                 <span className="font-mono font-medium text-foreground">SC-04: Contractor payroll deletion</span>
                 <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
-              <div className="p-2 rounded bg-muted/30 border border-border flex items-center justify-between">
+              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
                 <span className="font-mono font-medium text-foreground">SC-05: Contractor financial export</span>
                 <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
-              <div className="p-2 rounded bg-muted/30 border border-border flex items-center justify-between">
+              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
                 <span className="font-mono font-medium text-foreground">SC-03: Editor invoice deletion</span>
                 <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
@@ -208,7 +210,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
         {/* Right Column: Top Deterministic Counterexamples (7 cols) */}
         <div className="lg:col-span-7 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+            <span className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono">
               Deterministic Counterexamples ({TOP_COUNTEREXAMPLES.length} Ranked Findings)
             </span>
             <span className="text-[11px] text-muted-foreground">
@@ -226,10 +228,10 @@ export const ChangeAnalysisScreen: React.FC = () => {
                 <div
                   key={cx.id}
                   onClick={() => handleOpenEvidence(cx)}
-                  className={`p-3.5 rounded-lg border text-xs cursor-pointer transition-all space-y-2.5 ${
+                  className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all space-y-2.5 ${
                     isSelected
-                      ? "border-primary bg-accent/40 shadow-sm"
-                      : "border-border bg-card hover:border-border/80 hover:bg-muted/30"
+                      ? "border-orange-500/60 bg-gradient-to-r from-orange-500/[0.08] to-[#0D1015] shadow-lg"
+                      : "border-white/[0.08] bg-[#0D1015]/90 hover:border-white/[0.18] hover:bg-[#13171E]"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -247,20 +249,19 @@ export const ChangeAnalysisScreen: React.FC = () => {
                         size="sm"
                         disabled={isReplaying}
                         onClick={(e) => handleReplayCounterexample(e, cx)}
-                        className="text-[11px] gap-1 h-6 text-foreground"
+                        className="text-[11px] gap-1 h-6 text-foreground border-white/[0.1] hover:bg-white/[0.05]"
                       >
-                        <RefreshCw className={`h-3 w-3 ${isReplaying ? "animate-spin" : ""}`} />
+                        <RefreshCw className={`h-3 w-3 ${isReplaying ? "animate-spin text-orange-400" : "text-orange-400"}`} />
                         <span>{isReplaying ? "Evaluating..." : "Replay in Cedar"}</span>
                       </Button>
 
                       <Button
-                        variant="default"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleOpenEvidence(cx)
                         }}
-                        className="text-[11px] gap-1 h-6"
+                        className="text-[11px] gap-1 h-6 bg-[#FF6A24] text-white hover:bg-[#FF8A42]"
                       >
                         <FileSearch className="h-3 w-3" />
                         <span>Inspect</span>
@@ -272,10 +273,10 @@ export const ChangeAnalysisScreen: React.FC = () => {
                   {/* Live Replay Confirmation Status */}
                   {replay && (
                     <div
-                      className={`p-2 rounded text-[11px] flex items-center justify-between font-mono ${
+                      className={`p-2 rounded-lg text-[11px] flex items-center justify-between font-mono ${
                         replay.isReproduced
-                          ? "bg-status-allow/10 text-status-allow border border-status-allow/20"
-                          : "bg-status-deny/10 text-status-deny border border-status-deny/20"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : "bg-red-500/10 text-red-400 border border-red-500/20"
                       }`}
                     >
                       <div className="flex items-center gap-1.5">
@@ -296,28 +297,28 @@ export const ChangeAnalysisScreen: React.FC = () => {
 
                   {/* Scenario Request & Flip Matrix */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5 font-mono text-[11px]">
-                    <div className="p-2 rounded bg-muted/40 border border-border">
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
                       <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
                         Principal
                       </span>
                       <span className="text-foreground truncate block font-semibold">{cx.principal}</span>
                     </div>
 
-                    <div className="p-2 rounded bg-muted/40 border border-border">
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
                       <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
                         Action
                       </span>
-                      <span className="text-status-warning truncate block font-semibold">{cx.action}</span>
+                      <span className="text-orange-400 truncate block font-semibold">{cx.action}</span>
                     </div>
 
-                    <div className="p-2 rounded bg-muted/40 border border-border">
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
                       <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
                         Resource
                       </span>
                       <span className="text-foreground truncate block font-semibold">{cx.resource}</span>
                     </div>
 
-                    <div className="p-2 rounded bg-muted/40 border border-border flex items-center justify-between">
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
                       <div>
                         <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
                           Flip
@@ -333,8 +334,10 @@ export const ChangeAnalysisScreen: React.FC = () => {
 
                   {/* Violated Contract Label */}
                   {cx.violatedContractId && (
-                    <div className="text-[11px] text-status-deny font-mono pt-0.5">
-                      Violates: <strong>{cx.violatedContractId}</strong> — "{cx.violatedContractTitle}"
+                    <div className="text-[11px] text-red-400 font-mono pt-0.5 flex items-center gap-1.5">
+                      <span>Violates:</span>
+                      <strong>{cx.violatedContractId}</strong>
+                      <span className="text-muted-foreground">— "{cx.violatedContractTitle}"</span>
                     </div>
                   )}
                 </div>
