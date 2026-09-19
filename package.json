@@ -1,0 +1,27 @@
+{
+  "name": "policylab",
+  "version": "1.0.0",
+  "description": "> **Prove your authorization changes before they reach production.**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vishallakshmikanthan/policylab.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Vishallakshmikanthan/policylab/issues"
+  },
+  "homepage": "https://github.com/Vishallakshmikanthan/policylab#readme",
+  "dependencies": {
+    "@cedar-policy/cedar-wasm": "^4.13.0"
+  }
+}

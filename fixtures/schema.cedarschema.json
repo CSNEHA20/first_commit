@@ -1,0 +1,56 @@
+{
+  "AcmePay": {
+    "entityTypes": {
+      "User": {
+        "memberOfTypes": ["Role", "Department"]
+      },
+      "Role": {},
+      "Department": {},
+      "Invoice": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "amount": { "type": "Long" },
+            "owner": { "type": "Entity", "name": "User" }
+          }
+        }
+      },
+      "PayrollReport": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "quarter": { "type": "String" },
+            "confidential": { "type": "Boolean" }
+          }
+        }
+      },
+      "SupportTicket": {}
+    },
+    "actions": {
+      "view": {
+        "appliesTo": {
+          "resourceTypes": ["Invoice", "PayrollReport", "SupportTicket"],
+          "principalTypes": ["User", "Role"]
+        }
+      },
+      "edit": {
+        "appliesTo": {
+          "resourceTypes": ["Invoice", "SupportTicket"],
+          "principalTypes": ["User", "Role"]
+        }
+      },
+      "delete": {
+        "appliesTo": {
+          "resourceTypes": ["Invoice", "PayrollReport", "SupportTicket"],
+          "principalTypes": ["User", "Role"]
+        }
+      },
+      "export": {
+        "appliesTo": {
+          "resourceTypes": ["Invoice", "PayrollReport"],
+          "principalTypes": ["User", "Role"]
+        }
+      }
+    }
+  }
+}

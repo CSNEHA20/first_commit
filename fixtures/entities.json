@@ -1,0 +1,47 @@
+[
+  {
+    "uid": { "type": "Role", "id": "admin" },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": { "type": "Role", "id": "editor" },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": { "type": "Role", "id": "contractor" },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": { "type": "User", "id": "admin_root" },
+    "attrs": {},
+    "parents": [{ "type": "Role", "id": "admin" }]
+  },
+  {
+    "uid": { "type": "User", "id": "editor_bob" },
+    "attrs": {},
+    "parents": [{ "type": "Role", "id": "editor" }]
+  },
+  {
+    "uid": { "type": "User", "id": "contractor_alice" },
+    "attrs": {},
+    "parents": [{ "type": "Role", "id": "contractor" }]
+  },
+  {
+    "uid": { "type": "Invoice", "id": "inv_9082" },
+    "attrs": { "amount": 1500 },
+    "parents": []
+  },
+  {
+    "uid": { "type": "PayrollReport", "id": "payroll_2026_q1" },
+    "attrs": { "quarter": "Q1", "confidential": true },
+    "parents": []
+  },
+  {
+    "uid": { "type": "SupportTicket", "id": "ticket_102" },
+    "attrs": {},
+    "parents": []
+  }
+]
