@@ -7,10 +7,11 @@ and human-approved Amazon Verified Permissions (AVP) deployment.
 """
 
 from typing import Any, Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from .core.auth import AuthenticatedUser, get_current_user, require_roles
 from .core.logging import log_operational_metric, set_correlation_id
 from .core.aws_config import aws_config, AWSClusterStatus
 from .domain.models.authz import (
@@ -172,7 +173,7 @@ def get_health():
 
 
 @app.get("/aws/status", response_model=AWSClusterStatus)
-def get_aws_status():
+def get_aws_status(current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Audits and returns the truthful operational status of all AWS service integrations.
     Distinguishes LIVE, LOCAL_MOCKED, and NOT_CONFIGURED states.
@@ -181,7 +182,7 @@ def get_aws_status():
 
 
 @app.post("/policies/validate", response_model=PolicyValidationResponse)
-def validate_policy(request: PolicyValidationRequest):
+def validate_policy(request: PolicyValidationRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """Validates Cedar policy syntax and schema compatibility."""
     result = validation_service.validate(
         policy_text=request.policyText, schema_text=request.schemaText
@@ -195,7 +196,7 @@ def validate_policy(request: PolicyValidationRequest):
 
 
 @app.post("/simulate", response_model=CanonicalEvidence)
-def simulate_authorization(request: AuthorizationRequest):
+def simulate_authorization(request: AuthorizationRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """Deterministically evaluates a single authorization request against a Cedar policy set."""
     try:
         evidence = evaluation_service.evaluate(request)
@@ -208,7 +209,7 @@ def simulate_authorization(request: AuthorizationRequest):
 
 
 @app.post("/simulate/batch", response_model=SimulationRun)
-def simulate_batch(request: BatchSimulationRequest):
+def simulate_batch(request: BatchSimulationRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Deterministically evaluates a suite of declared authorization scenarios
     against a Cedar policy set, returning a structured simulation matrix.
@@ -229,7 +230,7 @@ def simulate_batch(request: BatchSimulationRequest):
 
 
 @app.post("/policies/diff", response_model=PolicyDiffReport)
-def compare_policies(request: PolicyDiffRequest):
+def compare_policies(request: PolicyDiffRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Deterministically compares baseline vs. candidate Cedar policy sets across
     the declared scenario universe, classifying behavioral transitions and
@@ -251,7 +252,7 @@ def compare_policies(request: PolicyDiffRequest):
 
 
 @app.post("/policies/counterexamples", response_model=List[Counterexample])
-def get_counterexamples(request: PolicyDiffRequest):
+def get_counterexamples(request: PolicyDiffRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Generates deterministic, concrete counterexamples from behavioral transitions
     between baseline and candidate policies.
@@ -278,7 +279,7 @@ def get_counterexamples(request: PolicyDiffRequest):
 
 
 @app.post("/counterexamples/replay", response_model=CounterexampleReplayResult)
-def replay_counterexample(request: CounterexampleReplayRequest):
+def replay_counterexample(request: CounterexampleReplayRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Deterministically replays a counterexample vector against baseline and candidate
     policies using the live Cedar runtime path, verifying reproducibility.
@@ -294,7 +295,7 @@ def replay_counterexample(request: CounterexampleReplayRequest):
 
 
 @app.post("/contracts/evaluate", response_model=ContractEvaluationReport)
-def evaluate_contracts(request: ContractEvaluationRequest):
+def evaluate_contracts(request: ContractEvaluationRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Evaluates organizational security contracts against a policy set across a declared scenario suite.
     """
@@ -314,7 +315,7 @@ def evaluate_contracts(request: ContractEvaluationRequest):
 
 
 @app.post("/policies/regression", response_model=RegressionReport)
-def run_regression(request: RegressionRunRequest):
+def run_regression(request: RegressionRunRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Executes an end-to-end regression evaluation between baseline and candidate policies,
     evaluating diff transitions, extracting counterexamples, checking security contracts,
@@ -339,7 +340,7 @@ def run_regression(request: RegressionRunRequest):
 
 
 @app.post("/explanations", response_model=AIExplanationResponse)
-def generate_explanation(request: AIExplanationRequest):
+def generate_explanation(request: AIExplanationRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Synthesizes a structured, grounded AI explanation and remediation proposal
     from supplied deterministic authorization evidence.
@@ -360,7 +361,11 @@ def generate_explanation(request: AIExplanationRequest):
 
 
 @app.get("/deployment/readiness", response_model=AVPReadinessResponse)
-def get_deployment_readiness(region: str = "us-east-1", store_id: str = "ps-acmepay-prod"):
+def get_deployment_readiness(
+    region: str = "us-east-1",
+    store_id: str = "ps-acmepay-prod",
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Checks AWS environment connection and Amazon Verified Permissions readiness.
     """
@@ -374,7 +379,10 @@ def get_deployment_readiness(region: str = "us-east-1", store_id: str = "ps-acme
 
 
 @app.post("/deployment/prepare", response_model=DeploymentPrepareResponse)
-def prepare_deployment(request: DeploymentPrepareRequest):
+def prepare_deployment(
+    request: DeploymentPrepareRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Evaluates pre-deployment gate eligibility, calculates cryptographic policy hash,
     and creates a deployment preparation record.
@@ -399,11 +407,19 @@ def prepare_deployment(request: DeploymentPrepareRequest):
 
 
 @app.post("/deployment/approve", response_model=HumanApprovalResponse)
-def approve_deployment(request: HumanApprovalRequest):
+def approve_deployment(
+    request: HumanApprovalRequest,
+    current_user: AuthenticatedUser = Depends(require_roles(["approver", "admin"])),
+):
     """
     Registers explicit human operator sign-off for a specific prepared deployment and policy hash.
+    Requires 'approver' or 'admin' platform role.
     """
     try:
+        # If approver wasn't explicitly named in request payload, bind to authenticated user
+        if not (request.operatorName or request.approverName):
+            request.operatorName = current_user.username
+            request.approverName = current_user.username
         appr_res = deployment_service.register_approval(request)
         log_operational_metric("HumanApprovalGranted", 1.0, unit="Count")
         return appr_res
@@ -420,9 +436,13 @@ def approve_deployment(request: HumanApprovalRequest):
 
 
 @app.post("/deployment/submit", response_model=DeploymentSubmitResponse)
-def submit_deployment(request: DeploymentSubmitRequest):
+def submit_deployment(
+    request: DeploymentSubmitRequest,
+    current_user: AuthenticatedUser = Depends(require_roles(["deployer", "admin"])),
+):
     """
     Submits an approved policy set to Amazon Verified Permissions after validating human approval.
+    Requires 'deployer' or 'admin' platform role.
     """
     try:
         submit_res = deployment_service.submit_deployment(request)
@@ -445,7 +465,7 @@ def submit_deployment(request: DeploymentSubmitRequest):
 
 
 @app.get("/deployment/history", response_model=List[DeploymentRecord])
-def get_deployment_history():
+def get_deployment_history(current_user: AuthenticatedUser = Depends(get_current_user)):
     """
     Retrieves the audit trail ledger of verified deployments.
     """
@@ -466,7 +486,10 @@ class FullValidationRequest(BaseModel):
 
 
 @app.post("/validate-inputs", response_model=MultiStageValidationReport)
-def validate_inputs(request: FullValidationRequest):
+def validate_inputs(
+    request: FullValidationRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Exhaustive multi-stage input validation boundary checking policy syntax,
     schema compatibility, entity graph structure, and request/context types.
@@ -489,7 +512,10 @@ def validate_inputs(request: FullValidationRequest):
 
 
 @app.post("/policies/generate", response_model=PolicyGenerationResponse)
-def generate_policy(request: PolicyGenerationRequest):
+def generate_policy(
+    request: PolicyGenerationRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Synthesizes a candidate Cedar policy draft from natural language requirements
     using Amazon Bedrock with automatic syntax validation. (Draft remains UNTRUSTED).
@@ -521,7 +547,10 @@ class AgentAuditRequest(BaseModel):
 
 
 @app.post("/audits/agent-run", response_model=AuditWorkflowReport)
-def run_agent_audit(request: AgentAuditRequest):
+def run_agent_audit(
+    request: AgentAuditRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Executes an end-to-end security audit orchestrated by PolicyAuditAgent.
     Deterministic Cedar tools own authorization results.
@@ -551,7 +580,10 @@ class AuditExportRequest(BaseModel):
 
 
 @app.post("/audits/export", response_model=AuditExportResponse)
-def export_audit_report(request: AuditExportRequest):
+def export_audit_report(
+    request: AuditExportRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Exports a structured audit report in Markdown or JSON format.
     """
@@ -577,7 +609,10 @@ class AccessMatrixRequest(BaseModel):
 
 
 @app.post("/matrix/evaluate", response_model=AccessMatrixReport)
-def evaluate_access_matrix(request: AccessMatrixRequest):
+def evaluate_access_matrix(
+    request: AccessMatrixRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Evaluates effective authorization surface across Principals x (Actions x Resources)
     and indicates behavioral changes against an optional baseline policy.
@@ -608,7 +643,10 @@ class WhatIfRequest(BaseModel):
 
 
 @app.post("/simulator/what-if", response_model=WhatIfSimulationResponse)
-def simulate_what_if(request: WhatIfRequest):
+def simulate_what_if(
+    request: WhatIfRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Calculates impact metrics and gate readiness for a proposed policy modification.
     """
@@ -628,7 +666,10 @@ def simulate_what_if(request: WhatIfRequest):
 
 
 @app.get("/policies/{set_id}/timeline", response_model=List[PolicyVersionTimelineEntry])
-def get_policy_timeline(set_id: str):
+def get_policy_timeline(
+    set_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Retrieves chronological version history for a PolicySet.
     """
@@ -644,7 +685,11 @@ class RecordVersionRequest(BaseModel):
 
 
 @app.post("/policies/{set_id}/versions", response_model=PolicyVersionTimelineEntry)
-def record_policy_version(set_id: str, request: RecordVersionRequest):
+def record_policy_version(
+    set_id: str,
+    request: RecordVersionRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Records a new immutable policy version in the repository.
     """
@@ -653,7 +698,7 @@ def record_policy_version(set_id: str, request: RecordVersionRequest):
             set_id=set_id,
             version_tag=request.versionTag,
             policy_text=request.policyText,
-            author=request.author,
+            author=request.author or current_user.username,
             change_summary=request.changeSummary,
             gate_status=request.gateStatus,
         )
@@ -671,7 +716,10 @@ class CreateSnapshotRequest(BaseModel):
 
 
 @app.post("/entity-snapshots", response_model=EntitySnapshot)
-def create_entity_snapshot(request: CreateSnapshotRequest):
+def create_entity_snapshot(
+    request: CreateSnapshotRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Creates an immutable, bounded entity snapshot with SHA-256 integrity verification.
     """
@@ -690,7 +738,10 @@ def create_entity_snapshot(request: CreateSnapshotRequest):
 
 
 @app.get("/entity-snapshots/{snapshot_id}", response_model=EntitySnapshot)
-def get_entity_snapshot(snapshot_id: str):
+def get_entity_snapshot(
+    snapshot_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Retrieves a bounded entity snapshot by ID.
     """

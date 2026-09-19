@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/common/StatusBadge"
+import { UserSessionBadge } from "@/components/common/UserSessionBadge"
 import { useTheme } from "@/theme/ThemeProvider"
 
 interface AppHeaderProps {
@@ -98,6 +99,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             size="sm"
           />
         </div>
+
+        {/* User Identity / Emulated Role Badge */}
+        <UserSessionBadge />
 
         {/* Export Evidence Action (Inspired by Ref Images) */}
         <Button

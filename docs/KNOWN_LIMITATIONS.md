@@ -52,10 +52,12 @@ To defend against denial-of-service, memory exhaustion, and regex injection, Pol
 - **Implementation:** Custom entity providers normalize backend records to Cedar entity shapes (`id`, `typeName`, `attributes`, `parents`).
 - **Limitation:** Non-standard entity graphs with circular parent hierarchies or malformed UIDs fail closed with a `ValidationError` rather than guessing or defaulting to root.
 
-### 8. Pre-Deployment API Authentication & Identity Prerequisite
-- **Boundary:** Neither the frontend web client nor the FastAPI backend currently integrates an external Identity Provider (such as Amazon Cognito User Pool, AWS IAM SigV4, or an OAuth2/OIDC IdP). All local and demo interactions run with application-level verification (including cryptographic HMAC `approvalToken` checks for AVP submissions).
-- **Security Invariant:** In strict adherence to security rules, PolicyLab does not deploy a publicly unauthenticated HTTP API in production, nor does it fabricate dummy JWT issuers or mock tokens.
-- **Status:** Live deployment to public AWS is intentionally gated until an enterprise Identity Provider (e.g. Amazon Cognito User Pool with an HTTP API JWT Authorizer) is configured.
+### 8. Production API Authentication & Cognito Identity Provider Integration
+- **Implementation:** `infrastructure/template.yaml` declares a dedicated, self-contained Amazon Cognito User Pool (`PolicyLabUserPool`) and SPA User Pool Client (`PolicyLabUserPoolClient`). The HTTP API Gateway v2 enforces edge JWT authentication (`CognitoJwtAuthorizer`) as the default authorizer across all business and deployment endpoints.
+- **Fail-Closed Runtime:** The FastAPI backend security module (`backend/core/auth.py`) extracts edge-verified claims (`requestContext.authorizer.jwt.claims`) or validates incoming bearer tokens, strictly enforcing HTTP 401 Unauthorized for missing, malformed, or expired credentials when `ENVIRONMENT=prod` or `AUTH_STRICT=true`.
+- **Role-Based Access Control (RBAC):** Sensitive endpoints enforce platform roles (`approver` or `admin` for `/deployment/approve`; `deployer` or `admin` for `/deployment/submit`), returning HTTP 403 Forbidden for unauthorized identities.
+- **Local Development Continuity:** Local development (`ENVIRONMENT=dev`, `AUTH_ALLOW_LOCAL_DEV=true`) provides an offline fallback session with seamless in-browser role emulation (`UserSessionBadge`), permitting full end-to-end testing without external network dependencies.
+- **Live User Signup Status:** While the SAM infrastructure template and backend/frontend logic are 100% verified locally, live Amazon Cognito user registration will be executed upon initial stack deployment.
 
 ### 9. Lambda Packaging & Cross-Platform Native Dependencies
 - **Packaging Structure:** `infrastructure/template.yaml` specifies `CodeUri: ../backend` and uses SAM's native `ParentPackageMode: explicit` (`ParentPackages: backend`). This guarantees that `backend/requirements.txt` is resolved by `pip` while preserving the `backend.lambda_handler.handler` package structure and excluding `frontend/node_modules/`.

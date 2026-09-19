@@ -14,8 +14,22 @@ import {
   SecurityContract,
   SecurityContractResult,
 } from "../types/authz"
+import { getAuthToken, getStoredUser, generateLocalDevToken, setAuthToken } from "./auth"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+
+export function getAuthHeaders(): Record<string, string> {
+  let token = getAuthToken()
+  if (!token) {
+    const user = getStoredUser()
+    token = generateLocalDevToken(user)
+    setAuthToken(token)
+  }
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  }
+}
 
 export interface PolicyValidationResponse {
   isValid: boolean
@@ -147,6 +161,22 @@ export interface ContractEvaluationReport {
   results: SecurityContractResult[]
 }
 
+export async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const url = `${API_BASE_URL}${endpoint}`
+  const headers = {
+    ...getAuthHeaders(),
+    ...(options.headers || {}),
+  }
+  const res = await fetch(url, { ...options, headers })
+  if (res.status === 401) {
+    throw new Error("Authentication required (HTTP 401): Missing, invalid, or expired session credentials.")
+  }
+  if (res.status === 403) {
+    throw new Error("Access forbidden (HTTP 403): Your assigned role lacks permission for this action.")
+  }
+  return res
+}
+
 export async function checkBackendHealth(): Promise<{
   status: string
   engine: string
@@ -164,9 +194,8 @@ export async function validateCedarPolicy(
   policyText: string,
   schemaText?: string
 ): Promise<PolicyValidationResponse> {
-  const res = await fetch(`${API_BASE_URL}/policies/validate`, {
+  const res = await fetchWithAuth("/policies/validate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ policyText, schemaText }),
   })
   if (!res.ok) {
@@ -178,9 +207,8 @@ export async function validateCedarPolicy(
 export async function simulateSingleAuthorization(
   request: AuthorizationRequest
 ): Promise<CanonicalEvidence> {
-  const res = await fetch(`${API_BASE_URL}/simulate`, {
+  const res = await fetchWithAuth("/simulate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
   })
   if (!res.ok) {
@@ -202,9 +230,8 @@ export async function simulateBatchScenarios(payload: {
     scenarios: Scenario[]
   }
 }): Promise<SimulationRunResponse> {
-  const res = await fetch(`${API_BASE_URL}/simulate/batch`, {
+  const res = await fetchWithAuth("/simulate/batch", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -229,9 +256,8 @@ export async function comparePolicies(payload: {
   baselineLabel?: string
   candidateLabel?: string
 }): Promise<PolicyDiffReport> {
-  const res = await fetch(`${API_BASE_URL}/policies/diff`, {
+  const res = await fetchWithAuth("/policies/diff", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -256,9 +282,8 @@ export async function generateCounterexamples(payload: {
   baselineLabel?: string
   candidateLabel?: string
 }): Promise<Counterexample[]> {
-  const res = await fetch(`${API_BASE_URL}/policies/counterexamples`, {
+  const res = await fetchWithAuth("/policies/counterexamples", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -271,9 +296,8 @@ export async function generateCounterexamples(payload: {
 export async function replayCounterexample(
   payload: CounterexampleReplayRequest
 ): Promise<CounterexampleReplayResult> {
-  const res = await fetch(`${API_BASE_URL}/counterexamples/replay`, {
+  const res = await fetchWithAuth("/counterexamples/replay", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -296,9 +320,8 @@ export async function evaluateContracts(payload: {
   }
   contracts: SecurityContract[]
 }): Promise<ContractEvaluationReport> {
-  const res = await fetch(`${API_BASE_URL}/contracts/evaluate`, {
+  const res = await fetchWithAuth("/contracts/evaluate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -324,9 +347,8 @@ export async function runRegression(payload: {
   baselineLabel?: string
   candidateLabel?: string
 }): Promise<RegressionReport> {
-  const res = await fetch(`${API_BASE_URL}/policies/regression`, {
+  const res = await fetchWithAuth("/policies/regression", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -339,9 +361,8 @@ export async function runRegression(payload: {
 export async function explainAuthorizationFinding(
   payload: import("../types/authz").AIExplanationRequest
 ): Promise<import("../types/authz").AIExplanationResponse> {
-  const res = await fetch(`${API_BASE_URL}/explanations`, {
+  const res = await fetchWithAuth("/explanations", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -352,7 +373,7 @@ export async function explainAuthorizationFinding(
 }
 
 export async function getAVPReadiness(): Promise<import("../types/authz").AVPReadinessResponse> {
-  const res = await fetch(`${API_BASE_URL}/deployment/readiness`)
+  const res = await fetchWithAuth("/deployment/readiness")
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(errorBody.detail || "Failed to check AVP readiness")
@@ -363,9 +384,8 @@ export async function getAVPReadiness(): Promise<import("../types/authz").AVPRea
 export async function prepareDeployment(
   payload: import("../types/authz").DeploymentPrepareRequest
 ): Promise<import("../types/authz").DeploymentPrepareResponse> {
-  const res = await fetch(`${API_BASE_URL}/deployment/prepare`, {
+  const res = await fetchWithAuth("/deployment/prepare", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -378,9 +398,8 @@ export async function prepareDeployment(
 export async function approveDeployment(
   payload: import("../types/authz").HumanApprovalRequest
 ): Promise<import("../types/authz").HumanApprovalResponse> {
-  const res = await fetch(`${API_BASE_URL}/deployment/approve`, {
+  const res = await fetchWithAuth("/deployment/approve", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -393,9 +412,8 @@ export async function approveDeployment(
 export async function submitDeployment(
   payload: import("../types/authz").DeploymentSubmitRequest
 ): Promise<import("../types/authz").DeploymentSubmitResponse> {
-  const res = await fetch(`${API_BASE_URL}/deployment/submit`, {
+  const res = await fetchWithAuth("/deployment/submit", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -406,7 +424,7 @@ export async function submitDeployment(
 }
 
 export async function getDeploymentHistory(): Promise<import("../types/authz").DeploymentRecord[]> {
-  const res = await fetch(`${API_BASE_URL}/deployment/history`)
+  const res = await fetchWithAuth("/deployment/history")
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(errorBody.detail || "Failed to fetch deployment history")

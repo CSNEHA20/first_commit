@@ -17,11 +17,16 @@ PolicyLab deploys on AWS as a 100% serverless, zero-idle-cost application design
                                  │                 AWS Cloud                      │
                                  │                                                │
 [React 18+ Client] ────────────► │ [Amazon API Gateway (HTTP API v2)]             │
-(Amplify / S3+CloudFront)        │                        │                       │
-                                 │                        ▼                       │
-                                 │            [AWS Lambda (FastAPI / Mangum)]     │
-                                 │                        │                       │
-                                 │    ┌───────────────────┼──────────────────┐    │
+(Amplify / S3+CloudFront)        │    │ (DefaultAuthorizer: CognitoJwtAuthorizer) │
+       │                         │    │                                           │
+       │ (Auth: Cognito Token)   │    ├──► [Amazon Cognito User Pool]             │
+       └─────────────────────────┼────┘    (AuthN & Role Groups)                  │
+                                 │    │                                           │
+                                 │    ▼                                           │
+                                 │ [AWS Lambda (FastAPI / Mangum)]                │
+                                 │    │ (Strict Claims Extraction & RBAC)         │
+                                 │    │                                           │
+                                 │    ├───────────────────┼──────────────────┐    │
                                  │    ▼                   ▼                  ▼    │
                                  │ [Amazon DynamoDB]  [Amazon S3]   [Amazon AVP]  │
                                  │ (Single-Table)    (Artifacts)    (Policy Store)│
@@ -68,13 +73,13 @@ The template specifies `CodeUri: ../backend` and uses SAM's native `ParentPackag
 sam build --template-file infrastructure/template.yaml --region us-east-1
 ```
 
-### Step 4: Guided Deployment & Security Gating
+### Step 4: Guided Deployment & Security Configuration
 
-> [!WARNING]
-> **API Gateway Authentication Gating (Mandatory Security Gate):**
-> Neither the frontend nor backend currently implements an external Identity Provider (such as Amazon Cognito User Pool or AWS IAM SigV4).
-> In accordance with PolicyLab security standards, **do not approve deployment of publicly unauthenticated endpoints in production**.
-> If SAM prompts `PolicyLabBackendFunction may not have authorization defined, Is this okay?`, answer `N` (or cancel) until a genuine Identity Provider (Cognito User Pool with JWT Authorizer) is provisioned.
+The SAM template provisions a fully self-contained authentication architecture:
+- **`PolicyLabUserPool`**: Amazon Cognito User Pool with strict password policies and self-service registration controls.
+- **`PolicyLabUserPoolClient`**: Web App client (PKCE-ready, secretless for browser SPAs).
+- **`CognitoJwtAuthorizer`**: API Gateway HTTP API v2 Default Authorizer that verifies JWT issuer and audience at the edge before traffic touches Lambda.
+- **Public Exemption**: Only `GET /health` has `Authorizer: NONE` for synthetic uptime checks.
 
 ```bash
 sam deploy --guided \
@@ -97,6 +102,9 @@ During guided deployment, provide:
 ### SAM Template Outputs
 Upon successful deployment, SAM outputs:
 - `ApiEndpoint`: The HTTP API Gateway HTTPS base URL.
+- `UserPoolId`: Amazon Cognito User Pool ID (`us-east-1_xxxxxxxxx`).
+- `UserPoolClientId`: Amazon Cognito Web App Client ID.
+- `CognitoAuthUrl`: Identity Provider Issuer URL (`https://cognito-idp.us-east-1.amazonaws.com/<user-pool-id>`).
 - `DynamoDBTableName`: `PolicyLab-prod`
 - `ArtifactsBucketName`: `policylab-artifacts-<account-id>-us-east-1-prod`
 - `StateMachineArn`: `arn:aws:states:us-east-1:<account-id>:stateMachine:PolicyAuditWorkflow-prod`
@@ -126,14 +134,63 @@ When running backend services in production or local live mode, configure these 
 
 ---
 
-## 5. Live Cloud Verification Runbook
+## 5. Amazon Cognito Identity & RBAC Configuration
 
-### 1. Verify Operational Health & AWS Status
+PolicyLab implements Role-Based Access Control (RBAC) enforced at the application layer with identity provenance verified by the API Gateway Cognito JWT Authorizer:
+
+### Platform Authorization Roles
+
+| Role | Permitted Actions | Target Endpoints |
+| :--- | :--- | :--- |
+| `viewer` | Read-only inspection of status, history, timelines, and metrics | `GET /aws/status`, `GET /deployment/history`, `GET /policies/{set_id}/timeline` |
+| `engineer` | Policy authoring, syntax validation, what-if simulations, and diffs | `POST /policies/validate`, `POST /simulate`, `POST /simulator/what-if`, `POST /diff` |
+| `approver` | Pre-deployment gate inspection and cryptographic approval issuance | `POST /deployment/prepare`, `POST /deployment/approve` |
+| `deployer` | Initiates synchronized policy deployment to Amazon Verified Permissions | `POST /deployment/submit` |
+| `admin` | Universal administrative access and full bypass capabilities | All endpoints |
+
+### Creating a User and Assigning Role Groups via AWS CLI
+
 ```bash
-curl -X GET "https://<api-id>.execute-api.us-east-1.amazonaws.com/health"
-curl -X GET "https://<api-id>.execute-api.us-east-1.amazonaws.com/aws/status"
+# 1. Create a SecOps Approver User in the deployed User Pool
+aws cognito-idp admin-create-user \
+  --user-pool-id <UserPoolId> \
+  --username sarah.chen@acmepay.internal \
+  --user-attributes Email=sarah.chen@acmepay.internal,EmailVerified=true \
+  --temporary-password "TemporaryP@ss123!"
+
+# 2. Create the 'approver' group (if not created automatically)
+aws cognito-idp create-group \
+  --user-pool-id <UserPoolId> \
+  --group-name approver \
+  --description "SecOps Authorized Approvers"
+
+# 3. Add user to the 'approver' group
+aws cognito-idp admin-add-user-to-group \
+  --user-pool-id <UserPoolId> \
+  --username sarah.chen@acmepay.internal \
+  --group-name approver
+
+# 4. Authenticate and retrieve ID Token (JWT)
+aws cognito-idp initiate-auth \
+  --auth-flow USER_PASSWORD_AUTH \
+  --client-id <UserPoolClientId> \
+  --auth-parameters USERNAME=sarah.chen@acmepay.internal,PASSWORD="PermanentP@ss456!"
 ```
-*Expected Result:* HTTP 200 with all 5 services reporting `status: LIVE` when credentials and resources are active.
+
+---
+
+## 6. Live Cloud Verification Runbook
+
+### 1. Verify Operational Health (Public) & AWS Status (Authenticated)
+```bash
+# Unauthenticated health probe (always public)
+curl -X GET "https://<api-id>.execute-api.us-east-1.amazonaws.com/health"
+
+# Authenticated status check
+curl -X GET "https://<api-id>.execute-api.us-east-1.amazonaws.com/aws/status" \
+  -H "Authorization: Bearer <IdToken>"
+```
+*Expected Result:* HTTP 200 with all 5 services reporting `status: LIVE` when credentials and resources are active. Unauthenticated requests to `/aws/status` return HTTP 401 Unauthorized.
 
 ### 2. Verify Amazon Verified Permissions Store Discovery
 ```bash

@@ -41,6 +41,38 @@ Parameters:
 
 Resources:
   # ---------------------------------------------------------------------------
+  # Amazon Cognito User Pool & App Client (Production Identity Provider)
+  # ---------------------------------------------------------------------------
+  PolicyLabUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub 'policylab-users-${EnvironmentName}'
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+
+  PolicyLabUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub 'policylab-web-${EnvironmentName}'
+      UserPoolId: !Ref PolicyLabUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+
+  # ---------------------------------------------------------------------------
   # API Gateway (HTTP API v2)
   # ---------------------------------------------------------------------------
   PolicyLabHttpApi:
@@ -59,6 +91,15 @@ Resources:
           - Authorization
           - X-Correlation-ID
         MaxAge: 300
+      Auth:
+        DefaultAuthorizer: CognitoJwtAuthorizer
+        Authorizers:
+          CognitoJwtAuthorizer:
+            IdentitySource: '$request.header.Authorization'
+            JwtConfiguration:
+              issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${PolicyLabUserPool}'
+              audience:
+                - !Ref PolicyLabUserPoolClient
 
   # ---------------------------------------------------------------------------
   # Backend Lambda Function (FastAPI + Mangum)
@@ -70,6 +111,14 @@ Resources:
       Handler: backend.lambda_handler.handler
       Description: Core PolicyLab deterministic Cedar engine, AI explanation, and verification backend.
       Events:
+        ApiHealth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PolicyLabHttpApi
+            Path: /health
+            Method: GET
+            Auth:
+              Authorizer: NONE
         ApiRoot:
           Type: HttpApi
           Properties:
@@ -197,3 +246,12 @@ Outputs:
   StateMachineArn:
     Description: Step Functions Audit Workflow ARN
     Value: !Ref PolicyAuditStateMachine
+  UserPoolId:
+    Description: Amazon Cognito User Pool ID
+    Value: !Ref PolicyLabUserPool
+  UserPoolClientId:
+    Description: Amazon Cognito Web App Client ID
+    Value: !Ref PolicyLabUserPoolClient
+  CognitoAuthUrl:
+    Description: Amazon Cognito IdP Issuer Base URL
+    Value: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${PolicyLabUserPool}'
