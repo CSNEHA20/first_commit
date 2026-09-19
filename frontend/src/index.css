@@ -4,6 +4,63 @@
 
 @layer base {
   :root {
+    /* Light Mode (Default) */
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 93.5%;
+    --muted-foreground: 215.4 16.3% 42%;
+
+    --accent: 210 40% 94%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 88%;
+    --input: 214.3 31.8% 88%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+
+    /* Light Security Status */
+    --status-allow: 152 76% 36%;
+    --status-allow-foreground: 152 80% 96%;
+    --status-allow-border: 152 65% 45%;
+
+    --status-deny: 0 84% 50%;
+    --status-deny-foreground: 0 85% 97%;
+    --status-deny-border: 0 75% 60%;
+
+    --status-warning: 38 92% 44%;
+    --status-warning-foreground: 48 96% 96%;
+    --status-warning-border: 38 85% 50%;
+
+    --status-blocked: 346 84% 48%;
+    --status-blocked-foreground: 346 84% 97%;
+    --status-blocked-border: 346 80% 55%;
+
+    --ai-brand: 263 70% 50%;
+    --ai-brand-foreground: 263 70% 97%;
+    --ai-brand-border: 263 60% 65%;
+
+    --surface-elevated: 0 0% 100%;
+    --surface-subtle: 210 40% 95%;
+  }
+
+  .dark {
+    /* Dark Mode */
     --background: 224 71% 4%;
     --foreground: 210 40% 98%;
 
@@ -31,9 +88,8 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --radius: 0.5rem;
 
-    /* Security States */
+    /* Dark Security Status */
     --status-allow: 152 76% 40%;
     --status-allow-foreground: 142 76% 96%;
     --status-allow-border: 152 76% 40%;
@@ -50,9 +106,12 @@
     --status-blocked-foreground: 346 84% 96%;
     --status-blocked-border: 346 84% 53%;
 
-    --ai-brand: 263 70% 50%;
+    --ai-brand: 263 70% 55%;
     --ai-brand-foreground: 263 70% 96%;
     --ai-brand-border: 263 70% 60%;
+
+    --surface-elevated: 222 47% 10%;
+    --surface-subtle: 224 71% 6%;
   }
 
   * {
@@ -60,12 +119,12 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased selection:bg-slate-800 selection:text-white;
+    @apply bg-background text-foreground antialiased transition-colors duration-200;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Custom Scrollbar for Code and Evidence Views */
+/* Scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -76,10 +135,50 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Custom Cedar Code Highlighting Tokens */
+.cedar-keyword {
+  color: #7C3AED;
+  font-weight: 600;
+}
+.dark .cedar-keyword {
+  color: #A78BFA;
+}
+
+.cedar-entity {
+  color: #0284C7;
+  font-weight: 500;
+}
+.dark .cedar-entity {
+  color: #38BDF8;
+}
+
+.cedar-string {
+  color: #059669;
+}
+.dark .cedar-string {
+  color: #34D399;
+}
+
+.cedar-comment {
+  color: #64748B;
+  font-style: italic;
+}
+.dark .cedar-comment {
+  color: #94A3B8;
+}
+
+.cedar-action {
+  color: #EA580C;
+  font-weight: 500;
+}
+.dark .cedar-action {
+  color: #FB923C;
 }
