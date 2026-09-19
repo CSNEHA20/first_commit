@@ -65,8 +65,8 @@ const QUICK_TEMPLATES = [
 
 export const SimulatorScreen: React.FC = () => {
   const [selectedPrincipal, setSelectedPrincipal] = useState(SAMPLE_PRINCIPALS[0].id)
-  const [selectedAction, setSelectedAction] = useState(SAMPLE_ACTIONS[2].id) // delete
-  const [selectedResource, setSelectedResource] = useState(SAMPLE_RESOURCES[0].id) // payroll
+  const [selectedAction, setSelectedAction] = useState(SAMPLE_ACTIONS[2].id)
+  const [selectedResource, setSelectedResource] = useState(SAMPLE_RESOURCES[0].id)
   const [contextJson, setContextJson] = useState('{\n  "network": "EXTERNAL",\n  "isMfaVerified": false\n}')
   const [policyVersion, setPolicyVersion] = useState<"v12" | "v13">("v13")
   const [isSimulating, setIsSimulating] = useState(false)
@@ -169,39 +169,39 @@ export const SimulatorScreen: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Simulator Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.1] pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-orange-400 font-mono">Cedar Request Debugger</span>
             <span className="text-muted-foreground/40">·</span>
             <span className="text-xs text-muted-foreground">Interactive WASM Authorization Engine</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Zap className="h-5 w-5 text-orange-400 shadow-[0_0_10px_rgba(255,106,36,0.5)]" />
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground flex items-center gap-2.5">
+            <Zap className="h-6 w-6 text-orange-400 shadow-[0_0_12px_rgba(255,106,36,0.6)]" />
             Ad-hoc Scenario Simulator
           </h1>
         </div>
 
         {/* Policy Version Switcher */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Target Version:</span>
-          <div className="flex items-center p-0.5 rounded-lg bg-black/40 border border-white/[0.08]">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xs text-muted-foreground font-mono">Target:</span>
+          <div className="flex items-center p-0.5 rounded-xl bg-black/50 border border-white/[0.12] backdrop-blur-md">
             <button
               onClick={() => setPolicyVersion("v12")}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 policyVersion === "v12"
-                  ? "bg-white/[0.1] text-white shadow-sm font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white/[0.12] text-white shadow-sm"
+                  : "text-muted-foreground hover:text-white"
               }`}
             >
               v12 (Production)
             </button>
             <button
               onClick={() => setPolicyVersion("v13")}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 policyVersion === "v13"
-                  ? "bg-[#FF6A24] text-white shadow-sm font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-[#FF6A24] text-white shadow-[0_0_12px_rgba(255,106,36,0.4)]"
+                  : "text-muted-foreground hover:text-white"
               }`}
             >
               v13 (Candidate)
@@ -210,30 +210,30 @@ export const SimulatorScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Scenario Templates Bar */}
-      <div className="p-2.5 rounded-xl border border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md flex items-center gap-2 overflow-x-auto text-xs">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase flex items-center gap-1.5 shrink-0 font-mono">
-          <Bookmark className="h-3 w-3 text-orange-400" />
-          Quick Templates:
+      {/* Quick Scenario Templates Bar (Glass Capsule Bar) */}
+      <div className="glass-card-premium p-3 rounded-2xl flex items-center gap-2 overflow-x-auto text-xs shadow-lg">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5 shrink-0 font-mono pl-1">
+          <Bookmark className="h-3.5 w-3.5 text-orange-400" />
+          Templates:
         </span>
         {QUICK_TEMPLATES.map((tpl, idx) => (
           <button
             key={idx}
             onClick={() => applyTemplate(tpl)}
-            className="px-2.5 py-1 rounded-lg bg-black/40 hover:bg-white/[0.08] text-foreground text-[11px] font-medium border border-white/[0.06] whitespace-nowrap transition-colors shrink-0"
+            className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] hover:border-orange-500/40 text-foreground text-[11px] font-medium border border-white/[0.08] whitespace-nowrap transition-all duration-200 shrink-0 backdrop-blur-md hover:-translate-y-0.5"
           >
             {tpl.name}
           </button>
         ))}
       </div>
 
-      {/* Grid: Request Vector (7 cols) & Outcome Inspector (5 cols) */}
+      {/* Grid: Request Vector & Outcome Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left Column: Request Configuration */}
-        <div className="lg:col-span-7 space-y-3">
-          <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
-            <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
-              <CardTitle className="text-xs font-semibold">
+        {/* Left Column: Request Configuration (7 cols) */}
+        <div className="lg:col-span-7">
+          <Card className="glass-card-premium">
+            <CardHeader className="p-4 border-b border-white/[0.08]">
+              <CardTitle className="text-xs font-bold">
                 Authorization Request Vector
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
@@ -241,16 +241,16 @@ export const SimulatorScreen: React.FC = () => {
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="p-3.5 pt-2 space-y-3 text-xs">
+            <CardContent className="p-4 space-y-3.5 text-xs">
               {/* Principal Selection */}
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase font-mono">
+                <label className="text-[10px] font-mono font-bold text-muted-foreground uppercase">
                   Principal
                 </label>
                 <select
                   value={selectedPrincipal}
                   onChange={(e) => setSelectedPrincipal(e.target.value)}
-                  className="w-full h-8 px-2.5 rounded-lg bg-black/50 border border-white/[0.1] text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="glass-input w-full h-9 px-3 rounded-xl text-xs font-mono text-foreground focus:outline-none"
                 >
                   {SAMPLE_PRINCIPALS.map((p) => (
                     <option key={p.id} value={p.id} className="bg-[#0D1015] text-foreground">
@@ -262,13 +262,13 @@ export const SimulatorScreen: React.FC = () => {
 
               {/* Action Selection */}
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase font-mono">
+                <label className="text-[10px] font-mono font-bold text-muted-foreground uppercase">
                   Action
                 </label>
                 <select
                   value={selectedAction}
                   onChange={(e) => setSelectedAction(e.target.value)}
-                  className="w-full h-8 px-2.5 rounded-lg bg-black/50 border border-white/[0.1] text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="glass-input w-full h-9 px-3 rounded-xl text-xs font-mono text-foreground focus:outline-none"
                 >
                   {SAMPLE_ACTIONS.map((a) => (
                     <option key={a.id} value={a.id} className="bg-[#0D1015] text-foreground">
@@ -280,13 +280,13 @@ export const SimulatorScreen: React.FC = () => {
 
               {/* Resource Selection */}
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase font-mono">
+                <label className="text-[10px] font-mono font-bold text-muted-foreground uppercase">
                   Resource
                 </label>
                 <select
                   value={selectedResource}
                   onChange={(e) => setSelectedResource(e.target.value)}
-                  className="w-full h-8 px-2.5 rounded-lg bg-black/50 border border-white/[0.1] text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="glass-input w-full h-9 px-3 rounded-xl text-xs font-mono text-foreground focus:outline-none"
                 >
                   {SAMPLE_RESOURCES.map((r) => (
                     <option key={r.id} value={r.id} className="bg-[#0D1015] text-foreground">
@@ -298,98 +298,98 @@ export const SimulatorScreen: React.FC = () => {
 
               {/* Context JSON */}
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase font-mono">
+                <label className="text-[10px] font-mono font-bold text-muted-foreground uppercase">
                   Context (JSON Attributes)
                 </label>
                 <textarea
                   value={contextJson}
                   onChange={(e) => setContextJson(e.target.value)}
                   rows={2}
-                  className="w-full p-2 rounded-lg bg-black/50 border border-white/[0.1] text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="glass-input w-full p-2.5 rounded-xl text-xs font-mono text-foreground focus:outline-none"
                 />
               </div>
 
               <Button
                 onClick={handleSimulate}
                 disabled={isSimulating}
-                className="w-full bg-[#FF6A24] text-white hover:bg-[#FF8A42] font-semibold text-xs gap-1.5 h-8 mt-1 shadow-[0_0_15px_rgba(255,106,36,0.3)]"
+                className="w-full glass-button-orange text-white font-bold text-xs gap-2 h-9 mt-1 rounded-xl"
               >
-                <Play className="h-3 w-3 fill-current" />
+                <Play className="h-3.5 w-3.5 fill-current" />
                 {isSimulating ? "Evaluating in Cedar WASM..." : "Evaluate Request Vector"}
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Output Result & Delta Comparison */}
-        <div className="lg:col-span-5 space-y-3">
-          <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
-            <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
+        {/* Right Column: Output Result & Delta Comparison (5 cols) */}
+        <div className="lg:col-span-5">
+          <Card className="glass-card-premium">
+            <CardHeader className="p-4 border-b border-white/[0.08]">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-semibold">Evaluation Outcome</CardTitle>
+                <CardTitle className="text-xs font-bold">Evaluation Outcome</CardTitle>
                 <StatusBadge status={result.decision} size="xs" />
               </div>
             </CardHeader>
 
-            <CardContent className="p-3.5 pt-2 space-y-3 text-xs">
+            <CardContent className="p-4 space-y-3.5 text-xs">
               {hasEvaluated ? (
                 <>
                   {/* Decision Hero Banner */}
-                  <div className={`p-3.5 rounded-xl border flex items-center justify-between ${
+                  <div className={`p-4 rounded-2xl border backdrop-blur-xl flex items-center justify-between shadow-lg ${
                     result.decision === "ALLOW"
-                      ? "border-emerald-500/30 bg-emerald-500/[0.05]"
-                      : "border-red-500/30 bg-red-500/[0.05]"
+                      ? "border-emerald-500/40 bg-emerald-500/[0.08] shadow-[0_0_20px_rgba(24,184,104,0.15)]"
+                      : "border-red-500/40 bg-red-500/[0.08] shadow-[0_0_20px_rgba(239,68,68,0.15)]"
                   }`}>
                     <div>
-                      <span className="text-[10px] text-muted-foreground uppercase font-semibold block mb-0.5 font-mono">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1 font-mono">
                         Target Decision ({policyVersion})
                       </span>
                       <DecisionBadge decision={result.decision} size="lg" />
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[10px] text-muted-foreground uppercase font-semibold block mb-0.5 font-mono flex items-center gap-1 justify-end">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1 font-mono flex items-center gap-1 justify-end">
                         <Clock className="h-3 w-3 text-orange-400" /> Latency
                       </span>
-                      <span className="font-mono font-bold text-xs text-foreground">
+                      <span className="font-mono font-black text-sm text-foreground">
                         {result.executionMs} ms
                       </span>
                     </div>
                   </div>
 
-                  {/* Matched Policy Trace */}
-                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/[0.06] space-y-1 text-xs">
-                    <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
+                  {/* Matched Policy Trace (Frosted Glass Panel) */}
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/[0.1] backdrop-blur-md space-y-1.5 text-xs shadow-inner">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block font-mono">
                       Determining Policy Statement
                     </span>
-                    <div className="flex items-center gap-1.5 font-mono text-xs text-foreground font-semibold">
+                    <div className="flex items-center gap-2 font-mono text-xs text-foreground font-bold">
                       <Code2 className="h-3.5 w-3.5 text-orange-400" />
-                      <code>{result.matchedPolicy}</code>
+                      <code className="text-orange-400">{result.matchedPolicy}</code>
                     </div>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed pt-0.5">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed pt-0.5 font-sans">
                       {result.reason}
                     </p>
                   </div>
 
                   {/* Side-by-Side Baseline vs Candidate Comparison */}
-                  <div className="p-2.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2">
+                  <div className="p-3 rounded-xl bg-black/30 border border-white/[0.1] space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block font-mono">
                         Version Comparison Delta
                       </span>
                       {isDecisionFlip && (
-                        <span className="text-[9px] font-mono font-bold text-red-400 px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/20 animate-pulse">
+                        <span className="text-[9px] font-mono font-bold text-red-400 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.4)] animate-pulse">
                           DECISION FLIP
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between text-xs pt-0.5">
-                      <div className="text-center flex-1 p-2 rounded bg-black/20 border border-white/[0.04]">
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <div className="text-center flex-1 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm">
                         <span className="text-[10px] text-muted-foreground block mb-1 font-mono">v12 (Production)</span>
                         <DecisionBadge decision={baselineResult.decision} size="sm" />
                       </div>
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground mx-2 shrink-0" />
-                      <div className="text-center flex-1 p-2 rounded bg-black/20 border border-white/[0.04]">
+                      <ArrowRight className="h-4 w-4 text-muted-foreground mx-2 shrink-0" />
+                      <div className="text-center flex-1 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm">
                         <span className="text-[10px] text-muted-foreground block mb-1 font-mono">v13 (Candidate)</span>
                         <DecisionBadge decision={candidateResult.decision} size="sm" />
                       </div>

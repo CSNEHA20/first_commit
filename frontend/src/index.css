@@ -5,16 +5,16 @@
 @layer base {
   :root {
     /* Cybersecurity Workstation Light Mode Palette */
-    --background: 220 14% 96%;          /* #F3F4F6 */
-    --foreground: 220 24% 8%;           /* #0F1216 */
+    --background: 220 14% 96%;
+    --foreground: 220 24% 8%;
 
-    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card: 0 0% 100%;
     --card-foreground: 220 24% 8%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 220 24% 8%;
 
-    --primary: 20 100% 57%;            /* #FF6A24 - High-vis Cybersecurity Orange */
+    --primary: 20 100% 57%;            /* #FF6A24 */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 92%;
@@ -26,91 +26,82 @@
     --accent: 220 14% 90%;
     --accent-foreground: 220 24% 8%;
 
-    --destructive: 0 74% 50%;          /* #DC2626 */
+    --destructive: 0 74% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 86%;
     --input: 220 13% 86%;
     --ring: 20 100% 57%;
-    --radius: 0.5rem;                  /* 8px */
+    --radius: 0.75rem;
 
-    /* Security Status Semantics (Light) */
-    --status-allow: 149 71% 30%;       /* #16834A - Verified / Safe */
+    --status-allow: 149 71% 30%;
     --status-allow-foreground: 149 80% 96%;
     --status-allow-border: 149 50% 70%;
 
-    --status-deny: 0 74% 50%;          /* #DC2626 - Critical / Denied */
+    --status-deny: 0 74% 50%;
     --status-deny-foreground: 0 85% 97%;
     --status-deny-border: 0 60% 75%;
 
-    --status-warning: 39 90% 48%;      /* #F59E0B - Warning */
+    --status-warning: 39 90% 48%;
     --status-warning-foreground: 48 96% 96%;
     --status-warning-border: 38 80% 70%;
 
-    --status-blocked: 0 74% 50%;       /* #DC2626 - Blocked Gate */
+    --status-blocked: 0 74% 50%;
     --status-blocked-foreground: 0 85% 97%;
     --status-blocked-border: 0 60% 75%;
-
-    --ai-brand: 20 100% 57%;
-    --ai-brand-foreground: 0 0% 100%;
-    --ai-brand-border: 20 80% 75%;
 
     --surface-elevated: 0 0% 100%;
     --surface-subtle: 220 14% 94%;
   }
 
   .dark {
-    /* Cybersecurity Workstation Dark Mode Palette (#090A0D canvas, #0D1015 secondary) */
-    --background: 228 18% 4%;          /* #090A0D - Dark atmospheric canvas */
+    /* Cybersecurity Workstation Dark Mode Palette (#090A0D canvas) */
+    --background: 228 18% 4%;          /* #090A0D */
     --foreground: 220 14% 96%;         /* #F3F4F6 */
 
-    --card: 220 24% 7%;                /* #0D1015 - Secondary surface */
+    /* Translucent Glass Card Base */
+    --card: 222 25% 9%;                /* Translucent glass foundation */
     --card-foreground: 220 14% 96%;
 
-    --popover: 218 23% 10%;            /* #13171E - Raised glass surface */
+    --popover: 220 25% 11%;
     --popover-foreground: 220 14% 96%;
 
     --primary: 20 100% 57%;            /* #FF6A24 - Brand Cyber Orange */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 218 23% 10%;          /* #13171E */
+    --secondary: 218 23% 10%;
     --secondary-foreground: 220 14% 96%;
 
-    --muted: 218 23% 10%;              /* #13171E */
-    --muted-foreground: 220 10% 60%;   /* #8E95A5 - Muted slate text */
+    --muted: 218 23% 12%;
+    --muted-foreground: 220 12% 64%;   /* #949EB2 */
 
-    --accent: 219 22% 13%;             /* #191E27 - Elevated hover */
+    --accent: 219 22% 16%;
     --accent-foreground: 220 14% 98%;
 
     --destructive: 0 84% 60%;          /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 16%;             /* #1F2633 */
-    --input: 220 18% 16%;
+    --border: 220 18% 18%;
+    --input: 220 18% 18%;
     --ring: 20 100% 57%;
 
-    /* Security Status Semantics (Dark) */
-    --status-allow: 152 76% 40%;       /* #18B868 - Verified / Safe */
+    --status-allow: 152 76% 42%;       /* #18B868 */
     --status-allow-foreground: 152 80% 98%;
-    --status-allow-border: 152 50% 25%;
+    --status-allow-border: 152 50% 28%;
 
-    --status-deny: 0 84% 60%;          /* #EF4444 - Critical / Denied */
+    --status-deny: 0 84% 60%;          /* #EF4444 */
     --status-deny-foreground: 0 85% 98%;
-    --status-deny-border: 0 60% 28%;
+    --status-deny-border: 0 60% 30%;
 
-    --status-warning: 39 90% 55%;      /* #F5B544 - Warm Amber */
+    --status-warning: 39 90% 55%;      /* #F5B544 */
     --status-warning-foreground: 48 96% 98%;
-    --status-warning-border: 39 60% 26%;
+    --status-warning-border: 39 60% 28%;
 
-    --status-blocked: 0 84% 60%;       /* #EF4444 - Blocked Gate */
+    --status-blocked: 0 84% 60%;
     --status-blocked-foreground: 0 85% 98%;
-    --status-blocked-border: 0 60% 28%;
+    --status-blocked-border: 0 60% 30%;
 
-    --ai-brand: 20 100% 57%;
-    --ai-brand-foreground: 0 0% 100%;
-    --ai-brand-border: 20 50% 28%;
-
-    --surface-elevated: 219 22% 13%;   /* #191E27 */
+    --surface-elevated: 219 22% 13%;
     --surface-subtle: 220 24% 7%;
   }
 
@@ -119,54 +110,170 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased transition-colors duration-150;
+    @apply bg-background text-foreground antialiased transition-colors duration-200;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Atmospheric Ambient Horizon Glow & Glassmorphism Utilities */
-.ambient-horizon-glow {
+/* ==========================================================================
+   AUTHENTIC CYBERSECURITY GLASSMORHPISM ENGINE & ATMOSPHERIC LIGHTING
+   ========================================================================== */
+
+/* High-tech Isometric Dot/Grid Texture */
+.cyber-canvas-grid {
+  background-image: 
+    radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 24px 24px, 48px 48px, 48px 48px;
+}
+
+/* Luminous Cyber Auroras (Shining Through Frosted Glass) */
+.cyber-aurora-top {
   background: radial-gradient(
-    ellipse 85% 35% at 50% -12%,
+    ellipse 70% 45% at 50% -10%,
+    rgba(255, 106, 36, 0.22),
+    rgba(245, 181, 68, 0.09) 40%,
+    transparent 75%
+  );
+  animation: auroraPulse 8s ease-in-out infinite alternate;
+}
+
+.cyber-aurora-corner {
+  background: radial-gradient(
+    circle 650px at 85% 15%,
     rgba(255, 106, 36, 0.16),
-    rgba(245, 181, 68, 0.05) 50%,
-    transparent 80%
+    rgba(245, 181, 68, 0.06) 45%,
+    transparent 70%
   );
 }
 
-.glass-panel {
-  background: rgba(13, 16, 21, 0.78);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+.cyber-aurora-left {
+  background: radial-gradient(
+    circle 500px at 10% 40%,
+    rgba(56, 189, 248, 0.07),
+    transparent 65%
+  );
 }
 
-.glass-panel-elevated {
-  background: rgba(24, 28, 36, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+@keyframes auroraPulse {
+  0% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1.1;
+    transform: scale(1.05);
+  }
 }
 
-.glass-card {
-  background: rgba(19, 23, 30, 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.2s ease-in-out;
+/* Premium Frosted Glassmorphism Card Style */
+.glass-card-premium {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  ), rgba(16, 21, 30, 0.58);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 16px 0 rgba(255, 106, 36, 0.03),
+    0 10px 32px 0 rgba(0, 0, 0, 0.45);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glass-card:hover {
-  background: rgba(25, 30, 39, 0.85);
-  border-color: rgba(255, 106, 36, 0.28);
+.glass-card-premium:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 106, 36, 0.45);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
+    inset 0 0 24px 0 rgba(255, 106, 36, 0.08),
+    0 16px 40px -8px rgba(0, 0, 0, 0.6),
+    0 0 24px -2px rgba(255, 106, 36, 0.25);
 }
 
-/* Scrollbar styles - Clean & Minimal */
+/* Elevated Frosted Glass Panel */
+.glass-panel-premium {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  ), rgba(20, 26, 38, 0.68);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 20px 0 rgba(255, 106, 36, 0.05),
+    0 14px 44px 0 rgba(0, 0, 0, 0.55);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-premium:hover {
+  border-color: rgba(255, 106, 36, 0.5);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 30px 0 rgba(255, 106, 36, 0.12),
+    0 20px 50px -10px rgba(0, 0, 0, 0.7),
+    0 0 30px -4px rgba(255, 106, 36, 0.3);
+}
+
+/* Glass Input & Selector */
+.glass-input {
+  background: rgba(10, 14, 20, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  border-color: rgba(255, 106, 36, 0.6) !important;
+  box-shadow: 0 0 14px rgba(255, 106, 36, 0.25) !important;
+}
+
+/* Glass Button Shimmer & Micro-Interactions */
+.glass-button-orange {
+  background: linear-gradient(135deg, #FF6A24 0%, #FF8A42 100%);
+  box-shadow: 0 0 20px rgba(255, 106, 36, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button-orange:hover {
+  background: linear-gradient(135deg, #FF8A42 0%, #FF9A58 100%);
+  box-shadow: 0 0 28px rgba(255, 106, 36, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.glass-button-orange:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* Glowing Pulsing Radar Node Animation */
+@keyframes radarPulse {
+  0% {
+    r: 4px;
+    opacity: 1;
+  }
+  50% {
+    r: 8px;
+    opacity: 0.6;
+  }
+  100% {
+    r: 4px;
+    opacity: 1;
+  }
+}
+
+.animate-radar-pulse {
+  animation: radarPulse 2s ease-in-out infinite;
+}
+
+/* Scrollbar styles - High-Tech Minimal */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -174,15 +281,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.16);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 106, 36, 0.4);
+  background: rgba(255, 106, 36, 0.5);
 }
 
-/* Cedar Code Syntax Tokens - High Precision Dark Contrast */
+/* Cedar Code Syntax Tokens - High Contrast */
 .cedar-keyword {
   color: #C084FC;
   font-weight: 600;
@@ -216,7 +323,7 @@
 
 .cedar-action {
   color: #FF8A42;
-  font-weight: 500;
+  font-weight: 600;
 }
 .dark .cedar-action {
   color: #FF8A42;

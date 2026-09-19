@@ -4,15 +4,19 @@ import { cn } from "@/lib/utils"
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border border-border bg-card text-card-foreground",
+      "glass-card-premium rounded-2xl relative overflow-hidden text-card-foreground transition-all duration-300",
       className
     )}
     {...props}
-  />
+  >
+    {/* Specular Top Horizon Highlight Sheen */}
+    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.22] to-transparent pointer-events-none" />
+    {children}
+  </div>
 ))
 Card.displayName = "Card"
 
@@ -34,7 +38,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("text-sm font-semibold tracking-tight text-foreground", className)}
+    className={cn("text-xs font-bold tracking-tight text-foreground", className)}
     {...props}
   />
 ))

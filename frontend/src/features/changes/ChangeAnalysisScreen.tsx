@@ -32,7 +32,6 @@ export const ChangeAnalysisScreen: React.FC = () => {
     useState<Counterexample | null>(TOP_COUNTEREXAMPLES[0])
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   
-  // Replay state
   const [replayingId, setReplayingId] = useState<string | null>(null)
   const [replayResults, setReplayResults] = useState<Record<string, CounterexampleReplayResult>>({})
 
@@ -62,7 +61,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Hero Header & Version Transition */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.1] pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-muted-foreground font-mono">
@@ -71,71 +70,73 @@ export const ChangeAnalysisScreen: React.FC = () => {
             <span className="text-muted-foreground/40">·</span>
             <StatusBadge status="BLOCKED" size="xs" label="Gate: BLOCKED" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <GitCompare className="h-5 w-5 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground flex items-center gap-2.5">
+            <GitCompare className="h-6 w-6 text-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
             Authorization Change & Blast Radius Analysis
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5 font-sans">
             Evaluating effective authorization deltas and deterministic counterexamples across declared security contracts.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-          <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.08] text-orange-400">
+          <span className="px-3 py-1 rounded-xl bg-black/40 border border-white/[0.12] text-orange-400 font-semibold backdrop-blur-md">
             Bounded Universe: {BLAST_RADIUS_RESULT.universeSize} Scenarios
           </span>
         </div>
       </div>
 
-      {/* Bounded Analysis Disclosure Notice */}
-      <div className="p-3 rounded-xl bg-orange-500/[0.05] border border-orange-500/20 flex items-center gap-2.5 text-xs text-muted-foreground">
+      {/* Bounded Analysis Disclosure Notice (Glass Capsule) */}
+      <div className="glass-card-premium p-3.5 rounded-2xl flex items-center gap-3 text-xs text-muted-foreground">
         <Info className="h-4 w-4 text-orange-400 shrink-0" />
         <span>
           <strong className="text-foreground">Scope Disclosure:</strong> Blast radius and counterexample discovery are bounded to the declared scenario universe (432 combinations across 5 principal roles, 4 actions, and 4 resource archetypes).
         </span>
       </div>
 
-      {/* Blast Radius Summary Bar */}
-      <div className="p-4 rounded-xl border border-red-500/30 bg-gradient-to-r from-red-500/[0.08] via-[#0D1015]/90 to-[#0D1015]/90 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-5 text-xs">
+      {/* Blast Radius Summary Bar (Luminous Frosted Glass Panel) */}
+      <div className="glass-panel-premium relative p-4 sm:p-5 rounded-2xl border border-red-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/40 to-transparent pointer-events-none" />
+
+        <div className="flex items-center gap-6 text-xs">
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground block font-mono">
               Transitions
             </span>
-            <span className="font-mono font-bold text-red-400 text-sm">
+            <span className="font-mono font-black text-red-400 text-base sm:text-lg">
               +{BLAST_RADIUS_RESULT.newlyAuthorizedCount} Newly Authorized
             </span>
           </div>
 
-          <div className="h-6 w-[1px] bg-white/[0.1] hidden sm:block" />
+          <div className="h-8 w-[1px] bg-white/[0.12] hidden sm:block" />
 
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground block font-mono">
               Action Scope
             </span>
-            <span className="font-mono font-bold text-foreground text-sm">
+            <span className="font-mono font-black text-foreground text-base sm:text-lg">
               +{BLAST_RADIUS_RESULT.deltaActions} Actions
             </span>
           </div>
 
-          <div className="h-6 w-[1px] bg-white/[0.1] hidden sm:block" />
+          <div className="h-8 w-[1px] bg-white/[0.12] hidden sm:block" />
 
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground block font-mono">
               Exposed Resources
             </span>
-            <span className="font-mono font-bold text-foreground text-sm">
+            <span className="font-mono font-black text-foreground text-base sm:text-lg">
               +{BLAST_RADIUS_RESULT.deltaResources} Resources
             </span>
           </div>
 
-          <div className="h-6 w-[1px] bg-white/[0.1] hidden sm:block" />
+          <div className="h-8 w-[1px] bg-white/[0.12] hidden sm:block" />
 
           <div>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-mono">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground block font-mono">
               Affected Principals
             </span>
-            <span className="font-mono font-bold text-foreground text-sm">
+            <span className="font-mono font-black text-foreground text-base sm:text-lg">
               +{BLAST_RADIUS_RESULT.deltaPrincipals} Principals
             </span>
           </div>
@@ -149,58 +150,58 @@ export const ChangeAnalysisScreen: React.FC = () => {
       {/* Main Split Investigation Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Code Clause Diff (5 cols) */}
-        <div className="lg:col-span-5 space-y-3">
-          <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
-            <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
+        <div className="lg:col-span-5 space-y-4">
+          <Card className="glass-card-premium">
+            <CardHeader className="p-4 border-b border-white/[0.08]">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
-                  <Code2 className="h-3.5 w-3.5 text-orange-400" />
+                <CardTitle className="text-xs font-bold flex items-center gap-2">
+                  <Code2 className="h-4 w-4 text-orange-400" />
                   Policy Clause Diff (v12 vs v13)
                 </CardTitle>
-                <span className="text-[10px] font-mono text-muted-foreground">Line 24</span>
+                <span className="text-[10px] font-mono text-muted-foreground font-semibold px-2 py-0.5 rounded bg-white/[0.05] border border-white/[0.08]">Line 24</span>
               </div>
             </CardHeader>
 
-            <CardContent className="p-3 font-mono text-xs space-y-2">
-              <div className="p-2 rounded bg-black/40 text-muted-foreground border border-white/[0.06] text-[11px]">
+            <CardContent className="p-4 font-mono text-xs space-y-2.5">
+              <div className="p-2.5 rounded-xl bg-black/40 text-muted-foreground border border-white/[0.08] text-[11px]">
                 // Version 12 (Production Baseline):
               </div>
-              <div className="p-2.5 rounded bg-red-500/15 text-red-400 border border-red-500/30 text-[11px] leading-relaxed">
+              <div className="p-3 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-[11px] leading-relaxed shadow-[0_0_12px_rgba(239,68,68,0.15)]">
                 - action == Action::"view",
               </div>
 
-              <div className="p-2 rounded bg-black/40 text-muted-foreground border border-white/[0.06] text-[11px] mt-2">
+              <div className="p-2.5 rounded-xl bg-black/40 text-muted-foreground border border-white/[0.08] text-[11px] mt-2">
                 // Version 13 (Candidate Draft - Wildcard Broadening):
               </div>
-              <div className="p-2.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] leading-relaxed">
+              <div className="p-3 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] leading-relaxed shadow-[0_0_12px_rgba(24,184,104,0.15)]">
                 + action, // Broadened across view, edit, delete, export
               </div>
 
-              <div className="pt-2 text-[11px] text-muted-foreground font-sans leading-relaxed border-t border-white/[0.06] mt-3">
+              <div className="pt-2 text-[11px] text-muted-foreground font-sans leading-relaxed border-t border-white/[0.08] mt-3">
                 <strong className="text-foreground">Mechanism:</strong> Removing the explicit action constraint broadened the permit statement across all 4 declared actions in the schema, overriding the implicit default-deny for contractors.
               </div>
             </CardContent>
           </Card>
 
-          {/* Violated Contracts List */}
-          <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
-            <CardHeader className="p-3.5 pb-1">
-              <span className="text-[10px] font-semibold uppercase text-muted-foreground font-mono flex items-center gap-1.5">
-                <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
+          {/* Violated Contracts List (Glass Card) */}
+          <Card className="glass-card-premium">
+            <CardHeader className="p-4 pb-2 border-b border-white/[0.08]">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground font-mono flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-red-400" />
                 Violated Security Invariants
               </span>
             </CardHeader>
-            <CardContent className="p-3.5 pt-1 space-y-1.5 text-xs">
-              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
-                <span className="font-mono font-medium text-foreground">SC-04: Contractor payroll deletion</span>
+            <CardContent className="p-4 space-y-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-black/40 border border-white/[0.08] flex items-center justify-between backdrop-blur-md">
+                <span className="font-mono font-semibold text-foreground">SC-04: Contractor payroll deletion</span>
                 <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
-              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
-                <span className="font-mono font-medium text-foreground">SC-05: Contractor financial export</span>
+              <div className="p-2.5 rounded-xl bg-black/40 border border-white/[0.08] flex items-center justify-between backdrop-blur-md">
+                <span className="font-mono font-semibold text-foreground">SC-05: Contractor financial export</span>
                 <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
-              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
-                <span className="font-mono font-medium text-foreground">SC-03: Editor invoice deletion</span>
+              <div className="p-2.5 rounded-xl bg-black/40 border border-white/[0.08] flex items-center justify-between backdrop-blur-md">
+                <span className="font-mono font-semibold text-foreground">SC-03: Editor invoice deletion</span>
                 <StatusBadge status="BLOCKED" size="xs" label="FAIL" />
               </div>
             </CardContent>
@@ -210,7 +211,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
         {/* Right Column: Top Deterministic Counterexamples (7 cols) */}
         <div className="lg:col-span-7 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono">
+            <span className="text-xs font-bold text-foreground uppercase tracking-wider font-mono">
               Deterministic Counterexamples ({TOP_COUNTEREXAMPLES.length} Ranked Findings)
             </span>
             <span className="text-[11px] text-muted-foreground">
@@ -218,7 +219,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
             </span>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {TOP_COUNTEREXAMPLES.map((cx) => {
               const replay = replayResults[cx.id]
               const isReplaying = replayingId === cx.id
@@ -228,28 +229,28 @@ export const ChangeAnalysisScreen: React.FC = () => {
                 <div
                   key={cx.id}
                   onClick={() => handleOpenEvidence(cx)}
-                  className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all space-y-2.5 ${
+                  className={`glass-card-premium relative p-4 rounded-2xl text-xs cursor-pointer transition-all duration-300 space-y-3 ${
                     isSelected
-                      ? "border-orange-500/60 bg-gradient-to-r from-orange-500/[0.08] to-[#0D1015] shadow-lg"
-                      : "border-white/[0.08] bg-[#0D1015]/90 hover:border-white/[0.18] hover:bg-[#13171E]"
+                      ? "border-orange-500 shadow-[0_0_24px_rgba(255,106,36,0.3)] bg-gradient-to-r from-orange-500/[0.12] via-[#121622]/80 to-[#121622]/80 -translate-y-1"
+                      : "hover:border-white/[0.25]"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <SeverityBadge severity={cx.severity as any} />
-                      <span className="font-semibold text-foreground">
+                      <span className="font-bold text-foreground font-mono">
                         {cx.title || cx.scenarioTitle || cx.id}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       {/* Live Cedar WASM Replay Button */}
                       <Button
                         variant="outline"
                         size="sm"
                         disabled={isReplaying}
                         onClick={(e) => handleReplayCounterexample(e, cx)}
-                        className="text-[11px] gap-1 h-6 text-foreground border-white/[0.1] hover:bg-white/[0.05]"
+                        className="text-[11px] gap-1.5 h-7 text-foreground border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-md"
                       >
                         <RefreshCw className={`h-3 w-3 ${isReplaying ? "animate-spin text-orange-400" : "text-orange-400"}`} />
                         <span>{isReplaying ? "Evaluating..." : "Replay in Cedar"}</span>
@@ -261,7 +262,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
                           e.stopPropagation()
                           handleOpenEvidence(cx)
                         }}
-                        className="text-[11px] gap-1 h-6 bg-[#FF6A24] text-white hover:bg-[#FF8A42]"
+                        className="text-[11px] gap-1 h-7 bg-[#FF6A24] text-white hover:bg-[#FF8A42] font-semibold shadow-[0_0_12px_rgba(255,106,36,0.3)]"
                       >
                         <FileSearch className="h-3 w-3" />
                         <span>Inspect</span>
@@ -273,17 +274,17 @@ export const ChangeAnalysisScreen: React.FC = () => {
                   {/* Live Replay Confirmation Status */}
                   {replay && (
                     <div
-                      className={`p-2 rounded-lg text-[11px] flex items-center justify-between font-mono ${
+                      className={`p-2.5 rounded-xl text-[11px] flex items-center justify-between font-mono backdrop-blur-md ${
                         replay.isReproduced
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : "bg-red-500/10 text-red-400 border border-red-500/20"
+                          ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-[0_0_12px_rgba(24,184,104,0.2)]"
+                          : "bg-red-500/15 text-red-300 border border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
                       }`}
                     >
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         {replay.isReproduced ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                         ) : (
-                          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                          <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
                         )}
                         <span>
                           {replay.isReproduced
@@ -295,37 +296,37 @@ export const ChangeAnalysisScreen: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Scenario Request & Flip Matrix */}
+                  {/* Scenario Request & Flip Matrix (Glass Pills) */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5 font-mono text-[11px]">
-                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
-                      <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md">
+                      <span className="text-[9px] text-muted-foreground block font-sans uppercase font-bold">
                         Principal
                       </span>
-                      <span className="text-foreground truncate block font-semibold">{cx.principal}</span>
+                      <span className="text-foreground truncate block font-bold mt-0.5">{cx.principal}</span>
                     </div>
 
-                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
-                      <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md">
+                      <span className="text-[9px] text-muted-foreground block font-sans uppercase font-bold">
                         Action
                       </span>
-                      <span className="text-orange-400 truncate block font-semibold">{cx.action}</span>
+                      <span className="text-orange-400 truncate block font-bold mt-0.5">{cx.action}</span>
                     </div>
 
-                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
-                      <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md">
+                      <span className="text-[9px] text-muted-foreground block font-sans uppercase font-bold">
                         Resource
                       </span>
-                      <span className="text-foreground truncate block font-semibold">{cx.resource}</span>
+                      <span className="text-foreground truncate block font-bold mt-0.5">{cx.resource}</span>
                     </div>
 
-                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between">
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md flex items-center justify-between">
                       <div>
-                        <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">
+                        <span className="text-[9px] text-muted-foreground block font-sans uppercase font-bold">
                           Flip
                         </span>
-                        <div className="flex items-center gap-1 mt-0.5">
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           <DecisionBadge decision={cx.baselineDecision} size="sm" />
-                          <ArrowRight className="h-2.5 w-2.5 text-muted-foreground" />
+                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
                           <DecisionBadge decision={cx.candidateDecision} size="sm" />
                         </div>
                       </div>

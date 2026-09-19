@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils"
 
 export interface RadarMetric {
   axis: string
-  baselineScore: number // 0 to 100
-  candidateScore: number // 0 to 100
+  baselineScore: number
+  candidateScore: number
   unit?: string
   description?: string
 }
@@ -33,12 +33,11 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  const size = 300
+  const size = 320
   const center = size / 2
-  const radius = 105
+  const radius = 110
   const count = metrics.length
 
-  // Helper to compute (x, y) coordinates for an axis at given percentage (0-100)
   const getCoordinates = (index: number, score: number) => {
     const angle = (Math.PI * 2 / count) * index - Math.PI / 2
     const dist = (score / 100) * radius
@@ -48,7 +47,6 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
     }
   }
 
-  // Generate background concentric web rings (25%, 50%, 75%, 100%)
   const rings = [25, 50, 75, 100]
   const ringPolygons = rings.map((pct) => {
     const pts = Array.from({ length: count }).map((_, i) => {
@@ -58,28 +56,31 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
     return { pct, pts }
   })
 
-  // Candidate polygon points (Orange glow)
   const candidatePoints = metrics.map((m, i) => {
     const { x, y } = getCoordinates(i, m.candidateScore)
     return `${x},${y}`
   }).join(" ")
 
-  // Baseline polygon points (Cyan/slate subtle)
   const baselinePoints = metrics.map((m, i) => {
     const { x, y } = getCoordinates(i, m.baselineScore)
     return `${x},${y}`
   }).join(" ")
 
   return (
-    <div className={cn("relative p-4 rounded-xl border border-white/[0.08] bg-[#0D1015]/85 backdrop-blur-md flex flex-col justify-between select-none", className)}>
-      {/* Top Specular Line */}
-      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.14] to-transparent pointer-events-none" />
+    <div
+      className={cn(
+        "glass-card-premium relative p-5 rounded-2xl flex flex-col justify-between select-none overflow-hidden",
+        className
+      )}
+    >
+      {/* Specular Top Horizon Highlight Line */}
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.28] to-transparent pointer-events-none" />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
         <div>
-          <h3 className="text-xs font-semibold text-foreground tracking-tight flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-orange-500 shadow-[0_0_8px_#FF6A24]" />
+          <h3 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_#FF6A24] animate-pulse" />
             {title}
           </h3>
           <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -89,13 +90,13 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
 
         {/* Legend */}
         <div className="flex items-center gap-3 text-[10px] font-mono shrink-0">
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-3 rounded-sm bg-sky-400/80" />
-            <span className="text-muted-foreground">v12 Baseline</span>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20">
+            <span className="h-1.5 w-3 rounded-sm bg-sky-400" />
+            <span className="text-sky-300">v12 Baseline</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-3 rounded-sm bg-orange-500 shadow-[0_0_6px_#FF6A24]" />
-            <span className="text-orange-400 font-semibold">v13 Candidate</span>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-500/15 border border-orange-500/30">
+            <span className="h-1.5 w-3 rounded-sm bg-orange-500 shadow-[0_0_8px_#FF6A24]" />
+            <span className="text-orange-400 font-bold">v13 Candidate</span>
           </div>
         </div>
       </div>
@@ -109,15 +110,18 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
           className="overflow-visible"
         >
           <defs>
-            {/* Candidate Glow Gradient */}
-            <radialGradient id="candidateGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#FF6A24" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#FF6A24" stopOpacity="0.05" />
+            <radialGradient id="radarCandidateGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#FF6A24" stopOpacity="0.55" />
+              <stop offset="70%" stopColor="#FF8A42" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#FF6A24" stopOpacity="0.02" />
             </radialGradient>
-            <radialGradient id="baselineGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.2" />
+            <radialGradient id="radarBaselineGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.25" />
               <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.02" />
             </radialGradient>
+            <filter id="radarOrangeGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#FF6A24" floodOpacity="0.65" />
+            </filter>
           </defs>
 
           {/* Web Concentric Polygons */}
@@ -126,9 +130,9 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
               key={pct}
               points={pts}
               fill="transparent"
-              stroke="rgba(255, 255, 255, 0.08)"
+              stroke="rgba(255, 255, 255, 0.1)"
               strokeWidth="1"
-              strokeDasharray={pct === 100 ? "none" : "2,2"}
+              strokeDasharray={pct === 100 ? "none" : "2,3"}
             />
           ))}
 
@@ -142,7 +146,7 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
                 y1={center}
                 x2={x}
                 y2={y}
-                stroke="rgba(255, 255, 255, 0.09)"
+                stroke="rgba(255, 255, 255, 0.12)"
                 strokeWidth="1"
               />
             )
@@ -151,24 +155,25 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
           {/* Baseline Polygon (v12) */}
           <polygon
             points={baselinePoints}
-            fill="url(#baselineGlow)"
+            fill="url(#radarBaselineGlow)"
             stroke="#38BDF8"
             strokeWidth="1.5"
-            strokeOpacity="0.65"
+            strokeOpacity="0.75"
             strokeDasharray="3,3"
           />
 
-          {/* Candidate Polygon (v13 - Vibrant Orange Blast Area) */}
+          {/* Candidate Polygon (v13 - Radiant Orange Area) */}
           <polygon
             points={candidatePoints}
-            fill="url(#candidateGlow)"
+            fill="url(#radarCandidateGlow)"
             stroke="#FF6A24"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinejoin="round"
-            className="filter drop-shadow-[0_0_8px_rgba(255,106,36,0.4)]"
+            filter="url(#radarOrangeGlow)"
+            className="transition-all duration-500"
           />
 
-          {/* Candidate Vertex Nodes with Interactive Hover */}
+          {/* Candidate Vertex Nodes with Glowing Pulsing Hover */}
           {metrics.map((m, i) => {
             const { x, y } = getCoordinates(i, m.candidateScore)
             const isHovered = hoveredIndex === i
@@ -183,11 +188,12 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
                 <circle
                   cx={x}
                   cy={y}
-                  r={isHovered ? 6 : 4}
+                  r={isHovered ? 7 : 4.5}
                   fill="#FF8A42"
-                  stroke="#090A0D"
-                  strokeWidth="2"
-                  className="transition-all duration-150"
+                  stroke="#FFFFFF"
+                  strokeWidth={isHovered ? "2.5" : "1.5"}
+                  className="transition-all duration-200"
+                  filter="url(#radarOrangeGlow)"
                 />
               </g>
             )
@@ -195,7 +201,7 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
 
           {/* Axis Labels Placed Around Circumference */}
           {metrics.map((m, i) => {
-            const { x, y } = getCoordinates(i, 122)
+            const { x, y } = getCoordinates(i, 124)
             const isHovered = hoveredIndex === i
             const textAnchor = x > center + 10 ? "start" : x < center - 10 ? "end" : "middle"
 
@@ -207,8 +213,8 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
                 textAnchor={textAnchor}
                 dominantBaseline="central"
                 className={cn(
-                  "text-[9px] font-mono transition-colors duration-150 cursor-pointer",
-                  isHovered ? "fill-orange-400 font-bold" : "fill-muted-foreground"
+                  "text-[9px] font-mono transition-all duration-200 cursor-pointer select-none",
+                  isHovered ? "fill-orange-400 font-bold scale-110" : "fill-muted-foreground hover:fill-white"
                 )}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
@@ -221,7 +227,7 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
       </div>
 
       {/* Interactive Detail Inspector on Hover */}
-      <div className="mt-1 p-2 rounded-lg bg-black/40 border border-white/[0.06] text-xs font-mono flex items-center justify-between min-h-[36px]">
+      <div className="mt-1 p-2.5 rounded-xl bg-black/40 border border-white/[0.1] backdrop-blur-md text-xs font-mono flex items-center justify-between min-h-[40px] shadow-inner">
         {hoveredIndex !== null ? (
           <div className="flex items-center justify-between w-full">
             <div>
@@ -239,7 +245,7 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
         ) : (
           <div className="flex items-center justify-between w-full text-[11px] text-muted-foreground font-sans">
             <span>Hover over radar vertex nodes to inspect dimensional exposure</span>
-            <span className="font-mono text-[10px] text-orange-400/90 font-semibold">+68% Net Surface Expansion</span>
+            <span className="font-mono text-[10px] text-orange-400 font-bold">+68% Net Surface Expansion</span>
           </div>
         )}
       </div>

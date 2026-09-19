@@ -132,12 +132,12 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Code Surface (8 cols) */}
         <div className="lg:col-span-8 space-y-3">
-          <div className="rounded-xl border border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md overflow-hidden shadow-2xl">
+          <div className="glass-panel-premium rounded-2xl overflow-hidden shadow-2xl transition-all duration-300">
             {/* Editor Sub-Header */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.08] bg-black/40 text-xs">
+            <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/[0.08] bg-white/[0.02] text-xs">
               <div className="flex items-center gap-2">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-                  <TabsList className="h-6 bg-white/[0.05] border border-white/[0.08]">
+                  <TabsList className="h-6 bg-black/40 border border-white/[0.08]">
                     <TabsTrigger value="code" className="text-xs h-5 px-2.5 font-mono text-muted-foreground data-[state=active]:text-white data-[state=active]:bg-white/[0.1]">
                       policy.cedar
                     </TabsTrigger>
@@ -162,9 +162,9 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
             {/* Code Body Area */}
             <div>
               {activeTab === "code" ? (
-                <div className="flex bg-[#090A0D]/70 font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
+                <div className="flex bg-black/40 backdrop-blur-sm font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
                   {/* Line Numbers */}
-                  <div className="py-3 px-2.5 select-none text-right text-muted-foreground/30 border-r border-white/[0.08] bg-black/20 w-11 shrink-0 text-[11px]">
+                  <div className="py-3 px-2.5 select-none text-right text-muted-foreground/30 border-r border-white/[0.08] bg-black/30 w-11 shrink-0 text-[11px]">
                     {Array.from({ length: lineCount }).map((_, i) => (
                       <div
                         key={i}
@@ -192,14 +192,14 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                   />
                 </div>
               ) : (
-                <div className="p-3 bg-[#090A0D]/70 font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
+                <div className="p-3 bg-black/40 backdrop-blur-sm font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
                   <pre className="text-muted-foreground">{ACMEPAY_SCHEMA}</pre>
                 </div>
               )}
             </div>
 
             {/* Diagnostics Bar */}
-            <div className="px-3 py-2 border-t border-white/[0.08] bg-black/40 flex items-center justify-between text-xs">
+            <div className="px-3.5 py-2.5 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 {selectedVersion === "v13" ? (
                   <div className="flex items-center gap-1.5 text-amber-400 font-medium">
@@ -223,7 +223,7 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
 
         {/* Right Column: Policy Context & Diagnostics (4 cols) */}
         <div className="lg:col-span-4 space-y-3">
-          <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+          <Card className="glass-card-premium rounded-2xl">
             <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
               <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
                 <Hash className="h-3.5 w-3.5 text-orange-400" />

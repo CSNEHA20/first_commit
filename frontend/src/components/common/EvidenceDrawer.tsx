@@ -101,10 +101,10 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
   const remediationCode = explanation?.remediationCedar || fallbackRemediation
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-in fade-in-0 duration-150">
-      <div className="relative w-full max-w-xl bg-[#0D1015]/95 border-l border-white/[0.1] h-full flex flex-col shadow-2xl overflow-y-auto animate-in slide-in-from-right-full duration-200">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-md animate-in fade-in-0 duration-200">
+      <div className="relative w-full max-w-xl glass-panel-premium border-l border-white/[0.12] h-full flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-y-auto animate-in slide-in-from-right-full duration-200">
         {/* Inspector Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-[#090A0D]/90 backdrop-blur-md">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 border-b border-white/[0.08] bg-[#0d121c]/80 backdrop-blur-xl">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-md bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400">
               <FileSearch className="h-3.5 w-3.5" />
@@ -184,29 +184,29 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
 
             {/* Request Tuple */}
             <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+              <div className="glass-card-premium p-2.5 rounded-xl">
                 <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">Principal</span>
                 <span className="text-foreground font-semibold truncate block">{counterexample.principal}</span>
               </div>
 
-              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+              <div className="glass-card-premium p-2.5 rounded-xl">
                 <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">Action</span>
                 <span className="text-orange-400 font-semibold truncate block">{counterexample.action}</span>
               </div>
 
-              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+              <div className="glass-card-premium p-2.5 rounded-xl">
                 <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">Resource</span>
                 <span className="text-foreground font-semibold truncate block">{counterexample.resource}</span>
               </div>
 
-              <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+              <div className="glass-card-premium p-2.5 rounded-xl">
                 <span className="text-[9px] text-muted-foreground block font-sans uppercase font-medium">Context</span>
                 <span className="text-muted-foreground truncate block">network: EXTERNAL</span>
               </div>
             </div>
 
             {/* Determining Policy Line Snippet */}
-            <div className="p-2.5 rounded-lg bg-black/40 border border-white/[0.06] space-y-1.5 font-mono text-[11px]">
+            <div className="glass-card-premium p-3 rounded-xl space-y-1.5 font-mono text-[11px]">
               <div className="flex items-center justify-between text-[10px] font-sans">
                 <span className="font-semibold text-foreground flex items-center gap-1">
                   <Code2 className="h-3 w-3 text-orange-400" />
@@ -214,7 +214,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                 </span>
                 <Badge variant="outline" className="text-[9px] font-mono border-white/[0.1]">Line 24</Badge>
               </div>
-              <pre className="p-2 rounded bg-black/60 text-[11px] text-muted-foreground border border-white/[0.05] overflow-x-auto font-mono">
+              <pre className="p-2.5 rounded-lg bg-black/60 text-[11px] text-muted-foreground border border-white/[0.05] overflow-x-auto font-mono">
                 {counterexample.evidence?.matchedPolicies?.[0]?.clause ||
                   `permit (\n    principal in Role::"contractor",\n    action,\n    resource in ResourceType::"SupportTicket"\n);`}
               </pre>
@@ -262,7 +262,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                 <span>Error: {explanationError}</span>
               </div>
             ) : explanation ? (
-              <div className="p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-2.5 text-xs">
+              <div className="glass-card-premium p-3.5 rounded-xl space-y-2.5 text-xs">
                 <div>
                   <span className="font-semibold text-foreground block text-[11px] mb-0.5">
                     Summary:
@@ -313,7 +313,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                 )}
               </div>
             ) : (
-              <div className="p-3 rounded-xl bg-black/40 text-center text-muted-foreground text-[11px]">
+              <div className="glass-card-premium p-3 rounded-xl text-center text-muted-foreground text-[11px]">
                 Loading grounded explanation...
               </div>
             )}
@@ -357,11 +357,11 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
         </div>
 
         {/* Drawer Footer */}
-        <div className="sticky bottom-0 p-3 border-t border-white/[0.08] bg-[#090A0D]/90 backdrop-blur-md flex items-center justify-between text-xs">
+        <div className="sticky bottom-0 p-3.5 border-t border-white/[0.08] bg-[#0d121c]/80 backdrop-blur-xl flex items-center justify-between text-xs">
           <span className="text-[10px] text-muted-foreground font-mono">
             Deterministic Cedar AST evaluation verified.
           </span>
-          <Button variant="default" size="sm" onClick={onClose} className="h-7 text-xs bg-[#FF6A24] text-white hover:bg-[#FF8A42]">
+          <Button variant="default" size="sm" onClick={onClose} className="h-7 text-xs bg-[#FF6A24] text-white hover:bg-[#FF8A42] shadow-[0_0_12px_rgba(255,106,36,0.3)]">
             Done
           </Button>
         </div>

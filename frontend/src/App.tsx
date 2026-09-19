@@ -35,9 +35,11 @@ export function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#090A0D] text-foreground flex flex-col font-sans relative overflow-x-hidden">
-      {/* Top Atmospheric Horizon Ambient Flare Glow */}
-      <div className="absolute top-0 inset-x-0 h-96 ambient-horizon-glow pointer-events-none z-0" />
+    <div className="min-h-screen bg-[#090A0D] text-foreground flex flex-col font-sans relative overflow-x-hidden cyber-canvas-grid">
+      {/* Multi-layer Atmospheric Cyber Auroras & Lights Shining Through Frosted Glass */}
+      <div className="fixed top-0 inset-x-0 h-[520px] cyber-aurora-top pointer-events-none z-0" />
+      <div className="fixed top-[-100px] right-[-100px] h-[650px] w-[650px] cyber-aurora-corner pointer-events-none z-0" />
+      <div className="fixed top-[35%] left-[-150px] h-[550px] w-[550px] cyber-aurora-left pointer-events-none z-0" />
 
       {/* Workbench Titlebar Header */}
       <AppHeader

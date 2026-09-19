@@ -207,7 +207,7 @@ export const DeploymentScreen: React.FC = () => {
       )}
 
       {/* Deployment Gate Checklist & Approval Card */}
-      <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+      <Card className="glass-card-premium rounded-2xl">
         <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -330,7 +330,7 @@ export const DeploymentScreen: React.FC = () => {
                       value={approverName}
                       onChange={(e) => setApproverName(e.target.value)}
                       disabled={!!approval}
-                      className="w-full px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.1] text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                      className="glass-input w-full px-2.5 py-1 text-xs"
                     />
                   </div>
                   <div>
@@ -342,7 +342,7 @@ export const DeploymentScreen: React.FC = () => {
                       value={ticketRef}
                       onChange={(e) => setTicketRef(e.target.value)}
                       disabled={!!approval}
-                      className="w-full px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.1] text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                      className="glass-input w-full px-2.5 py-1 text-xs"
                     />
                   </div>
                 </div>
@@ -356,7 +356,7 @@ export const DeploymentScreen: React.FC = () => {
                     value={approvalNotes}
                     onChange={(e) => setApprovalNotes(e.target.value)}
                     disabled={!!approval}
-                    className="w-full px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.1] text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    className="glass-input w-full px-2.5 py-1 text-xs"
                   />
                 </div>
 
@@ -364,7 +364,7 @@ export const DeploymentScreen: React.FC = () => {
                   <Button
                     size="sm"
                     onClick={handleApprove}
-                    className="w-full text-xs font-semibold bg-[#FF6A24] text-white hover:bg-[#FF8A42] gap-1.5 h-8 shadow-[0_0_15px_rgba(255,106,36,0.3)]"
+                    className="w-full text-xs font-semibold bg-[#FF6A24] text-white hover:bg-[#FF8A42] gap-1.5 h-8 shadow-[0_0_15px_rgba(255,106,36,0.3)] transition-all hover:shadow-[0_0_22px_rgba(255,106,36,0.5)]"
                   >
                     <UserCheck className="h-3.5 w-3.5" />
                     Sign & Register Approval Token
@@ -413,7 +413,7 @@ export const DeploymentScreen: React.FC = () => {
       </Card>
 
       {/* Verified Deployment Audit Trail */}
-      <Card className="border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-md">
+      <Card className="glass-card-premium rounded-2xl">
         <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
           <CardTitle className="text-xs font-semibold">
             Verified Deployment Audit Trail
