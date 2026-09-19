@@ -12,10 +12,13 @@ Globals:
     Tracing: Active
     Environment:
       Variables:
+        ENVIRONMENT: !Ref EnvironmentName
         AWS_REGION: !Ref AWS::Region
         POLICYLAB_DYNAMODB_TABLE: !Ref PolicyLabTable
         POLICYLAB_ARTIFACT_BUCKET: !Ref PolicyLabArtifactsBucket
         POLICYLAB_ENTITY_TABLE: !Ref PolicyLabTable
+        AVP_POLICY_STORE_ID: !Ref AVPPolicyStoreId
+        AUDIT_STATE_MACHINE_ARN: !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:PolicyAuditWorkflow-${EnvironmentName}'
         AWS_BEDROCK_ENABLED: 'true'
         AWS_DYNAMODB_ENABLED: 'true'
         AWS_S3_ENABLED: 'true'
@@ -31,6 +34,10 @@ Parameters:
     Type: String
     Default: ps-acmepay-prod
     Description: Target Amazon Verified Permissions policy store identifier.
+  FrontendOrigin:
+    Type: String
+    Default: 'http://localhost:5173'
+    Description: Allowed CORS origin for the frontend web client.
 
 Resources:
   # ---------------------------------------------------------------------------
@@ -42,7 +49,7 @@ Resources:
       StageName: !Ref EnvironmentName
       CorsConfiguration:
         AllowOrigins:
-          - '*'
+          - !Ref FrontendOrigin
         AllowMethods:
           - GET
           - POST
@@ -59,7 +66,7 @@ Resources:
   PolicyLabBackendFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../
+      CodeUri: ../backend
       Handler: backend.lambda_handler.handler
       Description: Core PolicyLab deterministic Cedar engine, AI explanation, and verification backend.
       Events:
@@ -87,6 +94,7 @@ Resources:
                 - bedrock:InvokeModel
               Resource:
                 - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0'
+                - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0'
             - Sid: VerifiedPermissionsAccess
               Effect: Allow
               Action:
@@ -96,7 +104,13 @@ Resources:
                 - verifiedpermissions:UpdatePolicy
                 - verifiedpermissions:IsAuthorized
                 - verifiedpermissions:BatchIsAuthorized
-              Resource: '*'
+              Resource:
+                - !Sub 'arn:aws:verifiedpermissions:${AWS::Region}:${AWS::AccountId}:policy-store/${AVPPolicyStoreId}'
+                - !Sub 'arn:aws:verifiedpermissions:${AWS::Region}:${AWS::AccountId}:policy-store/${AVPPolicyStoreId}/*'
+    Metadata:
+      BuildProperties:
+        ParentPackageMode: explicit
+        ParentPackages: backend
 
   # ---------------------------------------------------------------------------
   # DynamoDB Single-Table Storage

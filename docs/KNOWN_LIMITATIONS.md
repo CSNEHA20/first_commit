@@ -51,3 +51,12 @@ To defend against denial-of-service, memory exhaustion, and regex injection, Pol
 ### 7. Entity Graph Normalization
 - **Implementation:** Custom entity providers normalize backend records to Cedar entity shapes (`id`, `typeName`, `attributes`, `parents`).
 - **Limitation:** Non-standard entity graphs with circular parent hierarchies or malformed UIDs fail closed with a `ValidationError` rather than guessing or defaulting to root.
+
+### 8. Pre-Deployment API Authentication & Identity Prerequisite
+- **Boundary:** Neither the frontend web client nor the FastAPI backend currently integrates an external Identity Provider (such as Amazon Cognito User Pool, AWS IAM SigV4, or an OAuth2/OIDC IdP). All local and demo interactions run with application-level verification (including cryptographic HMAC `approvalToken` checks for AVP submissions).
+- **Security Invariant:** In strict adherence to security rules, PolicyLab does not deploy a publicly unauthenticated HTTP API in production, nor does it fabricate dummy JWT issuers or mock tokens.
+- **Status:** Live deployment to public AWS is intentionally gated until an enterprise Identity Provider (e.g. Amazon Cognito User Pool with an HTTP API JWT Authorizer) is configured.
+
+### 9. Lambda Packaging & Cross-Platform Native Dependencies
+- **Packaging Structure:** `infrastructure/template.yaml` specifies `CodeUri: ../backend` and uses SAM's native `ParentPackageMode: explicit` (`ParentPackages: backend`). This guarantees that `backend/requirements.txt` is resolved by `pip` while preserving the `backend.lambda_handler.handler` package structure and excluding `frontend/node_modules/`.
+- **Runtime Compatibility:** Python dependencies with native C/Rust extensions (such as `pydantic-core`) must match AWS Lambda's Linux x86_64 environment. SAM CLI's `DependencyBuilder` retrieves `manylinux_2_17_x86_64` wheels for the target Python 3.11 runtime.

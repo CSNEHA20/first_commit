@@ -59,17 +59,26 @@ cd policylab
 
 ### Step 2: Validate SAM Template
 ```bash
-sam validate -t infrastructure/template.yaml
+sam validate --template-file infrastructure/template.yaml --region us-east-1
 ```
 
 ### Step 3: Build the Serverless Application
+The template specifies `CodeUri: ../backend` and uses SAM's native `ParentPackageMode: explicit` (`ParentPackages: backend`). This ensures all pip dependencies from `backend/requirements.txt` are bundled while preserving the `backend.lambda_handler.handler` package structure and excluding `frontend/node_modules/`:
 ```bash
-sam build -t infrastructure/template.yaml
+sam build --template-file infrastructure/template.yaml --region us-east-1
 ```
 
-### Step 4: Guided Deployment
+### Step 4: Guided Deployment & Security Gating
+
+> [!WARNING]
+> **API Gateway Authentication Gating (Mandatory Security Gate):**
+> Neither the frontend nor backend currently implements an external Identity Provider (such as Amazon Cognito User Pool or AWS IAM SigV4).
+> In accordance with PolicyLab security standards, **do not approve deployment of publicly unauthenticated endpoints in production**.
+> If SAM prompts `PolicyLabBackendFunction may not have authorization defined, Is this okay?`, answer `N` (or cancel) until a genuine Identity Provider (Cognito User Pool with JWT Authorizer) is provisioned.
+
 ```bash
 sam deploy --guided \
+  --template-file infrastructure/template.yaml \
   --stack-name policylab-prod \
   --region us-east-1 \
   --capabilities CAPABILITY_IAM
@@ -78,18 +87,20 @@ sam deploy --guided \
 During guided deployment, provide:
 - **Stack Name:** `policylab-prod`
 - **AWS Region:** `us-east-1`
-- **Parameter Environment:** `prod`
-- **Parameter StrictAWS:** `true`
+- **Parameter EnvironmentName:** `prod`
+- **Parameter AVPPolicyStoreId:** `ps-acmepay-prod`
+- **Parameter FrontendOrigin:** Your deployed frontend URL (e.g. `https://main.d123456.amplifyapp.com` or `http://localhost:5173`)
 - **Confirm changes before deploy:** `Y`
 - **Allow SAM CLI to create IAM roles:** `Y`
 - **Save arguments to configuration file:** `Y`
 
 ### SAM Template Outputs
 Upon successful deployment, SAM outputs:
-- `ApiUrl`: The public API Gateway HTTPS base URL.
-- `DynamoDBTableName`: `policylab-metadata-prod`
-- `S3BucketName`: `policylab-artifacts-<account-id>-us-east-1-prod`
-- `StepFunctionArn`: `arn:aws:states:us-east-1:<account-id>:stateMachine:PolicyLabAuditWorkflow-prod`
+- `ApiEndpoint`: The HTTP API Gateway HTTPS base URL.
+- `DynamoDBTableName`: `PolicyLab-prod`
+- `ArtifactsBucketName`: `policylab-artifacts-<account-id>-us-east-1-prod`
+- `StateMachineArn`: `arn:aws:states:us-east-1:<account-id>:stateMachine:PolicyAuditWorkflow-prod`
+- `BackendFunctionArn`: `arn:aws:lambda:us-east-1:<account-id>:function:policylab-prod-PolicyLabBackendFunction-...`
 
 ---
 
