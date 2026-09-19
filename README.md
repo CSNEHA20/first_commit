@@ -134,11 +134,32 @@ Complete engineering specifications are available in the [`docs/`](./docs) direc
 | Milestone | Status | Description |
 |---|---|---|
 | **Phase 0: Documentation Foundation** | **COMPLETE** | Comprehensive PRD, Technical Spec, Architecture, Data Flow, Tech Stack, and Frontend blueprints finalized. |
-| **Phase 1: Cedar Engine & Simulation** | *Pending* | Core Cedar parser, scenario evaluation, and local adapter implementation. |
-| **Phase 2: Semantic Diff & Blast Radius** | *Pending* | Matrix evaluation, population deltas, and counterexample generation. |
-| **Phase 3: Security Contracts & AI** | *Pending* | Regression harness, Amazon Bedrock explanation, and Strands audit agent. |
-| **Phase 4: AWS Persistence & AVP** | *Pending* | DynamoDB/S3 integration and Verified Permissions deployment gate. |
-| **Phase 5: Frontend & Demo Video** | *Pending* | Monaco UI, Evidence Drawers, and 3-minute AcmePay demo recording. |
+| **Phase 1: Cedar Core Engine & Single Simulation** | **COMPLETE** | Deterministic Cedar WASM validation, evaluation, and canonical evidence models. |
+| **Phase 2: Scenario Engine & Batch Simulation** | **COMPLETE** | Bounded matrix execution, scenario runner, and expectation testing. |
+| **Phase 3: Policy Diff & Blast Radius Engine** | **COMPLETE** | Behavioral transition classification, bounded blast radius metrics, and transparency statements. |
+| **Phase 4: Counterexamples, Contracts & Regression Gate** | **COMPLETE** | Deterministic counterexample extraction & replay, security contracts, and pre-deployment gate decisions. |
+| **Phase 5: Grounded AI Explanations & AWS Deployment** | *Next* | Bedrock / Strands explanations and Amazon Verified Permissions deployment. |
+
+---
+
+## Running Verification
+
+### Backend Tests
+```bash
+python -m pytest -v
+```
+
+### Frontend Build
+```bash
+cd frontend
+npm run build
+```
+
+### AcmePay 12-Step End-to-End Regression Demonstration
+```bash
+python -m pytest tests/integration/test_acmepay_e2e_regression.py -v
+```
+
 
 ---
 

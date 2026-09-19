@@ -1,9 +1,11 @@
 """
 PolicyLab Backend API Service
 FastAPI REST interface exposing deterministic Cedar validation, single evaluation,
-batch scenario simulation, and policy diff comparison.
+batch scenario simulation, policy diff comparison, counterexample extraction & replay,
+security contract evaluation, and pre-deployment regression gates.
 """
 
+from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,16 +23,32 @@ from .domain.models.diff import (
     PolicyDiffReport,
     PolicyDiffRequest,
 )
+from .domain.models.counterexample import (
+    Counterexample,
+    CounterexampleReplayRequest,
+    CounterexampleReplayResult,
+)
+from .domain.models.contract import (
+    ContractEvaluationReport,
+    ContractEvaluationRequest,
+)
+from .domain.models.regression import (
+    RegressionReport,
+    RegressionRunRequest,
+)
 from .domain.cedar.validation import CedarValidationService
 from .domain.cedar.evaluation import CedarEvaluationService
 from .domain.cedar.runner import ScenarioRunner
 from .domain.cedar.diff import CedarPolicyDiffService
+from .domain.cedar.counterexample import CounterexampleEngine
+from .domain.cedar.contract import SecurityContractService
+from .domain.cedar.regression import RegressionEngine
 from .domain.cedar.engine import LocalCedarAdapter
 
 app = FastAPI(
-    title="PolicyLab Deterministic Authorization & Policy Diff API",
-    description="Deterministic Cedar policy validation, evaluation, scenario runner, and diff engine.",
-    version="1.2.0",
+    title="PolicyLab Deterministic Authorization, Verification & Regression API",
+    description="Deterministic Cedar policy validation, evaluation, scenario runner, diff engine, counterexamples, contracts, and regression gate.",
+    version="1.3.0",
 )
 
 app.add_middleware(
@@ -46,6 +64,16 @@ evaluation_service = CedarEvaluationService()
 scenario_runner = ScenarioRunner()
 diff_service = CedarPolicyDiffService(
     scenario_runner=scenario_runner, validation_service=validation_service
+)
+counterexample_engine = CounterexampleEngine(evaluation_service=evaluation_service)
+contract_service = SecurityContractService(
+    scenario_runner=scenario_runner, validation_service=validation_service
+)
+regression_engine = RegressionEngine(
+    diff_service=diff_service,
+    counterexample_engine=counterexample_engine,
+    contract_service=contract_service,
+    validation_service=validation_service,
 )
 cedar_adapter = LocalCedarAdapter()
 
@@ -135,4 +163,89 @@ def compare_policies(request: PolicyDiffRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Diff engine execution error: {str(ex)}",
+        )
+
+
+@app.post("/policies/counterexamples", response_model=List[Counterexample])
+def get_counterexamples(request: PolicyDiffRequest):
+    """
+    Generates deterministic, concrete counterexamples from behavioral transitions
+    between baseline and candidate policies.
+    """
+    try:
+        diff_report = diff_service.compare(request)
+        counterexamples = counterexample_engine.extract_counterexamples(
+            scenario_diffs=diff_report.scenarioDiffs,
+            baseline_label=request.baselineLabel,
+            candidate_label=request.candidateLabel,
+            entities=request.entities,
+        )
+        return counterexamples
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Counterexample extraction failed: {str(ve)}",
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Counterexample extraction error: {str(ex)}",
+        )
+
+
+@app.post("/counterexamples/replay", response_model=CounterexampleReplayResult)
+def replay_counterexample(request: CounterexampleReplayRequest):
+    """
+    Deterministically replays a counterexample vector against baseline and candidate
+    policies using the live Cedar runtime path, verifying reproducibility.
+    """
+    try:
+        replay_result = counterexample_engine.replay_counterexample(request)
+        return replay_result
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Counterexample replay failed: {str(ex)}",
+        )
+
+
+@app.post("/contracts/evaluate", response_model=ContractEvaluationReport)
+def evaluate_contracts(request: ContractEvaluationRequest):
+    """
+    Evaluates organizational security contracts against a policy set across a declared scenario suite.
+    """
+    try:
+        report = contract_service.evaluate_standalone(request)
+        return report
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Contract evaluation failed: {str(ve)}",
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Contract evaluation error: {str(ex)}",
+        )
+
+
+@app.post("/policies/regression", response_model=RegressionReport)
+def run_regression(request: RegressionRunRequest):
+    """
+    Executes an end-to-end regression evaluation between baseline and candidate policies,
+    evaluating diff transitions, extracting counterexamples, checking security contracts,
+    and computing the deterministic pre-deployment verification gate decision.
+    """
+    try:
+        report = regression_engine.run_regression(request)
+        return report
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Regression evaluation failed: {str(ve)}",
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Regression engine error: {str(ex)}",
         )

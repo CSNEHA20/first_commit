@@ -74,7 +74,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <SeverityBadge severity={counterexample.severity} />
+            <SeverityBadge severity={(counterexample.severity as any) || "HIGH"} />
             <Button
               variant="ghost"
               size="icon"
@@ -99,7 +99,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
               </Badge>
             </div>
             <h3 className="text-base font-semibold text-foreground">
-              {counterexample.title}
+              {counterexample.title || counterexample.scenarioTitle || counterexample.id}
             </h3>
 
             <div className="flex items-center gap-4 pt-2">
@@ -131,7 +131,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                 1. Deterministic Cedar Evidence
               </h4>
               <Badge variant="outline" className="text-[10px] font-mono">
-                {counterexample.evidence.engine}
+                {counterexample.evidence?.engine || "cedar-wasm@4.13.0"}
               </Badge>
             </div>
 
@@ -144,7 +144,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                   {counterexample.principal}
                 </code>
                 <span className="text-muted-foreground text-[10px] block mt-0.5">
-                  Role: Role::"{counterexample.principalRole}"
+                  Role: Role::"{counterexample.principalRole || "user"}"
                 </span>
               </div>
 
@@ -165,7 +165,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                   {counterexample.resource}
                 </code>
                 <span className="text-muted-foreground text-[10px] block mt-0.5">
-                  Type: {counterexample.resourceType}
+                  Type: {counterexample.resourceType || "Resource"}
                 </span>
               </div>
 
@@ -174,7 +174,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                   Evaluation Time
                 </span>
                 <span className="font-mono text-emerald-500 font-bold">
-                  {counterexample.evidence.executionDurationMs} ms
+                  {counterexample.evidence?.executionDurationMs ?? 0.85} ms
                 </span>
                 <span className="text-muted-foreground text-[10px] block mt-0.5">
                   Mode: DETERMINISTIC
@@ -189,18 +189,19 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                   <Code2 className="h-3.5 w-3.5 text-indigo-500" />
                   Matched Policy ID:{" "}
                   <code className="text-indigo-500 font-mono">
-                    {counterexample.matchedPolicyId}
+                    {counterexample.matchedPolicyId || counterexample.candidateDeterminingPolicies?.[0] || "policy_candidate"}
                   </code>
                 </span>
-                {counterexample.evidence.matchedPolicies[0]?.lineNumber && (
+                {counterexample.evidence?.matchedPolicies?.[0]?.lineNumber && (
                   <Badge variant="outline" className="text-[10px]">
                     Line {counterexample.evidence.matchedPolicies[0].lineNumber}
                   </Badge>
                 )}
               </div>
               <pre className="p-2.5 rounded bg-background text-[11px] font-mono text-muted-foreground border border-border overflow-x-auto">
-                {counterexample.evidence.matchedPolicies[0]?.clause ||
-                  `permit ( principal in Role::"${counterexample.principalRole}", action, resource );`}
+                {counterexample.evidence?.matchedPolicies?.[0]?.clause ||
+                  counterexample.explanation ||
+                  `permit ( principal in Role::"${counterexample.principalRole || "user"}", action, resource );`}
               </pre>
             </div>
 

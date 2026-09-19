@@ -4,7 +4,7 @@ export type SeverityLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
 
 export type VersionStatus = "DRAFT" | "VALIDATED" | "ANALYZED" | "VERIFIED" | "DEPLOYED" | "BLOCKED"
 
-export type DeploymentGateStatus = "READY" | "BLOCKED" | "VERIFIED"
+export type DeploymentGateStatus = "PASS" | "BLOCKED" | "INCOMPLETE" | "READY" | "VERIFIED"
 
 export interface AuthorizationRequest {
   principal: string
@@ -61,33 +61,104 @@ export interface Scenario {
 export interface SecurityContract {
   id: string
   title: string
-  description: string
+  description?: string
   severity: SeverityLevel
-  expectedDecision: AuthorizationDecision
+  expectedDecision?: AuthorizationDecision
   scenarioIds: string[]
   isActive: boolean
-  status: "PASSED" | "FAILED"
+  isBlocking?: boolean
+  contractType?: "SCENARIO_SET" | "INVARIANT_DENIED" | "INVARIANT_PERMITTED"
+  status?: "PASS" | "FAIL" | "UNCOMPARABLE" | "ERROR" | "PASSED" | "FAILED"
   failedCount?: number
+}
+
+export interface SecurityContractResult {
+  contractId: string
+  title: string
+  description?: string | null
+  severity: SeverityLevel
+  isBlocking: boolean
+  status: "PASS" | "FAIL" | "UNCOMPARABLE" | "ERROR"
+  evaluatedScenariosCount: number
+  passedScenariosCount: number
+  failedScenariosCount: number
+  uncomparableScenariosCount: number
+  violatingScenarioIds: string[]
+  counterexampleIds: string[]
+  failureReason?: string | null
+  boundaryStatement?: string
 }
 
 export interface Counterexample {
   id: string
-  title: string
+  scenarioId: string
+  scenarioTitle?: string | null
+  title?: string
   principal: string
-  principalRole: string
+  principalRole?: string
   action: string
   resource: string
-  resourceType: string
-  context: Record<string, string | number | boolean>
+  resourceType?: string
+  context: Record<string, string | number | boolean | unknown>
   baselineDecision: AuthorizationDecision
   candidateDecision: AuthorizationDecision
-  transition: "DENY_TO_ALLOW" | "ALLOW_TO_DENY"
-  severity: SeverityLevel
-  severityScore: number
-  matchedPolicyId: string
-  violatedContractId?: string
-  violatedContractTitle?: string
-  evidence: CanonicalEvidence
+  transition: "NEWLY_AUTHORIZED" | "NEWLY_FORBIDDEN" | "UNCHANGED_ALLOW" | "UNCHANGED_DENY" | "DENY_TO_ALLOW" | "ALLOW_TO_DENY"
+  severity?: SeverityLevel | string
+  severityScore?: number
+  baselineDeterminingPolicies?: string[]
+  candidateDeterminingPolicies?: string[]
+  matchedPolicyId?: string
+  violatedContractId?: string | null
+  violatedContractTitle?: string | null
+  explanation?: string
+  evidence?: CanonicalEvidence
+}
+
+export interface CounterexampleReplayRequest {
+  counterexample: Counterexample
+  baselinePolicyText: string
+  candidatePolicyText: string
+  schemaText?: string
+  entities?: Array<Record<string, unknown>>
+}
+
+export interface CounterexampleReplayResult {
+  counterexampleId: string
+  scenarioId: string
+  isReproduced: boolean
+  recordedBaselineDecision: AuthorizationDecision
+  recordedCandidateDecision: AuthorizationDecision
+  replayedBaselineDecision?: AuthorizationDecision | null
+  replayedCandidateDecision?: AuthorizationDecision | null
+  replayedTransition?: string | null
+  mismatchReason?: string | null
+  baselineEvidence?: CanonicalEvidence | null
+  candidateEvidence?: CanonicalEvidence | null
+}
+
+export interface RegressionGateDecision {
+  status: "PASS" | "BLOCKED" | "INCOMPLETE"
+  isPassing: boolean
+  reasons: string[]
+  blockingViolationsCount: number
+  nonBlockingViolationsCount: number
+  uncomparableScenariosCount: number
+  executionErrorsCount: number
+  requiresHumanApproval: boolean
+  deploymentNotice: string
+}
+
+export interface RegressionReport {
+  runId: string
+  timestamp: string
+  engine: string
+  baselineLabel: string
+  candidateLabel: string
+  diffReport: any
+  counterexamples: Counterexample[]
+  contractResults: SecurityContractResult[]
+  gateDecision: RegressionGateDecision
+  boundaryStatement: string
 }
 
 export interface BlastRadiusResult {

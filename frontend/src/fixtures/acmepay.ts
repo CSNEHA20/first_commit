@@ -165,6 +165,7 @@ export const POLICY_VERSIONS: PolicyVersion[] = [
 export const TOP_COUNTEREXAMPLES: Counterexample[] = [
   {
     id: "cx_01",
+    scenarioId: "sc_06",
     title: "Contractor can DELETE confidential Payroll Report",
     principal: "User::\"contractor_alice\"",
     principalRole: "contractor",
@@ -210,6 +211,7 @@ export const TOP_COUNTEREXAMPLES: Counterexample[] = [
   },
   {
     id: "cx_02",
+    scenarioId: "sc_07",
     title: "Contractor can EXPORT sensitive Payroll Report",
     principal: "User::\"contractor_alice\"",
     principalRole: "contractor",
@@ -252,6 +254,7 @@ export const TOP_COUNTEREXAMPLES: Counterexample[] = [
   },
   {
     id: "cx_03",
+    scenarioId: "sc_05",
     title: "Editor can DELETE production Invoice",
     principal: "User::\"editor_bob\"",
     principalRole: "editor",
@@ -527,6 +530,79 @@ export const AUDIT_RUN_MOCK: AuditRun = {
   timestamp: "2026-09-19T08:32:00Z",
 }
 
+export const ACMEPAY_ENTITIES: Array<Record<string, unknown>> = [
+  {
+    uid: { type: "Role", id: "admin" },
+    attrs: {},
+    parents: [],
+  },
+  {
+    uid: { type: "Role", id: "editor" },
+    attrs: {},
+    parents: [],
+  },
+  {
+    uid: { type: "Role", id: "contractor" },
+    attrs: {},
+    parents: [],
+  },
+  {
+    uid: { type: "Role", id: "finance_manager" },
+    attrs: {},
+    parents: [],
+  },
+  {
+    uid: { type: "Role", id: "viewer" },
+    attrs: {},
+    parents: [],
+  },
+  {
+    uid: { type: "User", id: "admin_root" },
+    attrs: {},
+    parents: [{ type: "Role", id: "admin" }],
+  },
+  {
+    uid: { type: "User", id: "editor_bob" },
+    attrs: {},
+    parents: [{ type: "Role", id: "editor" }],
+  },
+  {
+    uid: { type: "User", id: "contractor_alice" },
+    attrs: {},
+    parents: [{ type: "Role", id: "contractor" }],
+  },
+  {
+    uid: { type: "User", id: "finance_manager_sarah" },
+    attrs: {},
+    parents: [{ type: "Role", id: "finance_manager" }],
+  },
+  {
+    uid: { type: "User", id: "tenant_a_user" },
+    attrs: {},
+    parents: [{ type: "Role", id: "viewer" }],
+  },
+  {
+    uid: { type: "Invoice", id: "inv_001" },
+    attrs: { amount: 5000 },
+    parents: [],
+  },
+  {
+    uid: { type: "Invoice", id: "inv_9082" },
+    attrs: { amount: 1500 },
+    parents: [],
+  },
+  {
+    uid: { type: "PayrollReport", id: "payroll_2026_q1" },
+    attrs: { quarter: "Q1", confidential: true },
+    parents: [],
+  },
+  {
+    uid: { type: "SupportTicket", id: "ticket_102" },
+    attrs: {},
+    parents: [],
+  },
+]
+
 export const DEPLOYMENT_HISTORY: DeploymentRecord[] = [
   {
     id: "dep_001",
@@ -541,3 +617,5 @@ export const DEPLOYMENT_HISTORY: DeploymentRecord[] = [
     verificationProof: "cedar-proof-sig-990a12fbc",
   },
 ]
+
+

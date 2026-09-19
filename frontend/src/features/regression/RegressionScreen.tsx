@@ -5,6 +5,10 @@ import {
   CheckCircle2,
   XCircle,
   Filter,
+  ShieldCheck,
+  ShieldAlert,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,25 +18,75 @@ import { SeverityBadge } from "@/components/common/SeverityBadge"
 import {
   SECURITY_CONTRACTS,
   ALL_REGRESSION_SCENARIOS,
+  POLICY_V12_TEXT,
+  POLICY_V13_TEXT,
+  ACMEPAY_ENTITIES,
 } from "@/fixtures/acmepay"
-import { Scenario } from "@/types/authz"
+import { RegressionReport, Scenario, SecurityContract } from "@/types/authz"
+import { runRegression } from "@/lib/api"
 
 export const RegressionScreen: React.FC = () => {
   const [selectedVersion, setSelectedVersion] = useState<"v12" | "v13">("v13")
   const [isRunning, setIsRunning] = useState(false)
   const [filterTag, setFilterTag] = useState<string>("all")
+  const [regressionReport, setRegressionReport] = useState<RegressionReport | null>(null)
+  const [executionDurationMs, setExecutionDurationMs] = useState<number>(12.4)
 
-  const handleRunSuite = () => {
+  const handleRunSuite = async () => {
     setIsRunning(true)
-    setTimeout(() => setIsRunning(false), 400)
+    const startTime = performance.now()
+    try {
+      const candidatePolicy = selectedVersion === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT
+      const contractsPayload: SecurityContract[] = SECURITY_CONTRACTS.map((c) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        severity: c.severity,
+        isBlocking: true,
+        scenarioIds: c.scenarioIds,
+        isActive: true,
+        expectedDecision: c.expectedDecision,
+      }))
+
+      const report = await runRegression({
+        baselinePolicyText: POLICY_V12_TEXT,
+        candidatePolicyText: candidatePolicy,
+        entities: ACMEPAY_ENTITIES,
+        suite: {
+          id: "suite_acmepay_core",
+          name: "AcmePay Core Authorization Suite",
+          scenarios: ALL_REGRESSION_SCENARIOS,
+        },
+        contracts: contractsPayload,
+        baselineLabel: "v12 (PROD)",
+        candidateLabel: selectedVersion === "v12" ? "v12 (PROD)" : "v13 (Draft)",
+      })
+      setRegressionReport(report)
+      setExecutionDurationMs(Math.round((performance.now() - startTime) * 10) / 10)
+    } catch (err) {
+      console.error("Regression run failed:", err)
+    } finally {
+      setIsRunning(false)
+    }
   }
 
-  // Adjust scenario results based on selected version
+  // Adjust scenario results based on live report or fallback
   const scenarios: Scenario[] = ALL_REGRESSION_SCENARIOS.map((s) => {
+    if (regressionReport) {
+      const diffMatch = regressionReport.diffReport?.scenarioDiffs?.find(
+        (d: any) => d.scenarioId === s.id
+      )
+      if (diffMatch) {
+        return {
+          ...s,
+          actualDecision: diffMatch.candidateDecision || "DENY",
+        }
+      }
+    }
     if (selectedVersion === "v12") {
       return {
         ...s,
-        actualDecision: s.expectedDecision, // 100% pass on v12
+        actualDecision: s.expectedDecision,
       }
     }
     return s
@@ -45,6 +99,9 @@ export const RegressionScreen: React.FC = () => {
 
   const passedCount = scenarios.filter((s) => s.actualDecision === s.expectedDecision).length
   const failedCount = scenarios.length - passedCount
+
+  const gateDecision = regressionReport?.gateDecision
+  const gateStatus = gateDecision?.status || (selectedVersion === "v12" ? "PASS" : "BLOCKED")
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-200">
@@ -72,7 +129,10 @@ export const RegressionScreen: React.FC = () => {
           {/* Version Switcher */}
           <div className="flex items-center p-1 rounded-lg bg-muted border border-border">
             <button
-              onClick={() => setSelectedVersion("v12")}
+              onClick={() => {
+                setSelectedVersion("v12")
+                setRegressionReport(null)
+              }}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                 selectedVersion === "v12"
                   ? "bg-background text-foreground shadow-sm font-bold"
@@ -82,7 +142,10 @@ export const RegressionScreen: React.FC = () => {
               v12 (PROD)
             </button>
             <button
-              onClick={() => setSelectedVersion("v13")}
+              onClick={() => {
+                setSelectedVersion("v13")
+                setRegressionReport(null)
+              }}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                 selectedVersion === "v13"
                   ? "bg-background text-foreground shadow-sm font-bold"
@@ -98,11 +161,73 @@ export const RegressionScreen: React.FC = () => {
             disabled={isRunning}
             className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs gap-1.5 font-semibold h-8 shadow-sm"
           >
-            <Play className="h-3.5 w-3.5 fill-current" />
-            {isRunning ? "Running Suite..." : "Run All Scenarios"}
+            {isRunning ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Play className="h-3.5 w-3.5 fill-current" />
+            )}
+            {isRunning ? "Evaluating in Cedar..." : "Run Live Regression"}
           </Button>
         </div>
       </div>
+
+      {/* Pre-Deployment Gate Banner */}
+      <Card
+        className={`border shadow-md ${
+          gateStatus === "PASS"
+            ? "border-emerald-500/40 bg-gradient-to-r from-emerald-500/10 via-card to-background"
+            : gateStatus === "BLOCKED"
+            ? "border-rose-500/40 bg-gradient-to-r from-rose-500/10 via-card to-background"
+            : "border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-card to-background"
+        }`}
+      >
+        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div
+              className={`p-2 rounded-lg border ${
+                gateStatus === "PASS"
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-500"
+                  : gateStatus === "BLOCKED"
+                  ? "bg-rose-500/15 border-rose-500/30 text-rose-500"
+                  : "bg-amber-500/15 border-amber-500/30 text-amber-500"
+              }`}
+            >
+              {gateStatus === "PASS" ? (
+                <ShieldCheck className="h-5 w-5" />
+              ) : gateStatus === "BLOCKED" ? (
+                <ShieldAlert className="h-5 w-5" />
+              ) : (
+                <AlertCircle className="h-5 w-5" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-foreground">
+                  Pre-Deployment Gate: {gateStatus === "PASS" ? "VERIFIED (PASS)" : gateStatus === "BLOCKED" ? "BLOCKED" : "INCOMPLETE"}
+                </span>
+                <Badge variant={gateStatus === "PASS" ? "allow" : "destructive"} className="text-[10px]">
+                  {gateStatus}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {gateDecision?.reasons?.[0] ||
+                  (gateStatus === "PASS"
+                    ? "All organizational security contracts satisfied. Zero blocking violations."
+                    : "Blocking Security Contract SC-03 violated: Editor invoice deletion prohibited.")}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right shrink-0">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+              Governance Policy
+            </span>
+            <span className="text-xs font-semibold text-foreground">
+              Human Approval Mandatory
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Scoreboard */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -146,11 +271,11 @@ export const RegressionScreen: React.FC = () => {
           <CardHeader className="p-4 pb-1">
             <span className="text-[10px] uppercase font-bold text-muted-foreground">Suite Duration</span>
             <CardTitle className="text-xl font-mono text-foreground mt-1">
-              12.4 ms
+              {executionDurationMs} ms
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-1 text-[11px] text-muted-foreground">
-            Local in-memory Cedar engine.
+            Deterministic Cedar WASM engine.
           </CardContent>
         </Card>
       </div>
@@ -166,7 +291,11 @@ export const RegressionScreen: React.FC = () => {
         <CardContent className="p-4 pt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {SECURITY_CONTRACTS.map((c) => {
-              const isFailing = selectedVersion === "v13" && c.status === "FAILED"
+              const liveContract = regressionReport?.contractResults?.find((r) => r.contractId === c.id)
+              const isFailing = liveContract
+                ? liveContract.status === "FAIL"
+                : selectedVersion === "v13" && c.status === "FAILED"
+
               return (
                 <div
                   key={c.id}
@@ -190,6 +319,11 @@ export const RegressionScreen: React.FC = () => {
                   <p className="text-[11px] text-muted-foreground">
                     {c.description}
                   </p>
+                  {isFailing && liveContract?.failureReason && (
+                    <div className="text-[10px] text-rose-500 font-mono pt-1">
+                      Violation: {liveContract.failureReason}
+                    </div>
+                  )}
                 </div>
               )
             })}

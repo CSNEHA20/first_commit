@@ -32,6 +32,31 @@ from .diff import (
     ScenarioComparisonStatus,
     ScenarioDiffResult,
 )
+from .counterexample import (
+    Counterexample,
+    CounterexampleReplayRequest,
+    CounterexampleReplayResult,
+)
+from .contract import (
+    ContractEvaluationReport,
+    ContractEvaluationRequest,
+    ContractSeverity,
+    ContractStatus,
+    ContractType,
+    SecurityContract,
+    SecurityContractResult,
+    SecurityContractSuite,
+)
+from .regression import (
+    DeploymentGateStatus,
+    RegressionGateDecision,
+    RegressionReport,
+    RegressionRunRequest,
+)
+from .entity import (
+    FixtureEntityProvider,
+    IEntityProvider,
+)
 
 __all__ = [
     "AuthorizationDecision",
@@ -58,4 +83,21 @@ __all__ = [
     "PolicyDiffRequest",
     "ScenarioComparisonStatus",
     "ScenarioDiffResult",
+    "Counterexample",
+    "CounterexampleReplayRequest",
+    "CounterexampleReplayResult",
+    "ContractEvaluationReport",
+    "ContractEvaluationRequest",
+    "ContractSeverity",
+    "ContractStatus",
+    "ContractType",
+    "SecurityContract",
+    "SecurityContractResult",
+    "SecurityContractSuite",
+    "DeploymentGateStatus",
+    "RegressionGateDecision",
+    "RegressionReport",
+    "RegressionRunRequest",
+    "FixtureEntityProvider",
+    "IEntityProvider",
 ]

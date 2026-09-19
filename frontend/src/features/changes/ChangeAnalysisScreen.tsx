@@ -7,6 +7,9 @@ import {
   Info,
   Layers,
   FileCheck2,
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,18 +21,44 @@ import { EvidenceDrawer } from "@/components/common/EvidenceDrawer"
 import {
   BLAST_RADIUS_RESULT,
   TOP_COUNTEREXAMPLES,
+  POLICY_V12_TEXT,
+  POLICY_V13_TEXT,
+  ACMEPAY_ENTITIES,
 } from "@/fixtures/acmepay"
-import { Counterexample } from "@/types/authz"
+import { Counterexample, CounterexampleReplayResult } from "@/types/authz"
+import { replayCounterexample } from "@/lib/api"
 
 export const ChangeAnalysisScreen: React.FC = () => {
   const [selectedCounterexample, setSelectedCounterexample] =
     useState<Counterexample | null>(TOP_COUNTEREXAMPLES[0])
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [activeDiffTab, setActiveDiffTab] = useState<"behavioral" | "textual">("behavioral")
+  
+  // Replay state
+  const [replayingId, setReplayingId] = useState<string | null>(null)
+  const [replayResults, setReplayResults] = useState<Record<string, CounterexampleReplayResult>>({})
 
   const handleOpenEvidence = (cx: Counterexample) => {
     setSelectedCounterexample(cx)
     setIsDrawerOpen(true)
+  }
+
+  const handleReplayCounterexample = async (e: React.MouseEvent, cx: Counterexample) => {
+    e.stopPropagation()
+    setReplayingId(cx.id)
+    try {
+      const res = await replayCounterexample({
+        counterexample: cx,
+        baselinePolicyText: POLICY_V12_TEXT,
+        candidatePolicyText: POLICY_V13_TEXT,
+        entities: ACMEPAY_ENTITIES,
+      })
+      setReplayResults((prev) => ({ ...prev, [cx.id]: res }))
+    } catch (err) {
+      console.error("Replay error:", err)
+    } finally {
+      setReplayingId(null)
+    }
   }
 
   return (
@@ -131,7 +160,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
           {/* Newly Authorized Banner List */}
           <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs space-y-1.5">
             <span className="font-bold text-rose-500 uppercase tracking-wider text-[11px] block">
-              Newly Authorized Operations (38 Transitions: DENY ➔ ALLOW)
+              Newly Authorized Operations ({BLAST_RADIUS_RESULT.newlyAuthorizedCount} Transitions: DENY ➔ ALLOW)
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-mono text-foreground font-medium">
               <div className="p-2 rounded bg-background/60 border border-border">
@@ -140,7 +169,7 @@ export const ChangeAnalysisScreen: React.FC = () => {
               <div className="p-2 rounded bg-background/60 border border-border text-rose-500 font-bold">
                 • Contractor ➔ EXPORT ➔ Payroll
               </div>
-              <div className="p-2 rounded bg-background/60 border border-border">
+              <div className="p-2 rounded bg-background/60 border border-border text-rose-500 font-bold">
                 • Editor ➔ DELETE ➔ Invoice
               </div>
             </div>
@@ -181,91 +210,137 @@ export const ChangeAnalysisScreen: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {TOP_COUNTEREXAMPLES.map((cx) => (
-                <div
-                  key={cx.id}
-                  onClick={() => handleOpenEvidence(cx)}
-                  className="p-4 rounded-xl border border-border bg-card hover:border-rose-500/50 hover:bg-muted/30 cursor-pointer transition-all space-y-3 group shadow-sm"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <SeverityBadge severity={cx.severity} />
-                      <h3 className="text-sm font-bold text-foreground group-hover:text-rose-500 transition-colors">
-                        {cx.title}
-                      </h3>
+              {TOP_COUNTEREXAMPLES.map((cx) => {
+                const replay = replayResults[cx.id]
+                const isReplaying = replayingId === cx.id
+
+                return (
+                  <div
+                    key={cx.id}
+                    onClick={() => handleOpenEvidence(cx)}
+                    className="p-4 rounded-xl border border-border bg-card hover:border-rose-500/50 hover:bg-muted/30 cursor-pointer transition-all space-y-3 group shadow-sm"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <SeverityBadge severity={cx.severity as any} />
+                        <h3 className="text-sm font-bold text-foreground group-hover:text-rose-500 transition-colors">
+                          {cx.title || cx.scenarioTitle || cx.id}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Live Replay Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isReplaying}
+                          onClick={(e) => handleReplayCounterexample(e, cx)}
+                          className="text-xs gap-1.5 h-7 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${isReplaying ? "animate-spin" : ""}`} />
+                          {isReplaying ? "Verifying..." : "Replay in Cedar"}
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleOpenEvidence(cx)
+                          }}
+                          className="text-xs gap-1.5 h-7 text-indigo-500 border-indigo-500/30 hover:bg-indigo-500/10"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                          Inspect Evidence
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleOpenEvidence(cx)
-                      }}
-                      className="text-xs gap-1.5 self-start sm:self-auto h-7 text-indigo-500 border-indigo-500/30 hover:bg-indigo-500/10"
-                    >
-                      <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                      Inspect Evidence
-                      <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  </div>
+                    {/* Replay Status Alert if replayed */}
+                    {replay && (
+                      <div
+                        className={`p-2 rounded-lg text-xs flex items-center justify-between ${
+                          replay.isReproduced
+                            ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                            : "bg-rose-500/10 border border-rose-500/20 text-rose-500"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {replay.isReproduced ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                          ) : (
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <span className="font-mono text-[11px]">
+                            {replay.isReproduced
+                              ? `✓ 100% Deterministically Reproduced by Cedar WASM (${replay.replayedBaselineDecision} ➔ ${replay.replayedCandidateDecision})`
+                              : `Replay Mismatch: ${replay.mismatchReason}`}
+                          </span>
+                        </div>
+                        <Badge variant={replay.isReproduced ? "allow" : "destructive"} className="text-[10px]">
+                          {replay.isReproduced ? "REPRODUCED" : "MISMATCH"}
+                        </Badge>
+                      </div>
+                    )}
 
-                  {/* Scenario Details Row */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
-                      <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
-                        Principal
-                      </span>
-                      <code className="font-mono text-foreground font-semibold truncate block">
-                        {cx.principal}
-                      </code>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
-                      <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
-                        Action
-                      </span>
-                      <code className="font-mono text-amber-500 font-semibold truncate block">
-                        {cx.action}
-                      </code>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
-                      <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
-                        Resource
-                      </span>
-                      <code className="font-mono text-sky-500 font-semibold truncate block">
-                        {cx.resource}
-                      </code>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border flex items-center justify-between">
-                      <div>
+                    {/* Scenario Details Row */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
                         <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
-                          Decision Flip
+                          Principal
                         </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <DecisionBadge decision={cx.baselineDecision} size="sm" />
-                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                          <DecisionBadge decision={cx.candidateDecision} size="sm" />
+                        <code className="font-mono text-foreground font-semibold truncate block">
+                          {cx.principal}
+                        </code>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
+                          Action
+                        </span>
+                        <code className="font-mono text-amber-500 font-semibold truncate block">
+                          {cx.action}
+                        </code>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
+                          Resource
+                        </span>
+                        <code className="font-mono text-sky-500 font-semibold truncate block">
+                          {cx.resource}
+                        </code>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border flex items-center justify-between">
+                        <div>
+                          <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
+                            Decision Flip
+                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <DecisionBadge decision={cx.baselineDecision} size="sm" />
+                            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                            <DecisionBadge decision={cx.candidateDecision} size="sm" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Violated Contract Banner */}
-                  {cx.violatedContractId && (
-                    <div className="p-2 rounded bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-500 font-medium flex items-center justify-between">
-                      <span>
-                        Violated Invariant: <strong>{cx.violatedContractId}</strong> — "{cx.violatedContractTitle}"
-                      </span>
-                      <Badge variant="blocked" className="text-[9px]">
-                        Violated
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {/* Violated Contract Banner */}
+                    {cx.violatedContractId && (
+                      <div className="p-2 rounded bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-500 font-medium flex items-center justify-between">
+                        <span>
+                          Violated Invariant: <strong>{cx.violatedContractId}</strong> — "{cx.violatedContractTitle}"
+                        </span>
+                        <Badge variant="blocked" className="text-[9px]">
+                          Violated
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </TabsContent>
@@ -279,48 +354,24 @@ export const ChangeAnalysisScreen: React.FC = () => {
                 Side-by-side AST line comparison highlighting modified clauses.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="rounded-lg border border-border overflow-hidden font-mono text-xs leading-relaxed">
-                <div className="p-3 bg-muted/50 border-b border-border flex items-center justify-between font-bold text-muted-foreground text-[11px]">
-                  <span>Baseline: v12 (Line 16-20)</span>
-                  <span>Candidate: v13 (Line 16-20)</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border bg-muted/20">
-                  {/* Baseline Column */}
-                  <div className="p-4 space-y-1">
-                    <p className="text-muted-foreground">// 3. Editors read and modify invoices</p>
-                    <p className="text-foreground">permit (</p>
-                    <p className="text-foreground pl-4">principal in Role::"editor",</p>
-                    <p className="bg-emerald-500/10 text-emerald-500 pl-4 font-bold rounded">
-                      - action in [Action::"view", Action::"edit"],
-                    </p>
-                    <p className="text-foreground pl-4">resource in ResourceType::"Invoice"</p>
-                    <p className="text-foreground">);</p>
-                  </div>
-
-                  {/* Candidate Column */}
-                  <div className="p-4 space-y-1">
-                    <p className="text-muted-foreground">// 3. Editors: Accidental clause broadening</p>
-                    <p className="text-foreground">permit (</p>
-                    <p className="text-foreground pl-4">principal in Role::"editor",</p>
-                    <p className="bg-rose-500/15 text-rose-500 pl-4 font-bold rounded">
-                      + action, // ⚠ Broadened: Matches all 4 actions
-                    </p>
-                    <p className="text-foreground pl-4">resource in ResourceType::"Invoice"</p>
-                    <p className="text-foreground">);</p>
-                  </div>
-                </div>
+            <CardContent className="p-4 font-mono text-xs overflow-x-auto space-y-1">
+              <div className="text-muted-foreground">// Policy clause comparison:</div>
+              <div className="p-2 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                - action in [Action::"view", Action::"edit"],
+              </div>
+              <div className="p-2 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                + action, // Broadened to include delete and export accidentally!
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Flyout Evidence Drawer */}
+      {/* Slide-over Evidence Drawer */}
       <EvidenceDrawer
-        counterexample={selectedCounterexample}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        counterexample={selectedCounterexample}
       />
     </div>
   )

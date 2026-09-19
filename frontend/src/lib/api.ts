@@ -6,7 +6,13 @@
 import {
   AuthorizationRequest,
   CanonicalEvidence,
+  Counterexample,
+  CounterexampleReplayRequest,
+  CounterexampleReplayResult,
+  RegressionReport,
   Scenario,
+  SecurityContract,
+  SecurityContractResult,
 } from "../types/authz"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
@@ -129,6 +135,18 @@ export interface PolicyDiffReport {
   newlyForbiddenScenarios: ScenarioDiffResult[]
 }
 
+export interface ContractEvaluationReport {
+  reportId: string
+  timestamp: string
+  totalContracts: number
+  passedContracts: number
+  failedContracts: number
+  uncomparableContracts: number
+  errorContracts: number
+  allBlockingPassed: boolean
+  results: SecurityContractResult[]
+}
+
 export async function checkBackendHealth(): Promise<{
   status: string
   engine: string
@@ -219,6 +237,101 @@ export async function comparePolicies(payload: {
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(errorBody.detail || "Policy diff comparison failed")
+  }
+  return res.json()
+}
+
+export async function generateCounterexamples(payload: {
+  baselinePolicyText: string
+  candidatePolicyText: string
+  schemaText?: string
+  entities?: Array<Record<string, unknown>>
+  suite: {
+    id: string
+    name: string
+    description?: string
+    version?: string
+    scenarios: Scenario[]
+  }
+  baselineLabel?: string
+  candidateLabel?: string
+}): Promise<Counterexample[]> {
+  const res = await fetch(`${API_BASE_URL}/policies/counterexamples`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Counterexample generation failed")
+  }
+  return res.json()
+}
+
+export async function replayCounterexample(
+  payload: CounterexampleReplayRequest
+): Promise<CounterexampleReplayResult> {
+  const res = await fetch(`${API_BASE_URL}/counterexamples/replay`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Counterexample replay failed")
+  }
+  return res.json()
+}
+
+export async function evaluateContracts(payload: {
+  policyText: string
+  schemaText?: string
+  entities?: Array<Record<string, unknown>>
+  suite: {
+    id: string
+    name: string
+    description?: string
+    version?: string
+    scenarios: Scenario[]
+  }
+  contracts: SecurityContract[]
+}): Promise<ContractEvaluationReport> {
+  const res = await fetch(`${API_BASE_URL}/contracts/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Contract evaluation failed")
+  }
+  return res.json()
+}
+
+export async function runRegression(payload: {
+  baselinePolicyText: string
+  candidatePolicyText: string
+  schemaText?: string
+  entities?: Array<Record<string, unknown>>
+  suite: {
+    id: string
+    name: string
+    description?: string
+    version?: string
+    scenarios: Scenario[]
+  }
+  contracts: SecurityContract[]
+  baselineLabel?: string
+  candidateLabel?: string
+}): Promise<RegressionReport> {
+  const res = await fetch(`${API_BASE_URL}/policies/regression`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Regression evaluation failed")
   }
   return res.json()
 }
