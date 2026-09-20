@@ -551,16 +551,8 @@ PolicyLab includes two complete enterprise benchmarks and a generic connected wo
 Explore the end-to-end PolicyLab authorization verification and policy-engineering experience. Every capability below is mathematically grounded in Cedar WASM 4.13.0 and validated across 172 automated tests.
 
 <table>
-  <thead>
-    <tr>
-      <th width="44%" align="left">Capability &amp; Architectural Breakdown</th>
-      <th width="56%" align="center">Interactive UI &amp; Deterministic Telemetry</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- 1. Interactive Opening Simulator & Hero Gateway -->
-    <tr>
-      <td width="44%" valign="middle">
+<tr>
+<td width="48%" valign="middle">
 
 ### Interactive Opening Simulator & Hero Gateway
 
@@ -572,15 +564,13 @@ A friction-free security simulator embedded directly into the hero section of th
 
 [Inspect Landing Implementation →](./frontend/src/features/landing/LandingPage.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/01-interactive-simulator.png"><img src="policylab-screenshots/01-interactive-simulator.png" alt="Interactive Opening Simulator &amp; Hero Gateway" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 2. 4-Stage Deterministic Evaluation Pipeline -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/01-interactive-simulator.png"><img src="policylab-screenshots/01-interactive-simulator.png" alt="Interactive Opening Simulator &amp; Hero Gateway" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### 4-Stage Deterministic Evaluation Pipeline
 
@@ -593,15 +583,13 @@ Visual real-time tracing of the complete verification pipeline as requests pass 
 
 [View Pipeline Specification →](./docs/DATA_FLOW.md#1-system-wide-data-flow)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/02-deterministic-pipeline.png"><img src="policylab-screenshots/02-deterministic-pipeline.png" alt="4-Stage Deterministic Evaluation Pipeline" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 3. Security Workbench & Project Hub -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/02-deterministic-pipeline.png"><img src="policylab-screenshots/02-deterministic-pipeline.png" alt="4-Stage Deterministic Evaluation Pipeline" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Security Workbench & Project Hub
 
@@ -613,15 +601,13 @@ The centralized orchestration console for multi-project authorization governance
 
 [View Hub Console Source →](./frontend/src/features/hub/HubConsole.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/03-project-hub-console.png"><img src="policylab-screenshots/03-project-hub-console.png" alt="Security Workbench &amp; Project Hub" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 4. Local Workstation & CLI Pipeline Connector -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/03-project-hub-console.png"><img src="policylab-screenshots/03-project-hub-console.png" alt="Security Workbench &amp; Project Hub" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Local Workstation & CLI Pipeline Connector
 
@@ -632,15 +618,13 @@ Seamless zero-upload workstation integration enabling security engineers to impo
 
 [Inspect CLI Architecture →](./docs/TECH_STACK.md)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/04-local-cli-connector.png"><img src="policylab-screenshots/04-local-cli-connector.png" alt="Local Workstation &amp; CLI Pipeline Connector" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 5. GitHub Policy Repository Connector -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/04-local-cli-connector.png"><img src="policylab-screenshots/04-local-cli-connector.png" alt="Local Workstation &amp; CLI Pipeline Connector" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### GitHub Policy Repository Connector
 
@@ -652,15 +636,13 @@ Direct Git repository synchronizer that pulls Cedar policy definitions, schemas,
 
 [View Git Sync Guidelines →](./.agents/skills/dual-repo-sync/SKILL.md)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/05-github-repository-connector.png"><img src="policylab-screenshots/05-github-repository-connector.png" alt="GitHub Policy Repository Connector" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 6. Security Investigation Command Center -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/05-github-repository-connector.png"><img src="policylab-screenshots/05-github-repository-connector.png" alt="GitHub Policy Repository Connector" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Security Investigation Command Center
 
@@ -673,15 +655,13 @@ The mission-critical executive overview synthesizing system telemetry, authoriza
 
 [View Command Center Component →](./frontend/src/features/overview/OverviewScreen.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/06-overview-command-center.png"><img src="policylab-screenshots/06-overview-command-center.png" alt="Security Investigation Command Center" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 7. Cedar Policy Engineering Workspace -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/06-overview-command-center.png"><img src="policylab-screenshots/06-overview-command-center.png" alt="Security Investigation Command Center" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Cedar Policy Engineering Workspace (Monaco Editor)
 
@@ -693,15 +673,13 @@ A developer-grade policy authoring environment powered by Microsoft's Monaco Edi
 
 [View Editor Implementation →](./frontend/src/features/editor/PolicyEditorScreen.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/07-cedar-policy-editor.png"><img src="policylab-screenshots/07-cedar-policy-editor.png" alt="Cedar Policy Engineering Workspace" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 8. Side-by-Side Split View Policy Compare -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/07-cedar-policy-editor.png"><img src="policylab-screenshots/07-cedar-policy-editor.png" alt="Cedar Policy Engineering Workspace" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Side-by-Side Split View Policy Compare
 
@@ -713,15 +691,13 @@ A high-fidelity Monaco split-diff viewer comparing production baseline policies 
 
 [View Diff Engine Source →](./backend/domain/cedar/diff.py)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/08-split-policy-compare.png"><img src="policylab-screenshots/08-split-policy-compare.png" alt="Side-by-Side Split View Policy Compare" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 9. Cedar Schema & Entity Type Inspector -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/08-split-policy-compare.png"><img src="policylab-screenshots/08-split-policy-compare.png" alt="Side-by-Side Split View Policy Compare" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Cedar Schema & Entity Type Inspector
 
@@ -733,15 +709,13 @@ Interactive schema tab within the editor inspecting declared entity hierarchies,
 
 [View AcmePay Cedar Schema →](./fixtures/schema.cedarschema.json)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/09-cedar-schema-inspector.png"><img src="policylab-screenshots/09-cedar-schema-inspector.png" alt="Cedar Schema &amp; Entity Type Inspector" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 10. Ad-hoc Scenario Simulator -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/09-cedar-schema-inspector.png"><img src="policylab-screenshots/09-cedar-schema-inspector.png" alt="Cedar Schema &amp; Entity Type Inspector" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Ad-hoc Scenario Simulator & Request Vector Tester
 
@@ -754,15 +728,13 @@ An interactive authorization testing sandbox for evaluating custom request tuple
 
 [View Simulator Component →](./frontend/src/features/simulator/SimulatorScreen.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/10-scenario-simulator.png"><img src="policylab-screenshots/10-scenario-simulator.png" alt="Ad-hoc Scenario Simulator" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 11. Policy Differential & Risk Impact Summary -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/10-scenario-simulator.png"><img src="policylab-screenshots/10-scenario-simulator.png" alt="Ad-hoc Scenario Simulator" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Policy Differential & Risk Impact Summary
 
@@ -775,15 +747,13 @@ Quantitative blast radius analytics computing an overall authorization risk scor
 
 [View Change Analysis Component →](./frontend/src/features/changes/ChangeAnalysisScreen.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/11-risk-impact-summary.png"><img src="policylab-screenshots/11-risk-impact-summary.png" alt="Policy Differential &amp; Risk Impact Summary" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 12. Interactive Authorization Blast Radius Graph -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/11-risk-impact-summary.png"><img src="policylab-screenshots/11-risk-impact-summary.png" alt="Policy Differential &amp; Risk Impact Summary" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Interactive Authorization Blast Radius Graph
 
@@ -795,15 +765,13 @@ A dynamic, force-directed orbital graph mapping the full blast radius ripple eff
 
 [View Graph Visualizer →](./frontend/src/features/changes/ChangeAnalysisScreen.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/12-blast-radius-graph.png"><img src="policylab-screenshots/12-blast-radius-graph.png" alt="Interactive Authorization Blast Radius Graph" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 13. Severity-Ranked Deterministic Counterexamples -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/12-blast-radius-graph.png"><img src="policylab-screenshots/12-blast-radius-graph.png" alt="Interactive Authorization Blast Radius Graph" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Severity-Ranked Deterministic Counterexamples
 
@@ -817,15 +785,13 @@ Automated extraction of concrete authorization counterexamples proving where and
 
 [View Counterexample Generator →](./backend/domain/cedar/counterexample.py)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/13-counterexamples-replay.png"><img src="policylab-screenshots/13-counterexamples-replay.png" alt="Severity-Ranked Deterministic Counterexamples" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 14. Policy AST Semantic Diff Inspector -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/13-counterexamples-replay.png"><img src="policylab-screenshots/13-counterexamples-replay.png" alt="Severity-Ranked Deterministic Counterexamples" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Policy AST Semantic Diff Inspector
 
@@ -837,15 +803,13 @@ A specialized semantic diff viewer focusing exclusively on load-bearing Cedar AS
 
 [View Diff Model Spec →](./docs/SPEC.md#semantic-diff-model)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/14-policy-ast-diff.png"><img src="policylab-screenshots/14-policy-ast-diff.png" alt="Policy AST Semantic Diff Inspector" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 15. Security Contract Invariants & Regression Suite -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/14-policy-ast-diff.png"><img src="policylab-screenshots/14-policy-ast-diff.png" alt="Policy AST Semantic Diff Inspector" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Security Contract Invariants & Regression Suite
 
@@ -857,15 +821,13 @@ The core regression engine evaluating organizational security contracts to enfor
 
 [View Regression Harness →](./frontend/src/features/regression/RegressionScreen.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/15-security-contracts-regression.png"><img src="policylab-screenshots/15-security-contracts-regression.png" alt="Security Contract Invariants &amp; Regression Suite" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 16. Granular Scenario Assertion Breakdown -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/15-security-contracts-regression.png"><img src="policylab-screenshots/15-security-contracts-regression.png" alt="Security Contract Invariants &amp; Regression Suite" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Granular Scenario Assertion Breakdown
 
@@ -877,15 +839,13 @@ Comprehensive scenario execution matrix providing individual pass/fail records a
 
 [View Contract Test Suites →](./tests/unit/test_contracts.py)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/16-scenario-assertion-breakdown.png"><img src="policylab-screenshots/16-scenario-assertion-breakdown.png" alt="Granular Scenario Assertion Breakdown" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 17. Verified Permissions Release & Deployment Gate -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/16-scenario-assertion-breakdown.png"><img src="policylab-screenshots/16-scenario-assertion-breakdown.png" alt="Granular Scenario Assertion Breakdown" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Verified Permissions Release & Deployment Gate
 
@@ -901,15 +861,13 @@ The hard deployment verification gate preventing unauthorized policies from reac
 
 [View Deployment Gate Component →](./frontend/src/features/deployment/DeploymentScreen.tsx)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/17-deployment-gate-avp.png"><img src="policylab-screenshots/17-deployment-gate-avp.png" alt="Verified Permissions Release &amp; Deployment Gate" width="100%" /></a>
-      </td>
-    </tr>
-
-    <!-- 18. Strands Audit & Governance Intelligence -->
-    <tr>
-      <td width="44%" valign="middle">
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/17-deployment-gate-avp.png"><img src="policylab-screenshots/17-deployment-gate-avp.png" alt="Verified Permissions Release &amp; Deployment Gate" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="48%" valign="middle">
 
 ### Strands Audit & Governance Intelligence
 
@@ -922,12 +880,11 @@ Autonomous AI security audit agent orchestrating multi-step verification tools w
 
 [View Strands Agent Implementation →](./backend/domain/ai/agent.py)
 
-      </td>
-      <td width="56%" valign="middle">
-        <a href="policylab-screenshots/18-strands-audit-intelligence.png"><img src="policylab-screenshots/18-strands-audit-intelligence.png" alt="Strands Audit &amp; Governance Intelligence" width="100%" /></a>
-      </td>
-    </tr>
-  </tbody>
+</td>
+<td width="52%" valign="middle">
+<a href="policylab-screenshots/18-strands-audit-intelligence.png"><img src="policylab-screenshots/18-strands-audit-intelligence.png" alt="Strands Audit &amp; Governance Intelligence" width="100%" /></a>
+</td>
+</tr>
 </table>
 
 ---
