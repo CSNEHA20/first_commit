@@ -14,12 +14,21 @@ import { WorkspaceProvider } from "@/store/WorkspaceProvider"
 import { useWorkspace, DEMO_WORKSPACE } from "@/store/workspaceStore"
 import { useAppRouter } from "@/lib/router"
 import { DOCVAULT_WORKSPACE } from "@/fixtures/docvault"
+import { handleCognitoRedirectCallback } from "@/lib/cognito"
 import { useEffect } from "react"
 
 // ─── Inner component: rendered inside WorkspaceProvider context ───────────────
 function AppContent() {
   const { route, navigate } = useAppRouter()
   const { activeWorkspace, isDemoMode, dispatch } = useWorkspace()
+
+  // Handle Cognito OAuth callback on initial mount
+  useEffect(() => {
+    const user = handleCognitoRedirectCallback()
+    if (user && route.type === 'landing') {
+      navigate({ type: 'console' })
+    }
+  }, [])
 
   // Handle benchmark launch from landing page
   const handleOpenBenchmark = (benchmark: 'acmepay' | 'docvault') => {

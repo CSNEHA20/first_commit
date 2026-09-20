@@ -16,6 +16,12 @@ import {
   switchDemoRole,
   UserRole,
 } from '@/lib/auth'
+import {
+  redirectToGoogleOAuth,
+  cognitoSignUp,
+  cognitoConfirmSignUp,
+  cognitoSignIn,
+} from '@/lib/cognito'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -44,64 +50,74 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleGoogleSignIn = () => {
     setIsLoading(true)
     setAuthError(null)
-    // Check if Cognito Domain is configured in environment
-    const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN
-    const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID
-    const redirectUri = window.location.origin
-
-    if (cognitoDomain && clientId) {
-      // Redirect to Cognito Hosted UI with Google IdP
-      const authUrl = `${cognitoDomain}/oauth2/authorize?identity_provider=Google&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}&response_type=code&client_id=${clientId}&scope=email+openid+profile`
-      window.location.href = authUrl
-    } else {
-      // Graceful instant simulated Google Auth in dev mode
-      setTimeout(() => {
-        setIsLoading(false)
-        switchDemoRole('admin')
-        onSuccess()
-      }, 700)
+    try {
+      redirectToGoogleOAuth()
+    } catch (err: any) {
+      setIsLoading(false)
+      setAuthError(err.message || 'Failed to initiate Google OAuth redirect.')
     }
   }
 
-  const handleEmailAuth = (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setAuthError(null)
+    setAuthSuccessMsg(null)
 
+    // Sign Up - Step 1: Send verification email
     if (activeTab === 'signup' && !needsCodeVerification) {
-      // Simulate/trigger sending email code
-      setTimeout(() => {
+      try {
+        await cognitoSignUp(email, password)
         setIsLoading(false)
         setNeedsCodeVerification(true)
         setAuthSuccessMsg(
-          `Verification code sent to ${email}. (In local dev mode, enter any 6-digit code e.g. 123456)`
+          `Verification email sent to ${email}! Please enter the 6-digit confirmation code below.`
         )
-      }, 800)
+      } catch (err: any) {
+        setIsLoading(false)
+        setAuthError(err.message || 'Failed to register account with Amazon Cognito.')
+      }
       return
     }
 
+    // Sign Up - Step 2: Confirm OTP code
     if (activeTab === 'signup' && needsCodeVerification) {
       if (!confirmCode.trim()) {
         setIsLoading(false)
-        setAuthError('Please enter the 6-digit verification code.')
+        setAuthError('Please enter the 6-digit verification code from your email.')
         return
       }
-      setTimeout(() => {
+      try {
+        await cognitoConfirmSignUp(email, confirmCode.trim())
+        // Auto-login after confirmation
+        try {
+          await cognitoSignIn(email, password)
+        } catch {
+          // If auto-login fails, switch tab to signin
+          setActiveTab('signin')
+          setNeedsCodeVerification(false)
+          setAuthSuccessMsg('Account confirmed! You can now sign in with your credentials.')
+          setIsLoading(false)
+          return
+        }
         setIsLoading(false)
-        switchDemoRole('engineer')
         onSuccess()
-      }, 600)
+      } catch (err: any) {
+        setIsLoading(false)
+        setAuthError(err.message || 'Invalid or expired confirmation code.')
+      }
       return
     }
 
     // Sign In Flow
-    setTimeout(() => {
+    try {
+      await cognitoSignIn(email, password)
       setIsLoading(false)
-      switchDemoRole('approver')
       onSuccess()
-    }, 600)
+    } catch (err: any) {
+      setIsLoading(false)
+      setAuthError(err.message || 'Incorrect email or password.')
+    }
   }
 
   const handleSelectDevPersona = (role: UserRole) => {
