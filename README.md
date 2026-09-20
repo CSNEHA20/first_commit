@@ -38,7 +38,7 @@
    - [AcmePay Benchmark (Fintech Core)](#acmepay-benchmark-fintech-core)
    - [DocVault Benchmark (HIPAA Healthcare EHR)](#docvault-benchmark-hipaa-healthcare-ehr)
    - [Connected Workspaces Engine](#connected-workspaces-engine)
-8. [Platform Capabilities & Screen Tour](#-platform-capabilities--screen-tour)
+8. [Visual Feature Tour & Screenshots](#-visual-feature-tour--screenshots)
 9. [Authentication & Least-Privilege Identity](#-authentication--least-privilege-identity)
 10. [AWS Services & Cloud Architecture Matrix](#-aws-services--cloud-architecture-matrix)
 11. [Testing, Verification & Acceptance Proof](#-testing-verification--acceptance-proof)
@@ -524,18 +524,384 @@ PolicyLab includes two complete enterprise benchmarks and a generic connected wo
 
 ---
 
-## 💻 Platform Capabilities & Screen Tour
+## 📸 Visual Feature Tour & Screenshots
 
-| Screen | Responsibility & Features |
-| :--- | :--- |
-| **Interactive Opening Simulator** | High-fidelity landing page featuring live Cedar evaluation directly in the hero section, interactive scenario selector, real-time AI reasoning cards, benchmark launcher, and architectural previews. |
-| **Hub Console** | Project and workspace manager, runtime telemetry gauges, Cedar engine version status, AWS service health indicators, and global activity timeline. |
-| **Policy Editor** | Full Monaco Cedar code editor (`@monaco-editor/react`) with custom syntax highlighter, schema validation, real-time line diagnostics, version switcher (`v12`, `v13`, `v13_fixed`), and side-by-side policy compare. |
-| **Scenario Simulator** | Sub-millisecond Cedar evaluation (`<1ms`), scenario matrix ($P \times A \times R \times C$), determining policy inspector, and What-If context parameter overrides. |
-| **Change Analysis & Blast Radius** | Semantic AST diffing, bounded universe transition classification ($\text{DENY} \to \text{ALLOW}$), affected principals/actions/resources breakdown, and one-click Deterministic Counterexample Replay. |
-| **Security Contracts & Tests** | Declarative security invariants (e.g., `SC-01` to `SC-04`), automated test harness (172 tests), failure counterexample isolation, and pre-deployment gate calculation (`PASS` vs `BLOCKED`). |
-| **Strands Audit Intelligence** | Autonomous Strands `PolicyAuditAgent` multi-step tool execution trace, grounded Bedrock / Nemotron AI synthesis, strict hallucination citation checks, and Markdown/JSON audit export. |
-| **Verified Deployments** | Cryptographic human approval binding, SHA-256 digest anti-tampering verification, deployment gate enforcement, and Amazon Verified Permissions synchronization audit ledger. |
+Explore the end-to-end PolicyLab authorization verification and policy-engineering experience. Every capability below is mathematically grounded in Cedar WASM 4.13.0 and validated across 172 automated tests.
+
+<table>
+  <thead>
+    <tr>
+      <th width="42%">Capability & Architectural Breakdown</th>
+      <th width="58%">Interactive UI & Deterministic Telemetry</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- 1. Interactive Opening Simulator & Hero Gateway -->
+    <tr>
+      <td valign="top">
+        <h3>Interactive Opening Simulator & Hero Gateway</h3>
+        <p>A friction-free security simulator embedded directly into the hero section of the landing page. Developers and auditors can immediately test live Cedar authorization drift without needing an account or AWS credentials.</p>
+        <ul>
+          <li><strong>Instant Execution:</strong> Evaluates candidate Cedar policies under <code>&lt;1ms</code> via Cedar WASM 4.13.0 in-browser.</li>
+          <li><strong>Scenario Toggles:</strong> Switch between FinTech privilege escalations, enterprise legal hold leaks, and customer tenant confusion.</li>
+          <li><strong>Candidate Comparison:</strong> Live toggle between unsafe drift (<code>v13</code>) and fixed policy invariants (<code>v13_fixed</code>).</li>
+        </ul>
+        <p><a href="./frontend/src/features/landing/LandingPage.tsx">Inspect Landing Implementation →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200129.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200129.png" alt="Interactive Opening Simulator & Hero Gateway" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 2. 4-Stage Deterministic Evaluation Pipeline -->
+    <tr>
+      <td valign="top">
+        <h3>4-Stage Deterministic Evaluation Pipeline</h3>
+        <p>Visual real-time tracing of the complete verification pipeline as requests pass from ingress to deployment gating.</p>
+        <ul>
+          <li><strong>Stage 1 (Ingress):</strong> Ingress vector mapping (<code>User::"contractor_dave"</code> &rarr; <code>Action::"RefundOrder"</code> &rarr; <code>Order::"order_999"</code>).</li>
+          <li><strong>Stage 2 (Engine AST):</strong> Cedar WASM evaluation catches <code>+1 UNEXPECTED FLIP</code> (<code>DENY &rarr; ALLOW</code> in <code>0.38ms</code>).</li>
+          <li><strong>Stage 3 (Invariant Assertion):</strong> Contract <code>SC-04</code> assertion trips the hard gate to <code>BLOCKED</code>.</li>
+          <li><strong>Stage 4 (Multi-LLM Remediation):</strong> NVIDIA Nemotron & Amazon Bedrock explain why the permit clause broadened contractor access.</li>
+        </ul>
+        <p><a href="./docs/DATA_FLOW.md#1-system-wide-data-flow">View Pipeline Specification →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200150.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200150.png" alt="4-Stage Deterministic Evaluation Pipeline" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 3. Security Workbench & Project Hub -->
+    <tr>
+      <td valign="top">
+        <h3>Security Workbench & Project Hub</h3>
+        <p>The centralized orchestration console for multi-project authorization governance, cloud store connectivity, and benchmark exploration.</p>
+        <ul>
+          <li><strong>Project Sources:</strong> Connect local disk directories, GitHub repositories, or live Amazon Verified Permissions stores.</li>
+          <li><strong>Pre-Configured Benchmarks:</strong> Launch the <strong>AcmePay Fintech Core</strong> (432 scenarios) or <strong>DocVault Multi-Tenant SaaS</strong> (4 invariants).</li>
+          <li><strong>Connected Workspaces:</strong> Persistent workspace sessions with automatic local storage and server-state synchronization.</li>
+        </ul>
+        <p><a href="./frontend/src/features/hub/HubConsole.tsx">View Hub Console Source →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200206.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200206.png" alt="Security Workbench & Project Hub" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 4. Local Workstation & CLI Pipeline Connector -->
+    <tr>
+      <td valign="top">
+        <h3>Local Workstation & CLI Pipeline Connector</h3>
+        <p>Seamless zero-upload workstation integration enabling security engineers to import local policies or wire PolicyLab directly into CI/CD pipelines.</p>
+        <ul>
+          <li><strong>Local In-Browser Parsing:</strong> Policy files and schemas are parsed directly within the browser session without leaving the developer's machine.</li>
+          <li><strong>CI/CD CLI Tooling:</strong> Run <code>policylab verify --policy ./authz/candidate.cedar --baseline ./authz/baseline.cedar --schema ./authz/schema.json --scenarios ./tests/scenarios.json</code>.</li>
+        </ul>
+        <p><a href="./docs/TECH_STACK.md">Inspect CLI Architecture →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200217.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200217.png" alt="Local Workstation & CLI Pipeline Connector" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 5. GitHub Policy Repository Connector -->
+    <tr>
+      <td valign="top">
+        <h3>GitHub Policy Repository Connector</h3>
+        <p>Direct Git repository synchronizer that pulls Cedar policy definitions, schemas, and scenario suites directly from remote branches and pull requests.</p>
+        <ul>
+          <li><strong>Branch & Path Targeting:</strong> Pull specific subdirectories (e.g. <code>fixtures/docvault</code>) from designated branches (<code>main</code>).</li>
+          <li><strong>Dual-Remote Ready:</strong> Built to seamlessly connect to both <code>origin</code> and <code>first_commit</code> repositories.</li>
+          <li><strong>Authentication Support:</strong> Optional personal access token support for private enterprise policy repositories.</li>
+        </ul>
+        <p><a href="./.agents/skills/dual-repo-sync/SKILL.md">View Git Sync Guidelines →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200228.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200228.png" alt="GitHub Policy Repository Connector" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 6. Security Investigation Command Center -->
+    <tr>
+      <td valign="top">
+        <h3>Security Investigation Command Center</h3>
+        <p>The mission-critical executive overview synthesizing system telemetry, authorization drift metrics, threat surfaces, and regression matrices.</p>
+        <ul>
+          <li><strong>Live Telemetry Ribbon:</strong> Tracks Cedar WASM <code>v4.13.0</code>, environment (<code>dev us-east-1</code>), and active deployment status.</li>
+          <li><strong>Active Review Spotlight:</strong> Flags candidate draft <code>v13</code> with <strong>+38 Flips</strong>, <strong>+3 Actions</strong>, <strong>+184 Exposed Types</strong>, and <strong>+27 Roles</strong>.</li>
+          <li><strong>Authorization Threat Surface Radar:</strong> Multi-dimensional comparison of baseline vs. candidate security boundaries (+68% net surface expansion).</li>
+          <li><strong>Security Invariant Health:</strong> Radial gauge indicating 50% pass rate with deployment gate <code>BLOCKED</code>.</li>
+        </ul>
+        <p><a href="./frontend/src/features/overview/OverviewScreen.tsx">View Command Center Component →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200242.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200242.png" alt="Security Investigation Command Center" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 7. Cedar Policy Engineering Workspace -->
+    <tr>
+      <td valign="top">
+        <h3>Cedar Policy Engineering Workspace (Monaco Editor)</h3>
+        <p>A developer-grade policy authoring environment powered by Microsoft's Monaco Editor with dedicated Cedar language extensions.</p>
+        <ul>
+          <li><strong>Custom Cedar Tokenizer:</strong> Syntax highlighting for <code>permit</code>, <code>forbid</code>, <code>principal</code>, <code>action</code>, <code>resource</code>, and context expressions.</li>
+          <li><strong>In-Editor Diagnostics:</strong> Real-time gutter warnings (<code>Line 18 & 24: Unrestricted action clause matches 4 schema actions</code>).</li>
+          <li><strong>Policy Context & Provenance:</strong> Right-hand panel revealing broadened action scope alerts with direct jump to behavioral diffing.</li>
+        </ul>
+        <p><a href="./frontend/src/features/editor/PolicyEditorScreen.tsx">View Editor Implementation →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200252.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200252.png" alt="Cedar Policy Engineering Workspace" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 8. Side-by-Side Split View Policy Compare -->
+    <tr>
+      <td valign="top">
+        <h3>Side-by-Side Split View Policy Compare</h3>
+        <p>A high-fidelity Monaco split-diff viewer comparing production baseline policies against proposed candidate drafts.</p>
+        <ul>
+          <li><strong>Visual Syntax Drift:</strong> Red-highlighted deletions and green-highlighted additions illustrate line-by-line syntax modifications.</li>
+          <li><strong>Regression Warnings:</strong> Inlined annotations identifying where action scopes expanded from explicit sets (<code>["view", "edit"]</code>) to broad wildcards.</li>
+          <li><strong>Independent Scrolling:</strong> Synchronized diff scrolling with Cedar Core token parsing.</li>
+        </ul>
+        <p><a href="./backend/domain/cedar/diff.py">View Diff Engine Source →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200304.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200304.png" alt="Side-by-Side Split View Policy Compare" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 9. Cedar Schema & Entity Type Inspector -->
+    <tr>
+      <td valign="top">
+        <h3>Cedar Schema & Entity Type Inspector</h3>
+        <p>Interactive schema tab within the editor inspecting declared entity hierarchies, shapes, and attribute constraints.</p>
+        <ul>
+          <li><strong>Entity Hierarchy:</strong> Inspects <code>User</code>, <code>Role</code>, <code>Department</code>, <code>Invoice</code>, and <code>PayrollReport</code>.</li>
+          <li><strong>Attribute Typing:</strong> Typechecks string, long, boolean, and record structures against incoming authorization vectors.</li>
+          <li><strong>Schema Validation:</strong> Prevents policies from referencing non-existent actions or attributes before evaluation begins.</li>
+        </ul>
+        <p><a href="./fixtures/schema.cedarschema.json">View AcmePay Cedar Schema →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200317.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200317.png" alt="Cedar Schema & Entity Type Inspector" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 10. Ad-hoc Scenario Simulator -->
+    <tr>
+      <td valign="top">
+        <h3>Ad-hoc Scenario Simulator & Request Vector Tester</h3>
+        <p>An interactive authorization testing sandbox for evaluating custom request tuples against baseline and candidate policies in real time.</p>
+        <ul>
+          <li><strong>Sub-Millisecond Evaluation:</strong> Executes in <code>0.94ms</code> directly via Cedar WASM.</li>
+          <li><strong>Pre-Built Regression Templates:</strong> One-click loading of "Contractor Delete Payroll (Buggy Flip)", "Editor Delete Invoice", and "Admin View All".</li>
+          <li><strong>Determining Policy Attribution:</strong> Pinpoints the exact policy ID (e.g. <code>policy_contractor_all_actions</code>) that caused the permit decision.</li>
+          <li><strong>Delta Flip Indicator:</strong> Clearly badges decision flips (<code>v12: DENY &rarr; v13: ALLOW</code>).</li>
+        </ul>
+        <p><a href="./frontend/src/features/simulator/SimulatorScreen.tsx">View Simulator Component →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200329.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200329.png" alt="Ad-hoc Scenario Simulator" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 11. Policy Differential & Risk Impact Summary -->
+    <tr>
+      <td valign="top">
+        <h3>Policy Differential & Risk Impact Summary</h3>
+        <p>Quantitative blast radius analytics computing an overall authorization risk score and categorizing impacted cloud assets.</p>
+        <ul>
+          <li><strong>Deterministic Risk Score:</strong> Computed at <strong>87 / 100 (HIGH RISK)</strong> across 432 evaluated scenarios.</li>
+          <li><strong>Granular Impact Counts:</strong> 27 Principals (14 new, 13 revoked), 184 Resources (Accounts, Invoices, Reports), and 11 Actions.</li>
+          <li><strong>Contract Violations:</strong> Surfaces 3 failing invariants including <code>SC-03: deny_cross_account_without_mfa</code>.</li>
+          <li><strong>Financial Impact Warning:</strong> Highlights elevated organizational risk requiring executive SecOps review.</li>
+        </ul>
+        <p><a href="./frontend/src/features/changes/ChangeAnalysisScreen.tsx">View Change Analysis Component →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200338.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200338.png" alt="Policy Differential & Risk Impact Summary" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 12. Interactive Authorization Blast Radius Graph -->
+    <tr>
+      <td valign="top">
+        <h3>Interactive Authorization Blast Radius Graph</h3>
+        <p>A dynamic, force-directed orbital graph mapping the full blast radius ripple effect originating from candidate policy changes.</p>
+        <ul>
+          <li><strong>Draggable Nodes:</strong> Freely pull and drag orbital nodes with automatic spring-physics snapback.</li>
+          <li><strong>Color-Coded Boundaries:</strong>
+            <ul>
+              <li><span style="color:#22c55e">●</span> <strong>Newly Authorized:</strong> Developers (+4), Contractors (+9), Service Accounts (+3).</li>
+              <li><span style="color:#eab308">●</span> <strong>Modified / Affected:</strong> Actions (+3), Resources (+184), Services (+5).</li>
+              <li><span style="color:#ef4444">●</span> <strong>Revoked:</strong> Viewers (-3), Partners (-6), External Users (-2).</li>
+              <li><span style="color:#a855f7">●</span> <strong>Contract Violations:</strong> Security Contracts (3 violations on SC-03).</li>
+            </ul>
+          </li>
+          <li><strong>Interactive Viewport:</strong> Zoom, pan, and fit-to-screen controls with 100% coverage indicators.</li>
+        </ul>
+        <p><a href="./frontend/src/features/changes/ChangeAnalysisScreen.tsx">View Graph Visualizer →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200355.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200355.png" alt="Interactive Authorization Blast Radius Graph" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 13. Severity-Ranked Deterministic Counterexamples -->
+    <tr>
+      <td valign="top">
+        <h3>Severity-Ranked Deterministic Counterexamples</h3>
+        <p>Automated extraction of concrete authorization counterexamples proving where and why candidate policies fail security policies.</p>
+        <ul>
+          <li><strong>Critical Exploit Vectors:</strong>
+            <ul>
+              <li><code>cx_01 · sc_06</code> (CRITICAL): <code>User::"contractor_alice"</code> deletes <code>PayrollReport::"payroll_2026_q1"</code> (<code>DENY &rarr; ALLOW</code>).</li>
+              <li><code>cx_02 · sc_07</code> (HIGH): <code>User::"contractor_alice"</code> exports confidential payroll reports.</li>
+              <li><code>cx_03 · sc_05</code> (HIGH): <code>User::"editor_bob"</code> deletes customer invoices.</li>
+            </ul>
+          </li>
+          <li><strong>One-Click Replay:</strong> "Replay in Cedar" deterministically reproduces the decision flip with mathematical certainty.</li>
+        </ul>
+        <p><a href="./backend/domain/cedar/counterexample.py">View Counterexample Generator →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200410.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200410.png" alt="Severity-Ranked Deterministic Counterexamples" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 14. Policy AST Semantic Diff Inspector -->
+    <tr>
+      <td valign="top">
+        <h3>Policy AST Semantic Diff Inspector</h3>
+        <p>A specialized semantic diff viewer focusing exclusively on load-bearing Cedar AST condition clauses rather than arbitrary text formatting.</p>
+        <ul>
+          <li><strong>Condition Broadening Caught:</strong> Isolates <code>- && resource.account_type == "internal"</code> replaced with <code>+ && resource.account_type in ["internal", "partner"]</code>.</li>
+          <li><strong>Noise Elimination:</strong> Disregards indentation and comments to highlight behavioral permission expansion.</li>
+          <li><strong>Target File Attribution:</strong> Maps modifications back to source services (<code>services/payment/policy.cedar</code>).</li>
+        </ul>
+        <p><a href="./docs/SPEC.md#semantic-diff-model">View Diff Model Spec →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200417.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200417.png" alt="Policy AST Semantic Diff Inspector" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 15. Security Contract Invariants & Regression Suite -->
+    <tr>
+      <td valign="top">
+        <h3>Security Contract Invariants & Regression Suite</h3>
+        <p>The core regression engine evaluating organizational security contracts to enforce zero-trust security postures before deployment.</p>
+        <ul>
+          <li><strong>Pre-Deployment Gate:</strong> Evaluates to <strong>BLOCKED</strong> (Blocking Invariant <code>SC-04</code> failed in <code>12.4ms</code>).</li>
+          <li><strong>Contract Coverage:</strong> 6 Active Invariants covering admin access, invoice deletion prohibitions, payroll deletion rules, and cross-tenant isolation.</li>
+          <li><strong>Deterministic Execution:</strong> Powered entirely by Cedar WASM in sub-millisecond execution cycles.</li>
+        </ul>
+        <p><a href="./frontend/src/features/regression/RegressionScreen.tsx">View Regression Harness →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200424.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200424.png" alt="Security Contract Invariants & Regression Suite" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 16. Granular Scenario Assertion Breakdown -->
+    <tr>
+      <td valign="top">
+        <h3>Granular Scenario Assertion Breakdown</h3>
+        <p>Comprehensive scenario execution matrix providing individual pass/fail records across all evaluated authorization tuples.</p>
+        <ul>
+          <li><strong>Tuple Auditing:</strong> Inspects <code>[sc_01]</code> through <code>[sc_09]</code> with expected vs. actual outcomes.</li>
+          <li><strong>Failure Isolation:</strong> Clearly marks regressions (e.g. <code>[sc_05] Editor cannot delete invoices</code> expected <code>DENY</code>, actual <code>ALLOW</code>).</li>
+          <li><strong>Pill Filtering:</strong> Instant filtering by role (All, Admin, Editor, Contractor, Multi-Tenant).</li>
+        </ul>
+        <p><a href="./tests/unit/test_contracts.py">View Contract Test Suites →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200432.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200432.png" alt="Granular Scenario Assertion Breakdown" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 17. Verified Permissions Release & Deployment Gate -->
+    <tr>
+      <td valign="top">
+        <h3>Verified Permissions Release & Deployment Gate</h3>
+        <p>The hard deployment verification gate preventing unauthorized policies from reaching AWS production environments.</p>
+        <ul>
+          <li><strong>4 Gate Verification Criteria:</strong>
+            <ol>
+              <li>Cedar Syntax & Schema Compilation (PASSED 0.4ms)</li>
+              <li>Bounded Scenario Diff Matrix (EVALUATED 1.8s)</li>
+              <li>Security Contract Invariants (SC-04 FAILED)</li>
+              <li>Deterministic Counterexample Resolution (1 CRITICAL ACTIVE)</li>
+            </ol>
+          </li>
+          <li><strong>Cryptographic Binding:</strong> Human approvals are sealed against the candidate policy's canonical SHA-256 digest.</li>
+          <li><strong>AVP Synchronization:</strong> Synchronizes green policies with Amazon Verified Permissions and logs immutable audit ledger entries.</li>
+        </ul>
+        <p><a href="./frontend/src/features/deployment/DeploymentScreen.tsx">View Deployment Gate Component →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200442.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200442.png" alt="Verified Permissions Release & Deployment Gate" width="100%" />
+        </a>
+      </td>
+    </tr>
+
+    <!-- 18. Strands Audit & Governance Intelligence -->
+    <tr>
+      <td valign="top">
+        <h3>Strands Audit & Governance Intelligence</h3>
+        <p>Autonomous AI security audit agent orchestrating multi-step verification tools with strictly grounded natural language synthesis.</p>
+        <ul>
+          <li><strong>Tool Invocation Trace:</strong> Dispatches <code>validate_policy</code> &rarr; <code>calculate_semantic_diff</code> &rarr; <code>get_security_contracts</code> &rarr; <code>grounded_bedrock_explanation</code>.</li>
+          <li><strong>Zero Hallucination Guarantee:</strong> LLM explanations are strictly grounded in deterministic finding IDs and scenario IDs.</li>
+          <li><strong>Executive Synthesis Narrative:</strong> Synthesizes executive risk summaries, root causes, and remediation Cedar patches.</li>
+          <li><strong>Multi-Format Export:</strong> Downloads authoritative audit reports in Markdown and JSON formats.</li>
+        </ul>
+        <p><a href="./backend/domain/ai/agent.py">View Strands Agent Implementation →</a></p>
+      </td>
+      <td valign="top">
+        <a href="./policylab-screenshots/Screenshot%202026-09-20%20200451.png" target="_blank">
+          <img src="./policylab-screenshots/Screenshot%202026-09-20%20200451.png" alt="Strands Audit & Governance Intelligence" width="100%" />
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
