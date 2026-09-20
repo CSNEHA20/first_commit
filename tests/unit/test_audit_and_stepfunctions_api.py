@@ -2,9 +2,16 @@
 Unit tests for PolicyAuditAgent execution, audit persistence, and Step Functions workflow endpoints.
 """
 
+import sys
 from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
+
+try:
+    import boto3
+except ImportError:
+    boto3 = MagicMock()
+    sys.modules["boto3"] = boto3
 
 from backend.main import app, repository
 from backend.core.auth import create_token_for_testing

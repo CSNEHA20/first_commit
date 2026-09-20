@@ -498,3 +498,33 @@ export async function getAuditReport(
   return res.json()
 }
 
+
+// --- Connected Workspace API -------------------------------------------------
+
+export interface WorkspaceRecord {
+  workspaceId: string
+  name: string
+  mode: string
+  description?: string | null
+  createdAt: string
+  scope: 'LOCAL_SESSION'
+}
+
+export async function createWorkspace(params: { name: string; description?: string }): Promise<WorkspaceRecord> {
+  const res = await fetchWithAuth('/workspaces', { method: 'POST', body: JSON.stringify({ name: params.name, description: params.description, mode: 'connected' }) })
+  if (!res.ok) { const e = await res.json().catch(() => ({ detail: res.statusText })); throw new Error(e.detail || 'Failed to create workspace') }
+  return res.json()
+}
+
+export async function getWorkspace(workspaceId: string): Promise<WorkspaceRecord> {
+  const res = await fetchWithAuth('/workspaces/' + encodeURIComponent(workspaceId))
+  if (!res.ok) { const e = await res.json().catch(() => ({ detail: res.statusText })); throw new Error(e.detail || 'Workspace not found') }
+  return res.json()
+}
+
+export async function listWorkspaces(): Promise<WorkspaceRecord[]> {
+  const res = await fetchWithAuth('/workspaces')
+  if (!res.ok) { const e = await res.json().catch(() => ({ detail: res.statusText })); throw new Error(e.detail || 'Failed to list workspaces') }
+  return res.json()
+}
+

@@ -71,7 +71,16 @@ const QUICK_TEMPLATES = [
   },
 ]
 
+import { useWorkspace } from "@/store/workspaceStore"
+import { ConnectedSimulatorPanel } from "./ConnectedSimulatorPanel"
+
 export const SimulatorScreen: React.FC = () => {
+  const { isDemoMode } = useWorkspace()
+
+  if (!isDemoMode) {
+    return <ConnectedSimulatorPanel />
+  }
+
   const [selectedPrincipal, setSelectedPrincipal] = useState(SAMPLE_PRINCIPALS[0].id)
   const [selectedAction, setSelectedAction] = useState(SAMPLE_ACTIONS[2].id)
   const [selectedResource, setSelectedResource] = useState(SAMPLE_RESOURCES[0].id)

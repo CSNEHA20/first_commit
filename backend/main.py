@@ -216,6 +216,93 @@ def get_aws_status(current_user: AuthenticatedUser = Depends(get_current_user)):
     return aws_config.audit_environment()
 
 
+# ─── Connected Workspace Endpoints ────────────────────────────────────────────
+
+class WorkspaceCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    description: Optional[str] = Field(None, max_length=500)
+    mode: str = Field(default="connected")
+
+
+class WorkspaceResponse(BaseModel):
+    workspaceId: str
+    name: str
+    mode: str
+    description: Optional[str] = None
+    createdAt: str
+    scope: str = "LOCAL_SESSION"
+
+
+@app.post("/workspaces", response_model=WorkspaceResponse, status_code=201)
+def create_workspace(
+    request: WorkspaceCreateRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    """
+    Creates a named Connected Workspace record in the session-scoped in-memory repository.
+    Persistence scope: LOCAL_SESSION — data is not durable across server restarts.
+    No Cedar policy data is stored here; Cedar evaluation uses the existing endpoints.
+    """
+    import uuid
+    from datetime import datetime, timezone
+
+    ws_id = f"ws_{uuid.uuid4().hex[:10]}"
+    record = {
+        "id": ws_id,
+        "name": request.name,
+        "mode": request.mode,
+        "description": request.description,
+        "createdBy": current_user.username,
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+        "scope": "LOCAL_SESSION",
+    }
+    repository.save_workspace(record)
+    return WorkspaceResponse(
+        workspaceId=ws_id,
+        name=record["name"],
+        mode=record["mode"],
+        description=record.get("description"),
+        createdAt=record["createdAt"],
+        scope="LOCAL_SESSION",
+    )
+
+
+@app.get("/workspaces/{workspace_id}", response_model=WorkspaceResponse)
+def get_workspace(
+    workspace_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    """Retrieves a Connected Workspace record by ID from the session-scoped repository."""
+    record = repository.get_workspace(workspace_id)
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Workspace '{workspace_id}' not found.")
+    return WorkspaceResponse(
+        workspaceId=record["id"],
+        name=record["name"],
+        mode=record["mode"],
+        description=record.get("description"),
+        createdAt=record["createdAt"],
+        scope="LOCAL_SESSION",
+    )
+
+
+@app.get("/workspaces", response_model=List[WorkspaceResponse])
+def list_workspaces(current_user: AuthenticatedUser = Depends(get_current_user)):
+    """Lists all Connected Workspace records in the session-scoped in-memory repository."""
+    records = repository.list_workspaces()
+    return [
+        WorkspaceResponse(
+            workspaceId=r["id"],
+            name=r["name"],
+            mode=r["mode"],
+            description=r.get("description"),
+            createdAt=r["createdAt"],
+            scope="LOCAL_SESSION",
+        )
+        for r in records
+    ]
+
+
 @app.post("/policies/validate", response_model=PolicyValidationResponse)
 def validate_policy(request: PolicyValidationRequest, current_user: AuthenticatedUser = Depends(get_current_user)):
     """Validates Cedar policy syntax and schema compatibility."""

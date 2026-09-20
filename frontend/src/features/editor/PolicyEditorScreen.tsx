@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import Editor, { Monaco } from "@monaco-editor/react"
 import {
   FileCode2,
@@ -11,6 +11,7 @@ import {
   Check,
   Code2,
   Hash,
+  Database,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,7 @@ import {
 } from "@/fixtures/acmepay"
 import { ActiveTab } from "@/components/layout/AppSidebar"
 import { validateCedarPolicy, PolicyValidationResponse } from "@/lib/api"
+import { useWorkspace } from "@/store/workspaceStore"
 
 interface PolicyEditorScreenProps {
   onNavigate: (tab: ActiveTab) => void
@@ -58,17 +60,17 @@ function configureCedarMonaco(monaco: Monaco) {
         "Department",
         "Invoice",
         "PayrollReport",
+        "Account",
         "CustomerRecord",
         "SupportTicket",
-        "ResourceType",
-        "Entity",
         "String",
         "Long",
         "Boolean",
         "Set",
         "Record",
-        "ipaddr",
-        "decimal",
+        "Entity",
+        "IPAddr",
+        "Decimal",
       ],
       operators: [
         "==",
@@ -83,27 +85,47 @@ function configureCedarMonaco(monaco: Monaco) {
         "+",
         "-",
         "*",
-        "/",
+        ".",
       ],
+      symbols: /[=><!~?:&|+\-*\/\^%]+/,
       tokenizer: {
         root: [
-          [/\/\/.*$/, "comment"],
-          [/"([^"\\]|\\.)*"/, "string"],
-          [/\b[A-Z][a-zA-Z0-9_]*::/, "type.identifier"],
           [
-            /\b[a-zA-Z_][a-zA-Z0-9_]*\b/,
+            /[a-z_$][\w$]*/,
             {
               cases: {
                 "@keywords": "keyword",
-                "@typeKeywords": "type",
                 "@default": "identifier",
               },
             },
           ],
-          [/[{}()\[\]]/, "delimiter"],
+          [
+            /[A-Z][\w$]*/,
+            {
+              cases: {
+                "@typeKeywords": "type",
+                "@default": "type.identifier",
+              },
+            },
+          ],
+          { include: "@whitespace" },
+          [/[{}()\[\]]/, "@brackets"],
+          [
+            /@symbols/,
+            {
+              cases: {
+                "@operators": "operator",
+                "@default": "",
+              },
+            },
+          ],
+          [/\d+/, "number"],
           [/[;,.]/, "delimiter"],
-          [/==|!=|<=|>=|<|>|&&|\|\||!/, "operator"],
-          [/\b\d+\b/, "number"],
+          [/"([^"\\]|\\.)*"/, "string"],
+        ],
+        whitespace: [
+          [/[ \t\r\n]+/, "white"],
+          [/\/\/.*$/, "comment"],
         ],
       },
     })
@@ -113,10 +135,10 @@ function configureCedarMonaco(monaco: Monaco) {
       inherit: true,
       rules: [
         { token: "keyword", foreground: "F97316", fontStyle: "bold" },
-        { token: "type", foreground: "38BDF8" },
-        { token: "type.identifier", foreground: "C084FC" },
+        { token: "type", foreground: "38BDF8", fontStyle: "bold" },
+        { token: "type.identifier", foreground: "38BDF8" },
         { token: "string", foreground: "34D399" },
-        { token: "comment", foreground: "6B7280", fontStyle: "italic" },
+        { token: "comment", foreground: "64748B", fontStyle: "italic" },
         { token: "operator", foreground: "F43F5E" },
         { token: "delimiter", foreground: "94A3B8" },
         { token: "number", foreground: "FBBF24" },
@@ -136,11 +158,23 @@ function configureCedarMonaco(monaco: Monaco) {
 export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   onNavigate,
 }) => {
-  const [selectedVersion, setSelectedVersion] = useState<"v12" | "v13">("v13")
+  const { isDemoMode, activeWorkspace, connectedData, dispatch } = useWorkspace()
+
+  // Selected version key
+  const [selectedVersion, setSelectedVersion] = useState<"baseline" | "candidate">("candidate")
   const [activeTab, setActiveTab] = useState<"code" | "schema">("code")
-  const [code, setCode] = useState(
-    selectedVersion === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT
-  )
+
+  // Code buffer
+  const getInitialCode = (ver: "baseline" | "candidate") => {
+    if (isDemoMode) {
+      return ver === "baseline" ? POLICY_V12_TEXT : POLICY_V13_TEXT
+    }
+    return ver === "baseline"
+      ? (connectedData?.baselinePolicyText || "")
+      : (connectedData?.candidatePolicyText || "")
+  }
+
+  const [code, setCode] = useState(() => getInitialCode("candidate"))
   const [copied, setCopied] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
@@ -150,9 +184,22 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   const editorRef = useRef<any>(null)
   const monacoRef = useRef<Monaco | null>(null)
 
-  const handleVersionChange = (ver: "v12" | "v13") => {
+  // Sync if workspace or version changes
+  useEffect(() => {
+    const freshCode = getInitialCode(selectedVersion)
+    setCode(freshCode)
+    setIsSaved(false)
+    setValidationResult(null)
+    setValDurationMs(null)
+  }, [isDemoMode, activeWorkspace?.id, selectedVersion])
+
+  const baselineLabel = isDemoMode ? "v12 (Production)" : (connectedData?.baselineLabel || "Baseline")
+  const candidateLabel = isDemoMode ? "v13 (Candidate)" : (connectedData?.candidateLabel || "Candidate")
+  const schemaDisplay = isDemoMode ? ACMEPAY_SCHEMA : (connectedData?.schemaText || "{\n  \"comment\": \"No schema defined for this workspace.\"\n}")
+
+  const handleVersionChange = (ver: "baseline" | "candidate") => {
     setSelectedVersion(ver)
-    const newCode = ver === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT
+    const newCode = getInitialCode(ver)
     setCode(newCode)
     setIsSaved(false)
     setValidationResult(null)
@@ -213,18 +260,51 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   }
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(activeTab === "code" ? code : ACMEPAY_SCHEMA)
+    navigator.clipboard.writeText(activeTab === "code" ? code : schemaDisplay)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handleSave = () => {
+    if (!isDemoMode && activeWorkspace) {
+      if (selectedVersion === "candidate") {
+        dispatch({
+          type: "UPDATE_CONNECTED_DATA",
+          id: activeWorkspace.id,
+          patch: { candidatePolicyText: code }
+        })
+      } else {
+        dispatch({
+          type: "UPDATE_CONNECTED_DATA",
+          id: activeWorkspace.id,
+          patch: { baselinePolicyText: code }
+        })
+      }
+    }
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2500)
   }
 
   return (
     <div className="space-y-4">
+      {/* Stale Warning Banner for Connected Workspaces */}
+      {!isDemoMode && connectedData?.analysisStale && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3 text-xs text-amber-300">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+            <span>Policy edits detected. Analysis results and approval states are now stale. Re-run analysis before verifying or deploying.</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onNavigate("changes")}
+            className="h-7 text-xs border-amber-500/30 hover:bg-amber-500/10 text-amber-300 shrink-0"
+          >
+            Re-run Analysis
+          </Button>
+        </div>
+      )}
+
       {/* Top Editor Toolbar Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
         <div>
@@ -232,6 +312,14 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
             <span className="text-xs text-orange-400 font-mono">Cedar Engine v3.1</span>
             <span className="text-muted-foreground/40">·</span>
             <span className="text-xs text-muted-foreground">Deterministic AST Evaluation</span>
+            {!isDemoMode && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  {activeWorkspace?.name || "Connected"}
+                </span>
+              </>
+            )}
           </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <FileCode2 className="h-5 w-5 text-orange-400" />
@@ -243,24 +331,24 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
           {/* Version Switcher Tabs */}
           <div className="flex items-center p-0.5 rounded-lg bg-black/40 border border-white/[0.08]">
             <button
-              onClick={() => handleVersionChange("v12")}
+              onClick={() => handleVersionChange("baseline")}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                selectedVersion === "v12"
+                selectedVersion === "baseline"
                   ? "bg-white/[0.1] text-white shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v12 (Production)
+              {baselineLabel}
             </button>
             <button
-              onClick={() => handleVersionChange("v13")}
+              onClick={() => handleVersionChange("candidate")}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                selectedVersion === "v13"
+                selectedVersion === "candidate"
                   ? "bg-orange-500/20 text-orange-400 border border-orange-500/30 shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v13 (Candidate)
+              {candidateLabel}
             </button>
           </div>
 
@@ -403,8 +491,18 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                       monacoRef.current = monaco
                     }}
                     onChange={(value) => {
-                      setCode(value || "")
+                      const updated = value || ""
+                      setCode(updated)
                       setIsSaved(false)
+                      if (!isDemoMode && activeWorkspace) {
+                        dispatch({
+                          type: "UPDATE_CONNECTED_DATA",
+                          id: activeWorkspace.id,
+                          patch: selectedVersion === "candidate"
+                            ? { candidatePolicyText: updated }
+                            : { baselinePolicyText: updated }
+                        })
+                      }
                       if (monacoRef.current && editorRef.current) {
                         const model = editorRef.current.getModel()
                         if (model) {
@@ -433,9 +531,9 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                     height="460px"
                     language="json"
                     theme="vs-dark"
-                    value={ACMEPAY_SCHEMA}
+                    value={schemaDisplay}
                     options={{
-                      readOnly: true,
+                      readOnly: isDemoMode,
                       minimap: { enabled: false },
                       fontSize: 12.5,
                       fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
@@ -470,7 +568,7 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                       <span>Policy validated by Cedar WASM engine. Zero syntax errors.</span>
                     </div>
                   )
-                ) : selectedVersion === "v13" ? (
+                ) : isDemoMode && selectedVersion === "candidate" ? (
                   <div className="flex items-center gap-1.5 text-amber-400 font-medium">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     <span>Line 18 & 24: Unrestricted action clause matches 4 schema actions.</span>
@@ -478,7 +576,7 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                 ) : (
                   <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                    <span>Policy set satisfies all schema constraints. Zero diagnostics.</span>
+                    <span>Zero syntax diagnostics. Ready for evaluation.</span>
                   </div>
                 )}
               </div>
@@ -504,19 +602,27 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
               <div className="p-2.5 rounded-lg bg-black/40 border border-white/[0.06] space-y-1.5 text-[11px]">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Version:</span>
-                  <Badge variant={selectedVersion === "v13" ? "blocked" : "allow"} className="font-mono text-[10px]">
-                    {selectedVersion}
+                  <Badge variant={selectedVersion === "candidate" ? "blocked" : "allow"} className="font-mono text-[10px]">
+                    {selectedVersion === "candidate" ? candidateLabel : baselineLabel}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">SHA-256:</span>
-                  <span className="font-mono text-muted-foreground truncate max-w-[140px]">
-                    {selectedVersion === "v13" ? "f4219a8...fa12" : "8a3e77f...91bc"}
+                  <span className="text-muted-foreground">Mode:</span>
+                  <span className="font-mono text-muted-foreground">
+                    {isDemoMode ? "Benchmark Fixture" : `Connected (${connectedData?.importSource || "MANUAL"})`}
                   </span>
                 </div>
+                {connectedData?.sourceRef && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Source:</span>
+                    <span className="font-mono text-muted-foreground truncate max-w-[140px]" title={connectedData.sourceRef}>
+                      {connectedData.sourceRef}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {selectedVersion === "v13" ? (
+              {isDemoMode && selectedVersion === "candidate" ? (
                 <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 space-y-1.5 text-xs">
                   <div className="flex items-center gap-1.5 text-red-400 font-semibold">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -534,7 +640,7 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                     Inspect Behavioral Diff
                   </Button>
                 </div>
-              ) : (
+              ) : isDemoMode ? (
                 <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-1 text-xs">
                   <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
@@ -542,6 +648,16 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                   </div>
                   <p className="text-[11px] text-muted-foreground">
                     Active policy set in Amazon Verified Permissions.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-1 text-xs">
+                  <div className="flex items-center gap-1.5 text-blue-400 font-semibold">
+                    <Database className="h-3.5 w-3.5 shrink-0" />
+                    <span>Connected Policy</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Deterministic evaluation via local Cedar WASM engine.
                   </p>
                 </div>
               )}
@@ -564,11 +680,11 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onNavigate("tests")}
+                  onClick={() => onNavigate("changes")}
                   className="w-full text-xs justify-start gap-1.5 h-7 border-white/[0.08] hover:bg-white/[0.05]"
                 >
-                  <Code2 className="h-3 w-3 text-orange-400" />
-                  Run Security Contracts
+                  <GitCompare className="h-3 w-3 text-orange-400" />
+                  Run Diff Analysis
                 </Button>
               </div>
             </CardContent>

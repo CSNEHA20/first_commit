@@ -360,3 +360,61 @@ class DynamoDBPolicyLabRepository(IPolicyLabRepository):
             except Exception:
                 pass
         return self._fallback_repo.list_deployments()
+
+    def save_workspace(self, workspace: Dict[str, Any]) -> None:
+        if self.is_live:
+            try:
+                item = {
+                    "PK": f"WORKSPACE#{workspace['workspaceId']}",
+                    "SK": "METADATA",
+                    "workspaceId": workspace["workspaceId"],
+                    "name": workspace.get("name", ""),
+                    "mode": workspace.get("mode", "connected"),
+                    "description": workspace.get("description", ""),
+                    "createdAt": workspace.get("createdAt", datetime.now(timezone.utc).isoformat()),
+                    "data": workspace.get("data", {}),
+                }
+                self._table.put_item(Item=item)
+                return
+            except Exception:
+                pass
+        self._fallback_repo.save_workspace(workspace)
+
+    def get_workspace(self, workspace_id: str) -> Optional[Dict[str, Any]]:
+        if self.is_live:
+            try:
+                res = self._table.get_item(Key={"PK": f"WORKSPACE#{workspace_id}", "SK": "METADATA"})
+                if "Item" in res:
+                    it = res["Item"]
+                    return {
+                        "workspaceId": it["workspaceId"],
+                        "name": it.get("name", ""),
+                        "mode": it.get("mode", "connected"),
+                        "description": it.get("description", ""),
+                        "createdAt": it.get("createdAt"),
+                        "data": it.get("data", {}),
+                    }
+            except Exception:
+                pass
+        return self._fallback_repo.get_workspace(workspace_id)
+
+    def list_workspaces(self) -> List[Dict[str, Any]]:
+        if self.is_live:
+            try:
+                from boto3.dynamodb.conditions import Key
+                res = self._table.query(KeyConditionExpression=Key("PK").begins_with("WORKSPACE#"))
+                if "Items" in res:
+                    return [
+                        {
+                            "workspaceId": it["workspaceId"],
+                            "name": it.get("name", ""),
+                            "mode": it.get("mode", "connected"),
+                            "description": it.get("description", ""),
+                            "createdAt": it.get("createdAt"),
+                        }
+                        for it in res["Items"]
+                    ]
+            except Exception:
+                pass
+        return self._fallback_repo.list_workspaces()
+

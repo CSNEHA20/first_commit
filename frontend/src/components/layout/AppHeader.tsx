@@ -17,6 +17,10 @@ interface AppHeaderProps {
   candidateVersion?: string
   gateStatus?: "PASS" | "BLOCKED" | "INCOMPLETE"
   environment?: "Production" | "Staging"
+  /** Mode badge: 'demo' shows orange DEMO label, 'connected' shows sky CONNECTED label */
+  workspaceMode?: "demo" | "connected"
+  /** Callback to open the workspace switcher */
+  onSwitchWorkspace?: () => void
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -25,6 +29,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   candidateVersion = "v13",
   gateStatus = "BLOCKED",
   environment = "Production",
+  workspaceMode = "demo",
+  onSwitchWorkspace,
 }) => {
   const { theme, toggleTheme } = useTheme()
 
@@ -64,10 +70,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
 
-        {/* Project Name */}
-        <span className="text-foreground font-medium hidden sm:inline text-xs">
+        {/* Project Name — clickable to switch workspace */}
+        <button
+          onClick={onSwitchWorkspace}
+          disabled={!onSwitchWorkspace}
+          className="text-foreground font-medium hidden sm:inline text-xs hover:text-orange-400 transition-colors disabled:cursor-default"
+          title={onSwitchWorkspace ? "Switch workspace" : undefined}
+        >
           {activeProject}
-        </span>
+        </button>
+
+        {/* Workspace Mode Badge */}
+        {workspaceMode === "demo" ? (
+          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+            DEMO
+          </span>
+        ) : (
+          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            CONNECTED
+          </span>
+        )}
 
         <ChevronRight className="h-3 w-3 text-muted-foreground/40 hidden md:inline" />
 

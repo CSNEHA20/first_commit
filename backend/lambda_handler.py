@@ -9,7 +9,80 @@ Provides dual dispatch:
 from datetime import datetime, timezone
 import json
 from typing import Any, Dict
-from mangum import Mangum
+try:
+    from mangum import Mangum
+except ImportError:
+    class Mangum:  # type: ignore
+        """Fallback adapter for local test environments without mangum installed."""
+        def __init__(self, app: Any, lifespan: str = "off", api_gateway_base_path: str = "/"):
+            self.app = app
+            self.lifespan = lifespan
+            self.base_path = api_gateway_base_path
+
+        def __call__(self, event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+            import asyncio
+            import base64
+
+            http_info = event.get("requestContext", {}).get("http", {})
+            method = (http_info.get("method") or event.get("httpMethod") or "GET").upper()
+            path = http_info.get("path") or event.get("rawPath") or event.get("path") or "/"
+            query_string = (event.get("rawQueryString") or "").encode("latin-1")
+
+            headers = []
+            for k, v in (event.get("headers") or {}).items():
+                headers.append((k.lower().encode("latin-1"), str(v).encode("latin-1")))
+
+            body = event.get("body") or ""
+            if event.get("isBase64Encoded") and body:
+                body_bytes = base64.b64decode(body)
+            else:
+                body_bytes = body.encode("utf-8") if isinstance(body, str) else b""
+
+            response_status = 200
+            response_headers = []
+            response_body_parts = []
+
+            async def receive():
+                return {"type": "http.request", "body": body_bytes, "more_body": False}
+
+            async def send(message):
+                nonlocal response_status, response_headers, response_body_parts
+                if message["type"] == "http.response.start":
+                    response_status = message["status"]
+                    response_headers = message.get("headers", [])
+                elif message["type"] == "http.response.body":
+                    response_body_parts.append(message.get("body", b""))
+
+            scope = {
+                "type": "http",
+                "asgi": {"version": "3.0"},
+                "http_version": "1.1",
+                "method": method,
+                "path": path,
+                "raw_path": path.encode("latin-1"),
+                "query_string": query_string,
+                "headers": headers,
+                "aws.event": event,
+                "aws.context": context,
+            }
+
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_closed():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            loop.run_until_complete(self.app(scope, receive, send))
+
+            return {
+                "statusCode": response_status,
+                "headers": {k.decode("latin-1"): v.decode("latin-1") for k, v in response_headers},
+                "body": b"".join(response_body_parts).decode("utf-8", errors="replace"),
+                "isBase64Encoded": False,
+            }
 
 from backend.main import (
     app,

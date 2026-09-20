@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { ThemeProvider } from "@/theme/ThemeProvider"
 import { AppHeader } from "@/components/layout/AppHeader"
 import { AppSidebar, ActiveTab } from "@/components/layout/AppSidebar"
@@ -9,9 +8,20 @@ import { ChangeAnalysisScreen } from "@/features/changes/ChangeAnalysisScreen"
 import { AuditScreen } from "@/features/audit/AuditScreen"
 import { RegressionScreen } from "@/features/regression/RegressionScreen"
 import { DeploymentScreen } from "@/features/deployment/DeploymentScreen"
+import { useState } from "react"
+import { WorkspaceProvider } from "@/store/WorkspaceProvider"
+import { WorkspaceSelector } from "@/features/workspace/WorkspaceSelector"
+import { useWorkspace } from "@/store/workspaceStore"
 
-export function AppContent() {
+// ─── Inner component: rendered inside WorkspaceProvider context ───────────────
+function AppContent() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview")
+  const { activeWorkspace, isDemoMode, dispatch } = useWorkspace()
+
+  // Show workspace selector when no workspace is active
+  if (!activeWorkspace) {
+    return <WorkspaceSelector />
+  }
 
   const renderActiveScreen = () => {
     switch (activeTab) {
@@ -34,17 +44,21 @@ export function AppContent() {
     }
   }
 
+  const projectName = isDemoMode ? "AcmePay / Authorization" : activeWorkspace.name
+
   return (
     <div className="min-h-screen bg-[#090A0D] text-foreground flex flex-col font-sans relative overflow-x-hidden cyber-canvas-grid">
-      {/* Multi-layer Atmospheric Cyber Auroras & Lights Shining Through Frosted Glass */}
+      {/* Multi-layer Atmospheric Cyber Auroras */}
       <div className="fixed top-0 inset-x-0 h-[520px] cyber-aurora-top pointer-events-none z-0" />
       <div className="fixed top-[-100px] right-[-100px] h-[650px] w-[650px] cyber-aurora-corner pointer-events-none z-0" />
       <div className="fixed top-[35%] left-[-150px] h-[550px] w-[550px] cyber-aurora-left pointer-events-none z-0" />
 
-      {/* Workbench Titlebar Header */}
+      {/* Workbench Header — workspace-aware */}
       <AppHeader
-        activeProject="AcmePay / Authorization"
-        activeVersion="v12 (PROD)"
+        activeProject={projectName}
+        activeVersion={isDemoMode ? "v12 (PROD)" : undefined}
+        workspaceMode={isDemoMode ? "demo" : "connected"}
+        onSwitchWorkspace={() => dispatch({ type: "SHOW_WORKSPACE_SELECTOR" })}
       />
 
       {/* Main Split Workspace Layout */}
@@ -53,8 +67,8 @@ export function AppContent() {
         <AppSidebar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
-          failedContractsCount={3}
-          counterexamplesCount={3}
+          failedContractsCount={isDemoMode ? 3 : 0}
+          counterexamplesCount={isDemoMode ? 3 : 0}
         />
 
         {/* Core Screen Workspace Area */}
@@ -69,7 +83,9 @@ export function AppContent() {
 export function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="policylab-ui-theme">
-      <AppContent />
+      <WorkspaceProvider>
+        <AppContent />
+      </WorkspaceProvider>
     </ThemeProvider>
   )
 }

@@ -12,8 +12,15 @@ Covers:
 - Error containment preventing unauthorized ALLOW
 """
 
-import pytest
+import sys
 from unittest.mock import MagicMock
+import pytest
+
+try:
+    import boto3
+except ImportError:
+    boto3 = MagicMock()
+    sys.modules["boto3"] = boto3
 
 from backend.domain.avp.adapter import (
     Boto3AVPAdapter,
@@ -47,9 +54,16 @@ from backend.domain.models.diff import BehavioralTransition
 from backend.domain.models.authz import AuthorizationDecision
 
 
-def test_failure_injection_avp_inaccessible_store():
+def test_failure_injection_avp_inaccessible_store(monkeypatch):
     """Verifies that an inaccessible AVP store returns isConfigured=False with error details."""
     adapter = Boto3AVPAdapter(region="us-east-1")
+
+    def mock_boto3_client(service, **kwargs):
+        mock_client = MagicMock()
+        mock_client.get_policy_store.side_effect = Exception("ResourceNotFoundException: Policy store nonexistent-store-xyz unavailable")
+        return mock_client
+
+    monkeypatch.setattr(boto3, "client", mock_boto3_client)
     readiness = adapter.check_readiness(region="us-east-1", store_id="nonexistent-store-xyz")
     assert readiness.isConfigured is False
     assert readiness.isReadyForDeployment is False

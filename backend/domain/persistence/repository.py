@@ -17,6 +17,23 @@ from ..models.deployment import DeploymentRecord, DeploymentStatus
 class IPolicyLabRepository(ABC):
     """Abstract persistence interface for PolicyLab domain records."""
 
+    # --- Connected Workspace Methods (Phase: Connected Workspace) ------------
+
+    @abstractmethod
+    def save_workspace(self, workspace: Dict[str, Any]) -> None:
+        """Stores or updates a Connected Workspace record."""
+        pass
+
+    @abstractmethod
+    def get_workspace(self, workspace_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves a Connected Workspace by ID."""
+        pass
+
+    @abstractmethod
+    def list_workspaces(self) -> List[Dict[str, Any]]:
+        """Lists all Connected Workspace records."""
+        pass
+
     @abstractmethod
     def save_policy_set(self, policy_set: Dict[str, Any]) -> None:
         """Stores or updates a PolicySet."""
@@ -85,6 +102,7 @@ class InMemoryPolicyLabRepository(IPolicyLabRepository):
         self._snapshots: Dict[str, EntitySnapshot] = {}
         self._audit_runs: Dict[str, Dict[str, Any]] = {}
         self._deployments: List[DeploymentRecord] = []
+        self._workspaces: Dict[str, Dict[str, Any]] = {}
         self._seed_default_records()
 
     def _seed_default_records(self) -> None:
@@ -173,3 +191,14 @@ class InMemoryPolicyLabRepository(IPolicyLabRepository):
 
     def list_deployments(self) -> List[DeploymentRecord]:
         return self._deployments
+
+    # --- Connected Workspace (session-scoped) ---------------------------------
+
+    def save_workspace(self, workspace: Dict[str, Any]) -> None:
+        self._workspaces[workspace["id"]] = workspace
+
+    def get_workspace(self, workspace_id: str) -> Optional[Dict[str, Any]]:
+        return self._workspaces.get(workspace_id)
+
+    def list_workspaces(self) -> List[Dict[str, Any]]:
+        return list(self._workspaces.values())
