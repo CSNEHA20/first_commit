@@ -55,11 +55,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   }
 
   return (
-    <header className="border-b border-white/[0.08] bg-[#090A0D]/90 backdrop-blur-md text-foreground sticky top-0 z-40 h-12 px-4 flex items-center justify-between transition-colors select-none">
+    <header className="border-b border-white/[0.08] bg-[#090A0D]/90 backdrop-blur-md text-foreground sticky top-0 z-40 h-12 px-4 flex items-center justify-between gap-4 transition-colors select-none">
       {/* Left: Workbench Identifier & Project Context */}
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-2 text-xs min-w-0 shrink">
         {/* Monogram / Logotype */}
-        <div className="flex items-center gap-2 font-semibold">
+        <div className="flex items-center gap-2 font-semibold shrink-0">
           <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-orange-500 to-amber-600 shadow-[0_0_10px_rgba(255,106,36,0.4)]">
             <Shield className="h-3.5 w-3.5 text-white" />
           </div>
@@ -68,13 +68,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </span>
         </div>
 
-        <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
+        <ChevronRight className="h-3 w-3 text-muted-foreground/40 shrink-0" />
 
         {/* Project Name — clickable to switch workspace */}
         <button
           onClick={onSwitchWorkspace}
           disabled={!onSwitchWorkspace}
-          className="text-foreground font-medium hidden sm:inline text-xs hover:text-orange-400 transition-colors disabled:cursor-default"
+          className="text-foreground font-medium hidden sm:inline text-xs hover:text-orange-400 transition-colors disabled:cursor-default truncate max-w-[140px] md:max-w-[200px]"
           title={onSwitchWorkspace ? "Switch workspace" : undefined}
         >
           {activeProject}
@@ -82,29 +82,29 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Workspace Mode Badge */}
         {workspaceMode === "demo" ? (
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20 shrink-0">
             DEMO
           </span>
         ) : (
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
             CONNECTED
           </span>
         )}
 
-        <ChevronRight className="h-3 w-3 text-muted-foreground/40 hidden md:inline" />
+        <ChevronRight className="h-3 w-3 text-muted-foreground/40 hidden md:inline shrink-0" />
 
         {/* Environment Tag */}
-        <div className="hidden md:flex items-center gap-1.5">
+        <div className="hidden md:flex items-center gap-1.5 shrink-0">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#18B868]" />
             {environment}
           </span>
         </div>
 
-        <span className="text-muted-foreground/40 hidden lg:inline">·</span>
+        <span className="text-muted-foreground/40 hidden xl:inline shrink-0">·</span>
 
         {/* Versions Context */}
-        <div className="hidden lg:flex items-center gap-2 text-muted-foreground text-[11px] font-mono">
+        <div className="hidden xl:flex items-center gap-2 text-muted-foreground text-[11px] font-mono shrink-0">
           <span>Baseline: <strong className="text-foreground">{activeVersion}</strong></span>
           <span className="text-muted-foreground/40">➔</span>
           <span>Review: <strong className="text-red-400">{candidateVersion} (Draft)</strong></span>
@@ -112,9 +112,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
 
       {/* Right: Gate Status & Controls */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5 shrink-0">
         {/* Contextual Pre-deployment Gate Indicator */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <StatusBadge
             status={gateStatus}
             label={`Gate: ${gateStatus} (SC-04)`}
@@ -130,20 +130,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           variant="outline"
           size="sm"
           onClick={handleExportEvidence}
-          className="h-7 text-xs gap-1.5 border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.08] text-foreground hidden sm:flex"
+          className="h-7 text-xs gap-1.5 border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.08] text-foreground hidden sm:flex shrink-0"
         >
-          <Download className="h-3 w-3 text-orange-400" />
+          <Download className="h-3 w-3 text-orange-400 shrink-0" />
           <span>Export</span>
         </Button>
 
-        <div className="h-3.5 w-[1px] bg-white/[0.1]" />
+        <div className="h-3.5 w-[1px] bg-white/[0.1] shrink-0" />
 
         {/* Theme Toggle Button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
-          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-white/[0.05] shrink-0"
           title={`Switch to ${theme === "light" ? "Dark" : "Light"} mode`}
         >
           {theme === "light" ? (

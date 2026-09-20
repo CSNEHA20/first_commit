@@ -90,25 +90,25 @@ export const UserSessionBadge: React.FC = () => {
   const isCognito = user.authSource === 'COGNITO'
 
   return (
-    <div className='flex items-center gap-2'>
+    <div className='flex items-center gap-2 shrink-0'>
       {/* Auth Source Badge */}
       <button
         onClick={() => setShowCognitoModal(true)}
-        className={`flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold transition-all hover:scale-105 ${
+        className={`h-7 shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 text-[11px] font-mono px-2.5 rounded-md border font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
           isCognito
             ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
-            : 'bg-zinc-800/80 text-zinc-400 border-zinc-700/60 hover:text-zinc-200'
+            : 'bg-zinc-800/80 text-zinc-300 border-zinc-700/60 hover:bg-zinc-800 hover:text-zinc-100'
         }`}
         title="Click to configure Amazon Cognito User Pool JWT"
       >
-        <Key className="h-2.5 w-2.5" />
-        <span>{isCognito ? 'COGNITO JWT' : 'DEV TOKEN'}</span>
+        <Key className="h-3 w-3 shrink-0" />
+        <span className="leading-none whitespace-nowrap">{isCognito ? 'COGNITO JWT' : 'DEV TOKEN'}</span>
       </button>
 
       {/* Role Selection Dropdown */}
       <Select value={user.role} onValueChange={handleRoleChange}>
         <SelectTrigger
-          className='h-7 px-2.5 py-1 text-xs gap-1.5 border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.07] text-foreground focus:ring-1 focus:ring-orange-500/50 rounded-md transition-colors'
+          className='h-7 shrink-0 px-2.5 py-1 text-xs gap-1.5 border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.07] text-foreground focus:ring-1 focus:ring-orange-500/50 rounded-md transition-colors'
           title={`Active identity: ${user.username} (${user.email || 'no email'})`}
         >
           <div className='flex items-center gap-1.5 font-mono'>
