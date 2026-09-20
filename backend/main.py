@@ -105,7 +105,15 @@ app = FastAPI(
     openapi_url=None if is_prod else "/openapi.json",
 )
 
-allowed_origins = [os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")] if is_prod else ["*"]
+allowed_origins = [
+    os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173"),
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

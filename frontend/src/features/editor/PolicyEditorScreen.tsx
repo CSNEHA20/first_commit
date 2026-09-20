@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react"
-import Editor, { Monaco } from "@monaco-editor/react"
+import Editor, { DiffEditor, Monaco } from "@monaco-editor/react"
 import {
   FileCode2,
   CheckCircle2,
@@ -12,6 +12,8 @@ import {
   Code2,
   Hash,
   Database,
+  Columns,
+  ArrowLeftRight,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -134,19 +136,19 @@ function configureCedarMonaco(monaco: Monaco) {
       base: "vs-dark",
       inherit: true,
       rules: [
-        { token: "keyword", foreground: "F97316", fontStyle: "bold" },
-        { token: "type", foreground: "38BDF8", fontStyle: "bold" },
-        { token: "type.identifier", foreground: "38BDF8" },
-        { token: "string", foreground: "34D399" },
-        { token: "comment", foreground: "64748B", fontStyle: "italic" },
-        { token: "operator", foreground: "F43F5E" },
-        { token: "delimiter", foreground: "94A3B8" },
-        { token: "number", foreground: "FBBF24" },
+        { token: "keyword", foreground: "f97316", fontStyle: "bold" },
+        { token: "type.identifier", foreground: "38bdf8", fontStyle: "bold" },
+        { token: "identifier", foreground: "e2e8f0" },
+        { token: "string", foreground: "4ade80" },
+        { token: "comment", foreground: "64748b", fontStyle: "italic" },
+        { token: "number", foreground: "fb923c" },
+        { token: "operator", foreground: "cbd5e1" },
       ],
       colors: {
         "editor.background": "#0c1017",
+        "editor.foreground": "#e2e8f0",
         "editor.lineHighlightBackground": "#ffffff08",
-        "editorCursor.foreground": "#F97316",
+        "editorCursor.foreground": "#f97316",
         "editorWhitespace.foreground": "#ffffff15",
         "editorIndentGuide.background": "#ffffff10",
         "editorIndentGuide.activeBackground": "#f9731640",
@@ -160,9 +162,17 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
 }) => {
   const { isDemoMode, activeWorkspace, connectedData, dispatch } = useWorkspace()
 
-  // Selected version key
+  // View Mode: 'single' editor vs 'compare' side-by-side diff
+  const [viewMode, setViewMode] = useState<"single" | "compare">("single")
+  const [renderSideBySide, setRenderSideBySide] = useState<boolean>(true)
+
+  // Selected version key in single mode
   const [selectedVersion, setSelectedVersion] = useState<"baseline" | "candidate">("candidate")
   const [activeTab, setActiveTab] = useState<"code" | "schema">("code")
+
+  // Compare mode version selectors
+  const [compareLeftVersion, setCompareLeftVersion] = useState<"baseline" | "candidate">("baseline")
+  const [compareRightVersion, setCompareRightVersion] = useState<"baseline" | "candidate">("candidate")
 
   // Code buffer
   const getInitialCode = (ver: "baseline" | "candidate") => {
@@ -182,6 +192,7 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   const [valDurationMs, setValDurationMs] = useState<number | null>(null)
 
   const editorRef = useRef<any>(null)
+  const diffEditorRef = useRef<any>(null)
   const monacoRef = useRef<Monaco | null>(null)
 
   // Sync if workspace or version changes
@@ -196,6 +207,11 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   const baselineLabel = isDemoMode ? "v12 (Production)" : (connectedData?.baselineLabel || "Baseline")
   const candidateLabel = isDemoMode ? "v13 (Candidate)" : (connectedData?.candidateLabel || "Candidate")
   const schemaDisplay = isDemoMode ? ACMEPAY_SCHEMA : (connectedData?.schemaText || "{\n  \"comment\": \"No schema defined for this workspace.\"\n}")
+
+  const leftCompareCode = getInitialCode(compareLeftVersion)
+  const rightCompareCode = getInitialCode(compareRightVersion)
+  const leftCompareLabel = compareLeftVersion === "baseline" ? baselineLabel : candidateLabel
+  const rightCompareLabel = compareRightVersion === "baseline" ? baselineLabel : candidateLabel
 
   const handleVersionChange = (ver: "baseline" | "candidate") => {
     setSelectedVersion(ver)
@@ -311,7 +327,9 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-orange-400 font-mono">Cedar Engine v3.1</span>
             <span className="text-muted-foreground/40">·</span>
-            <span className="text-xs text-muted-foreground">Deterministic AST Evaluation</span>
+            <span className="text-xs text-muted-foreground">
+              {viewMode === "compare" ? "Side-by-Side Policy Comparison" : "Deterministic AST Evaluation"}
+            </span>
             {!isDemoMode && (
               <>
                 <span className="text-muted-foreground/40">·</span>
@@ -327,68 +345,111 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Version Switcher Tabs */}
-          <div className="flex items-center p-0.5 rounded-lg bg-black/40 border border-white/[0.08]">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* View Mode Toggle: Single Editor vs Compare Side-by-Side */}
+          <div className="flex items-center p-0.5 rounded-lg bg-black/50 border border-white/[0.12] backdrop-blur-md">
             <button
-              onClick={() => handleVersionChange("baseline")}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                selectedVersion === "baseline"
-                  ? "bg-white/[0.1] text-white shadow-sm font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+              onClick={() => setViewMode("single")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                viewMode === "single"
+                  ? "bg-white/[0.12] text-white shadow-sm"
+                  : "text-muted-foreground hover:text-white"
               }`}
             >
-              {baselineLabel}
+              <Code2 className="h-3.5 w-3.5" />
+              <span>Editor</span>
             </button>
             <button
-              onClick={() => handleVersionChange("candidate")}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                selectedVersion === "candidate"
-                  ? "bg-orange-500/20 text-orange-400 border border-orange-500/30 shadow-sm font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+              onClick={() => setViewMode("compare")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                viewMode === "compare"
+                  ? "bg-[#FF6A24] text-white shadow-[0_0_12px_rgba(255,106,36,0.4)]"
+                  : "text-muted-foreground hover:text-white"
               }`}
             >
-              {candidateLabel}
+              <GitCompare className="h-3.5 w-3.5" />
+              <span>Compare</span>
             </button>
           </div>
 
-          <Button
-            size="sm"
-            onClick={handleValidate}
-            disabled={isValidating}
-            className="gap-1.5 text-xs h-8 bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all hover:scale-105"
-          >
-            {isValidating ? (
-              <>
-                <div className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                <span>Validating...</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-3.5 w-3.5 fill-current" />
-                <span>Validate AST</span>
-              </>
-            )}
-          </Button>
+          {viewMode === "single" ? (
+            <>
+              {/* Version Switcher Tabs in Single Mode */}
+              <div className="flex items-center p-0.5 rounded-lg bg-black/40 border border-white/[0.08]">
+                <button
+                  onClick={() => handleVersionChange("baseline")}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                    selectedVersion === "baseline"
+                      ? "bg-white/[0.1] text-white shadow-sm font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {baselineLabel}
+                </button>
+                <button
+                  onClick={() => handleVersionChange("candidate")}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                    selectedVersion === "candidate"
+                      ? "bg-orange-500/20 text-orange-400 border border-orange-500/30 shadow-sm font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {candidateLabel}
+                </button>
+              </div>
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleSave}
-            className="gap-1.5 text-xs h-8 border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] text-foreground transition-all hover:scale-105"
-          >
-            {isSaved ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-emerald-400 font-medium">Saved</span>
-              </>
-            ) : (
-              <>
-                <Save className="h-3.5 w-3.5" />
-                <span>Save</span>
-              </>
-            )}
-          </Button>
+              <Button
+                size="sm"
+                onClick={handleValidate}
+                disabled={isValidating}
+                className="gap-1.5 text-xs h-8 bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all hover:scale-105"
+              >
+                {isValidating ? (
+                  <>
+                    <div className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    <span>Validating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-3.5 w-3.5 fill-current" />
+                    <span>Validate AST</span>
+                  </>
+                )}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSave}
+                className="gap-1.5 text-xs h-8 border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] text-foreground transition-all hover:scale-105"
+              >
+                {isSaved ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                    <span className="text-emerald-400 font-medium">Saved</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3.5 w-3.5" />
+                    <span>Save</span>
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Compare Mode Side-by-Side vs Inline toggle */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRenderSideBySide(!renderSideBySide)}
+                className="gap-1.5 text-xs h-8 border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] text-foreground"
+              >
+                <Columns className="h-3.5 w-3.5 text-sky-400" />
+                <span>{renderSideBySide ? "Split View" : "Inline View"}</span>
+              </Button>
+            </>
+          )}
 
           <Button
             size="sm"
@@ -396,66 +457,112 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
             onClick={() => onNavigate("changes")}
             className="gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground transition-all hover:scale-105"
           >
-            <GitCompare className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Inspect Diff</span>
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Blast Radius</span>
           </Button>
         </div>
       </div>
 
-      {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left Column: Monaco Code Editor (8 cols) */}
-        <div className="lg:col-span-8 space-y-3">
+      {/* Main Layout Area */}
+      <div className={`grid grid-cols-1 ${viewMode === "compare" ? "lg:grid-cols-1" : "lg:grid-cols-12"} gap-4`}>
+        {/* Monaco Code / Diff Editor */}
+        <div className={`${viewMode === "compare" ? "lg:col-span-1" : "lg:col-span-8"} space-y-3`}>
           <div className="glass-panel-premium rounded-2xl border border-white/[0.08] overflow-hidden">
-            {/* Editor Sub-header / File tabs */}
-            <div className="flex items-center justify-between px-3.5 py-2 border-b border-white/[0.08] bg-black/40">
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setActiveTab("code")}
-                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
-                    activeTab === "code"
-                      ? "bg-white/[0.08] text-foreground font-semibold border border-white/[0.06]"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Code2 className="h-3.5 w-3.5 text-orange-400" />
-                  <span>policy_{selectedVersion}.cedar</span>
-                </button>
+            {/* Editor Sub-header / File tabs or Compare Selectors */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3.5 py-2 border-b border-white/[0.08] bg-black/40 gap-2">
+              {viewMode === "single" ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setActiveTab("code")}
+                    className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                      activeTab === "code"
+                        ? "bg-white/[0.08] text-foreground font-semibold border border-white/[0.06]"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Code2 className="h-3.5 w-3.5 text-orange-400" />
+                    <span>policy_{selectedVersion}.cedar</span>
+                  </button>
 
-                <button
-                  onClick={() => setActiveTab("schema")}
-                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
-                    activeTab === "schema"
-                      ? "bg-white/[0.08] text-foreground font-semibold border border-white/[0.06]"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Hash className="h-3.5 w-3.5 text-sky-400" />
-                  <span>schema.json</span>
-                </button>
-              </div>
+                  <button
+                    onClick={() => setActiveTab("schema")}
+                    className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                      activeTab === "schema"
+                        ? "bg-white/[0.08] text-foreground font-semibold border border-white/[0.06]"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Hash className="h-3.5 w-3.5 text-sky-400" />
+                    <span>schema.json</span>
+                  </button>
+                </div>
+              ) : (
+                /* Compare Mode Version Selectors Header */
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-lg border border-white/[0.08]">
+                    <span className="text-muted-foreground text-[11px] font-mono">Original (Left):</span>
+                    <select
+                      value={compareLeftVersion}
+                      onChange={(e) => setCompareLeftVersion(e.target.value as "baseline" | "candidate")}
+                      className="bg-transparent text-white font-medium text-xs focus:outline-none cursor-pointer"
+                    >
+                      <option value="baseline" className="bg-[#111622] text-white">
+                        {baselineLabel}
+                      </option>
+                      <option value="candidate" className="bg-[#111622] text-white">
+                        {candidateLabel}
+                      </option>
+                    </select>
+                  </div>
+
+                  <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+
+                  <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-lg border border-white/[0.08]">
+                    <span className="text-muted-foreground text-[11px] font-mono">Modified (Right):</span>
+                    <select
+                      value={compareRightVersion}
+                      onChange={(e) => setCompareRightVersion(e.target.value as "baseline" | "candidate")}
+                      className="bg-transparent text-orange-400 font-medium text-xs focus:outline-none cursor-pointer"
+                    >
+                      <option value="candidate" className="bg-[#111622] text-orange-400">
+                        {candidateLabel}
+                      </option>
+                      <option value="baseline" className="bg-[#111622] text-white">
+                        {baselineLabel}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleCopyCode}
-                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-3 w-3 text-emerald-400 mr-1" />
-                      <span className="text-emerald-400">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3 w-3 mr-1" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </Button>
+                {viewMode === "single" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCopyCode}
+                    className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-400 mr-1" />
+                        <span className="text-emerald-400">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3 mr-1" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </Button>
+                )}
 
-                {validationResult ? (
+                {viewMode === "compare" ? (
+                  <Badge variant="allow" className="text-[10px] gap-1 font-mono bg-sky-500/10 text-sky-300 border-sky-500/20">
+                    <GitCompare className="h-3 w-3" />
+                    Diff Engine Active ({renderSideBySide ? "Split" : "Inline"})
+                  </Badge>
+                ) : validationResult ? (
                   validationResult.isValid ? (
                     <Badge variant="allow" className="text-[10px] gap-1 font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                       <CheckCircle2 className="h-3 w-3" />
@@ -476,9 +583,38 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
               </div>
             </div>
 
-            {/* Code Body Area with Monaco */}
+            {/* Code Body Area with Monaco Editor or DiffEditor */}
             <div className="bg-[#0c1017]">
-              {activeTab === "code" ? (
+              {viewMode === "compare" ? (
+                <div className="min-h-[520px]">
+                  <DiffEditor
+                    height="520px"
+                    language="cedar"
+                    theme="policylab-cedar-dark"
+                    original={leftCompareCode}
+                    modified={rightCompareCode}
+                    beforeMount={configureCedarMonaco}
+                    onMount={(diffEditor, monaco) => {
+                      diffEditorRef.current = diffEditor
+                      monacoRef.current = monaco
+                    }}
+                    options={{
+                      readOnly: true,
+                      renderSideBySide: renderSideBySide,
+                      minimap: { enabled: false },
+                      fontSize: 12.5,
+                      fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      wordWrap: "on",
+                      automaticLayout: true,
+                      padding: { top: 12, bottom: 12 },
+                      diffWordWrap: "on",
+                      ignoreTrimWhitespace: false,
+                    }}
+                  />
+                </div>
+              ) : activeTab === "code" ? (
                 <div className="min-h-[460px]">
                   <Editor
                     height="460px"
@@ -551,7 +687,12 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
             {/* Diagnostics Bar */}
             <div className="px-3.5 py-2.5 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 overflow-hidden">
-                {validationResult ? (
+                {viewMode === "compare" ? (
+                  <div className="flex items-center gap-1.5 text-sky-300 font-medium">
+                    <GitCompare className="h-3.5 w-3.5 shrink-0 text-sky-400" />
+                    <span>Comparing {leftCompareLabel} (left) against {rightCompareLabel} (right)</span>
+                  </div>
+                ) : validationResult ? (
                   !validationResult.isValid ? (
                     <div className="flex items-center gap-1.5 text-rose-400 font-medium truncate">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-400" />
@@ -582,21 +723,22 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
               </div>
 
               <span className="text-[10px] text-muted-foreground font-mono shrink-0 ml-2">
-                {validationResult ? `Cedar WASM · ${valDurationMs ?? 0.8}ms` : "UTF-8 · LF · Cedar Core"}
+                {viewMode === "compare" ? "Monaco Diff · UTF-8" : validationResult ? `Cedar WASM · ${valDurationMs ?? 0.8}ms` : "UTF-8 · LF · Cedar Core"}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Policy Context & Diagnostics (4 cols) */}
-        <div className="lg:col-span-4 space-y-3">
-          <Card className="glass-card-premium rounded-2xl">
-            <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
-              <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
-                <Hash className="h-3.5 w-3.5 text-orange-400" />
-                Policy Context & Provenance
-              </CardTitle>
-            </CardHeader>
+        {/* Right Column: Policy Context & Diagnostics (4 cols, hidden in compare mode for full view) */}
+        {viewMode === "single" && (
+          <div className="lg:col-span-4 space-y-3">
+            <Card className="glass-card-premium rounded-2xl">
+              <CardHeader className="p-3.5 pb-2 border-b border-white/[0.06]">
+                <CardTitle className="text-xs font-semibold flex items-center gap-1.5">
+                  <Hash className="h-3.5 w-3.5 text-orange-400" />
+                  Policy Context & Provenance
+                </CardTitle>
+              </CardHeader>
 
             <CardContent className="p-3.5 pt-2 space-y-3 text-xs">
               <div className="p-2.5 rounded-lg bg-black/40 border border-white/[0.06] space-y-1.5 text-[11px]">
@@ -690,7 +832,9 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
             </CardContent>
           </Card>
         </div>
+        )}
       </div>
     </div>
   )
 }
+

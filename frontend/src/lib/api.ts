@@ -20,7 +20,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000
 
 export function getAuthHeaders(): Record<string, string> {
   let token = getAuthToken()
-  if (!token) {
+  if (!token || token.split(".").length !== 3) {
     const user = getStoredUser()
     token = generateLocalDevToken(user)
     setAuthToken(token)

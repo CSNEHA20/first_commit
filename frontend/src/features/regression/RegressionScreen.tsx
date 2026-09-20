@@ -8,6 +8,7 @@ import {
   Filter,
   RefreshCw,
   Clock,
+  AlertTriangle,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,7 @@ export const RegressionScreen: React.FC = () => {
   const [selectedVersion, setSelectedVersion] = useState<"v12" | "v13">("v13")
   const [isRunning, setIsRunning] = useState(false)
   const [filterTag, setFilterTag] = useState<string>("all")
+  const [suiteError, setSuiteError] = useState<string | null>(null)
   const [regressionReport, setRegressionReport] = useState<RegressionReport | null>(null)
   const [executionDurationMs, setExecutionDurationMs] = useState<number>(12.4)
 
@@ -37,6 +39,7 @@ export const RegressionScreen: React.FC = () => {
   useEffect(() => {
     setRegressionReport(null)
     setFilterTag("all")
+    setSuiteError(null)
   }, [activeWorkspace?.id, isDemoMode])
 
   const effectiveBaseline = isDemoMode
@@ -46,7 +49,7 @@ export const RegressionScreen: React.FC = () => {
     ? (selectedVersion === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT)
     : (connectedData?.candidatePolicyText || "")
   const effectiveBaselineLabel = isDemoMode
-    ? "v12 (PROD)"
+    ? "v12 (Production)"
     : (connectedData?.baselineLabel || "Baseline")
   const effectiveCandidateLabel = isDemoMode
     ? (selectedVersion === "v12" ? "v12 (PROD)" : "v13 (Draft)")
@@ -87,6 +90,7 @@ export const RegressionScreen: React.FC = () => {
     if (!isDemoMode && declaredScenarios.length === 0) return
 
     setIsRunning(true)
+    setSuiteError(null)
     const startTime = performance.now()
     try {
       const report = await runRegression({
@@ -105,8 +109,9 @@ export const RegressionScreen: React.FC = () => {
       })
       setRegressionReport(report)
       setExecutionDurationMs(Math.round((performance.now() - startTime) * 10) / 10)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Regression run failed:", err)
+      setSuiteError(err.message || "Failed to execute Cedar regression test suite. Check backend server connection.")
     } finally {
       setIsRunning(false)
     }
@@ -211,6 +216,17 @@ export const RegressionScreen: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Regression Suite Error Notification */}
+      {suiteError && (
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2.5 text-xs text-red-300">
+          <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <span className="font-semibold block text-red-200">Suite Execution Error</span>
+            <p className="leading-relaxed">{suiteError}</p>
+          </div>
+        </div>
+      )}
 
       {/* Pre-Deployment Gate Status Banner (Glass Panel) */}
       <div
