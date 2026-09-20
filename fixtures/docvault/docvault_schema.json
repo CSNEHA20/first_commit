@@ -1,0 +1,64 @@
+{
+  "DocVault": {
+    "entityTypes": {
+      "User": {
+        "memberOfTypes": ["Role"]
+      },
+      "Role": {
+        "memberOfTypes": []
+      },
+      "Document": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "classification": {
+              "type": "String",
+              "required": true
+            },
+            "matterId": {
+              "type": "String",
+              "required": false
+            }
+          }
+        }
+      },
+      "AuditRecord": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "classification": {
+              "type": "String",
+              "required": true
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "view": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document", "AuditRecord"]
+        }
+      },
+      "edit": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document"]
+        }
+      },
+      "export": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document", "AuditRecord"]
+        }
+      },
+      "delete": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document"]
+        }
+      }
+    }
+  }
+}

@@ -200,13 +200,13 @@ export const WorkspaceSelector: React.FC = () => {
             onClick={() => setShowConnectors((v) => !v)}
             className="w-full flex items-center justify-between px-1 mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground font-mono hover:text-foreground transition-colors"
           >
-            <span>External Connectors (Future Milestones)</span>
+            <span>External Project Connectors</span>
             <ChevronRight className={`h-3.5 w-3.5 transition-transform ${showConnectors ? "rotate-90" : ""}`} />
           </button>
           {showConnectors && (
             <div className="space-y-3">
-              <GitHubConnector />
-              <LocalConnector />
+              <GitHubConnector onWorkspaceCreated={(ws) => dispatch({ type: "CREATE_WORKSPACE", workspace: ws })} />
+              <LocalConnector onWorkspaceCreated={(ws) => dispatch({ type: "CREATE_WORKSPACE", workspace: ws })} />
               <AVPConnector />
             </div>
           )}

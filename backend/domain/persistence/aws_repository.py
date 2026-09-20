@@ -362,12 +362,13 @@ class DynamoDBPolicyLabRepository(IPolicyLabRepository):
         return self._fallback_repo.list_deployments()
 
     def save_workspace(self, workspace: Dict[str, Any]) -> None:
+        ws_id = workspace.get("workspaceId") or workspace.get("id")
         if self.is_live:
             try:
                 item = {
-                    "PK": f"WORKSPACE#{workspace['workspaceId']}",
+                    "PK": f"WORKSPACE#{ws_id}",
                     "SK": "METADATA",
-                    "workspaceId": workspace["workspaceId"],
+                    "workspaceId": ws_id,
                     "name": workspace.get("name", ""),
                     "mode": workspace.get("mode", "connected"),
                     "description": workspace.get("description", ""),
@@ -387,7 +388,7 @@ class DynamoDBPolicyLabRepository(IPolicyLabRepository):
                 if "Item" in res:
                     it = res["Item"]
                     return {
-                        "workspaceId": it["workspaceId"],
+                        "workspaceId": it.get("workspaceId") or it.get("id"),
                         "name": it.get("name", ""),
                         "mode": it.get("mode", "connected"),
                         "description": it.get("description", ""),
@@ -406,7 +407,7 @@ class DynamoDBPolicyLabRepository(IPolicyLabRepository):
                 if "Items" in res:
                     return [
                         {
-                            "workspaceId": it["workspaceId"],
+                            "workspaceId": it.get("workspaceId") or it.get("id"),
                             "name": it.get("name", ""),
                             "mode": it.get("mode", "connected"),
                             "description": it.get("description", ""),

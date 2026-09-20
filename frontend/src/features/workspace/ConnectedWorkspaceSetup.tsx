@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Workspace, DEFAULT_CONNECTED_DATA, ConnectedWorkspaceData } from "@/store/workspaceStore"
 import { Scenario } from "@/types/authz"
+import {
+  DOCVAULT_BASELINE_POLICY,
+  DOCVAULT_CANDIDATE_POLICY,
+  DOCVAULT_SCHEMA,
+  DOCVAULT_ENTITIES,
+  DOCVAULT_SCENARIOS,
+} from "@/fixtures/docvault"
 
 interface ConnectedWorkspaceSetupProps {
   onCancel: () => void
@@ -226,8 +233,37 @@ export const ConnectedWorkspaceSetup: React.FC<ConnectedWorkspaceSetupProps> = (
                 </CardHeader>
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground block mb-1.5">Workspace Name *</label>
-                  <input autoFocus className={ic} placeholder="e.g. MyApp Authorization Model" value={name} onChange={e => setName(e.target.value)} />
+                  <input autoFocus className={ic} placeholder="e.g. DocVault Legal Holds" value={name} onChange={e => setName(e.target.value)} />
                   <Err field="name" />
+                </div>
+
+                <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-orange-400">Quick Start: Independent Benchmark</span>
+                    <Badge variant="outline" className="text-[9px] font-mono border-orange-500/30 text-orange-400">Non-AcmePay</Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Load the complete <strong>DocVault Enterprise Legal & Audit</strong> benchmark (policies, schema, entities, and 6 declared scenarios).
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setName("DocVault Enterprise Legal & Audit")
+                      setPolicyText(DOCVAULT_BASELINE_POLICY)
+                      setCandidatePolicyText(DOCVAULT_CANDIDATE_POLICY)
+                      setSchemaText(DOCVAULT_SCHEMA)
+                      setEntitiesJson(JSON.stringify(DOCVAULT_ENTITIES, null, 2))
+                      setScenarios(DOCVAULT_SCENARIOS)
+                      setBaselineLabel("v1.0 (PROD)")
+                      setCandidateLabel("v1.1 (Draft)")
+                      setErrors({})
+                    }}
+                    className="text-xs h-7 border-orange-500/30 text-orange-300 hover:bg-orange-500/10"
+                  >
+                    Auto-Fill DocVault Model
+                  </Button>
                 </div>
               </div>
             )}

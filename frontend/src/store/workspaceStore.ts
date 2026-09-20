@@ -10,7 +10,7 @@
  */
 
 import { createContext, useContext } from "react"
-import { Scenario, SecurityContract } from "@/types/authz"
+import type { Scenario, SecurityContract } from "../types/authz.ts"
 
 // --- Source Labels -----------------------------------------------------------
 export type EvaluationSource =

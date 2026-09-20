@@ -8,7 +8,7 @@
  * This panel does NOT use any AcmePay fixture data.
  */
 
-import React, { useState, useCallback } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { Zap, Play, Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,6 +34,13 @@ export const ConnectedSimulatorPanel: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<any>(null)
   const [counterexamples, setCounterexamples] = useState<Counterexample[]>([])
+
+  // Reset outputs on workspace switch
+  useEffect(() => {
+    setResult(null)
+    setCounterexamples([])
+    setError(null)
+  }, [activeWorkspace?.id])
 
   // Single mode inputs
   const [principal, setPrincipal] = useState("")

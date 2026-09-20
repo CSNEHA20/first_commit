@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import {
   GitCompare,
   ArrowRight,
@@ -61,6 +61,15 @@ export const ChangeAnalysisScreen: React.FC = () => {
     isDemoMode ? "FIXTURE_PREVIEW" : "LOCAL_CEDAR_WASM"
   )
   const [replayingId, setReplayingId] = useState<string | null>(null)
+
+  // Strictly isolate analysis state when workspace switches or mode changes
+  useEffect(() => {
+    setDiffReport(null)
+    setCounterexamples(isDemoMode ? TOP_COUNTEREXAMPLES : [])
+    setSelectedCounterexample(isDemoMode ? TOP_COUNTEREXAMPLES[0] : null)
+    setAnalysisError(null)
+    setAnalysisSource(isDemoMode ? "FIXTURE_PREVIEW" : "LOCAL_CEDAR_WASM")
+  }, [activeWorkspace?.id, isDemoMode])
 
   // Resolve active policies and scenarios
   const effectiveBaselineText = isDemoMode

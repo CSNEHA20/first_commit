@@ -1,0 +1,62 @@
+[
+  {
+    "id": "sc_dv_01",
+    "title": "Legal Counsel Full Access to Litigation Hold",
+    "principal": "DocVault::User::\"attorney_elena\"",
+    "action": "DocVault::Action::\"view\"",
+    "resource": "DocVault::Document::\"litigation_hold_901\"",
+    "context": {},
+    "expectedDecision": "ALLOW",
+    "tags": ["legal", "litigation", "baseline-allow"]
+  },
+  {
+    "id": "sc_dv_02",
+    "title": "Compliance Officer View Compliance Report",
+    "principal": "DocVault::User::\"compliance_marcus\"",
+    "action": "DocVault::Action::\"view\"",
+    "resource": "DocVault::Document::\"compliance_report_104\"",
+    "context": {},
+    "expectedDecision": "ALLOW",
+    "tags": ["compliance", "baseline-allow"]
+  },
+  {
+    "id": "sc_dv_03",
+    "title": "Compliance Officer Blocked from Restricted Litigation",
+    "principal": "DocVault::User::\"compliance_marcus\"",
+    "action": "DocVault::Action::\"view\"",
+    "resource": "DocVault::Document::\"litigation_hold_901\"",
+    "context": {},
+    "expectedDecision": "DENY",
+    "tags": ["compliance", "security-boundary"]
+  },
+  {
+    "id": "sc_dv_04",
+    "title": "Auditor View Audit Record",
+    "principal": "DocVault::User::\"auditor_dave\"",
+    "action": "DocVault::Action::\"view\"",
+    "resource": "DocVault::AuditRecord::\"system_access_log_q3\"",
+    "context": {},
+    "expectedDecision": "ALLOW",
+    "tags": ["audit", "baseline-allow"]
+  },
+  {
+    "id": "sc_dv_05",
+    "title": "Auditor Export Audit Record (Violation in Candidate)",
+    "principal": "DocVault::User::\"auditor_dave\"",
+    "action": "DocVault::Action::\"export\"",
+    "resource": "DocVault::AuditRecord::\"system_access_log_q3\"",
+    "context": {},
+    "expectedDecision": "DENY",
+    "tags": ["audit", "export-restriction", "contract-critical"]
+  },
+  {
+    "id": "sc_dv_06",
+    "title": "Auditor View Litigation Hold (Must Be Denied)",
+    "principal": "DocVault::User::\"auditor_dave\"",
+    "action": "DocVault::Action::\"view\"",
+    "resource": "DocVault::Document::\"litigation_hold_901\"",
+    "context": {},
+    "expectedDecision": "DENY",
+    "tags": ["audit", "boundary"]
+  }
+]

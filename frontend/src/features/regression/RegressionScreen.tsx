@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import {
   ShieldCheck,
   ShieldAlert,
@@ -23,20 +23,54 @@ import {
 } from "@/fixtures/acmepay"
 import { RegressionReport, Scenario, SecurityContract } from "@/types/authz"
 import { runRegression } from "@/lib/api"
+import { useWorkspace } from "@/store/workspaceStore"
 
 export const RegressionScreen: React.FC = () => {
+  const { isDemoMode, activeWorkspace, connectedData } = useWorkspace()
   const [selectedVersion, setSelectedVersion] = useState<"v12" | "v13">("v13")
   const [isRunning, setIsRunning] = useState(false)
   const [filterTag, setFilterTag] = useState<string>("all")
   const [regressionReport, setRegressionReport] = useState<RegressionReport | null>(null)
   const [executionDurationMs, setExecutionDurationMs] = useState<number>(12.4)
 
-  const handleRunSuite = async () => {
-    setIsRunning(true)
-    const startTime = performance.now()
+  // Reset report on workspace switch
+  useEffect(() => {
+    setRegressionReport(null)
+    setFilterTag("all")
+  }, [activeWorkspace?.id, isDemoMode])
+
+  const effectiveBaseline = isDemoMode
+    ? POLICY_V12_TEXT
+    : (connectedData?.baselinePolicyText || "")
+  const effectiveCandidate = isDemoMode
+    ? (selectedVersion === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT)
+    : (connectedData?.candidatePolicyText || "")
+  const effectiveBaselineLabel = isDemoMode
+    ? "v12 (PROD)"
+    : (connectedData?.baselineLabel || "Baseline")
+  const effectiveCandidateLabel = isDemoMode
+    ? (selectedVersion === "v12" ? "v12 (PROD)" : "v13 (Draft)")
+    : (connectedData?.candidateLabel || "Candidate")
+
+  const effectiveEntities = useMemo(() => {
+    if (isDemoMode) return ACMEPAY_ENTITIES
     try {
-      const candidatePolicy = selectedVersion === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT
-      const contractsPayload: SecurityContract[] = SECURITY_CONTRACTS.map((c) => ({
+      if (connectedData?.entitiesJson && connectedData.entitiesJson.trim()) {
+        const p = JSON.parse(connectedData.entitiesJson)
+        return Array.isArray(p) ? p : []
+      }
+    } catch {
+      // ignore
+    }
+    return []
+  }, [isDemoMode, connectedData?.entitiesJson])
+
+  const declaredScenarios: Scenario[] = isDemoMode
+    ? ALL_REGRESSION_SCENARIOS
+    : (connectedData?.scenarios || [])
+
+  const declaredContracts: SecurityContract[] = isDemoMode
+    ? SECURITY_CONTRACTS.map((c) => ({
         id: c.id,
         title: c.title,
         description: c.description,
@@ -46,19 +80,28 @@ export const RegressionScreen: React.FC = () => {
         isActive: true,
         expectedDecision: c.expectedDecision,
       }))
+    : (connectedData?.contracts || [])
 
+  const handleRunSuite = async () => {
+    if (!effectiveBaseline.trim() && !effectiveCandidate.trim()) return
+    if (!isDemoMode && declaredScenarios.length === 0) return
+
+    setIsRunning(true)
+    const startTime = performance.now()
+    try {
       const report = await runRegression({
-        baselinePolicyText: POLICY_V12_TEXT,
-        candidatePolicyText: candidatePolicy,
-        entities: ACMEPAY_ENTITIES,
+        baselinePolicyText: effectiveBaseline,
+        candidatePolicyText: effectiveCandidate,
+        entities: effectiveEntities,
+        schemaText: connectedData?.schemaText || undefined,
         suite: {
-          id: "suite_acmepay_core",
-          name: "AcmePay Core Authorization Suite",
-          scenarios: ALL_REGRESSION_SCENARIOS,
+          id: `suite_${activeWorkspace?.id || "default"}`,
+          name: isDemoMode ? "AcmePay Core Authorization Suite" : `${activeWorkspace?.name || "Connected"} Suite`,
+          scenarios: declaredScenarios,
         },
-        contracts: contractsPayload,
-        baselineLabel: "v12 (PROD)",
-        candidateLabel: selectedVersion === "v12" ? "v12 (PROD)" : "v13 (Draft)",
+        contracts: declaredContracts,
+        baselineLabel: effectiveBaselineLabel,
+        candidateLabel: effectiveCandidateLabel,
       })
       setRegressionReport(report)
       setExecutionDurationMs(Math.round((performance.now() - startTime) * 10) / 10)
@@ -69,7 +112,7 @@ export const RegressionScreen: React.FC = () => {
     }
   }
 
-  const scenarios: Scenario[] = ALL_REGRESSION_SCENARIOS.map((s) => {
+  const scenarios: Scenario[] = declaredScenarios.map((s) => {
     if (regressionReport) {
       const diffMatch = regressionReport.diffReport?.scenarioDiffs?.find(
         (d: any) => d.scenarioId === s.id
@@ -81,7 +124,7 @@ export const RegressionScreen: React.FC = () => {
         }
       }
     }
-    if (selectedVersion === "v12") {
+    if (isDemoMode && selectedVersion === "v12") {
       return {
         ...s,
         actualDecision: s.expectedDecision,
@@ -108,12 +151,12 @@ export const RegressionScreen: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-orange-400 font-mono">
-              Suite: AcmePay Security Invariants
+              Suite: {isDemoMode ? "AcmePay Security Invariants" : `${activeWorkspace?.name || "Connected"} Suite`}
             </span>
             <span className="text-muted-foreground/40">·</span>
             <StatusBadge
               status={failedCount > 0 ? "BLOCKED" : "PASS"}
-              label={failedCount > 0 ? `${failedCount} Violations` : "18/18 Pass"}
+              label={failedCount > 0 ? `${failedCount} Violations` : `${passedCount}/${scenarios.length} Pass`}
               size="xs"
             />
           </div>

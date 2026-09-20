@@ -1,0 +1,22 @@
+[
+  {
+    "id": "SEC-DOC-01",
+    "title": "Auditor Export Restriction",
+    "description": "External auditors must never be permitted to export any audit records or vault documents.",
+    "severity": "CRITICAL",
+    "isBlocking": true,
+    "scenarioIds": ["sc_dv_05"],
+    "isActive": true,
+    "expectedDecision": "DENY"
+  },
+  {
+    "id": "SEC-DOC-02",
+    "title": "Litigation Hold Isolation",
+    "description": "Restricted litigation documents must only be accessible to Legal Counsel.",
+    "severity": "HIGH",
+    "isBlocking": true,
+    "scenarioIds": ["sc_dv_03", "sc_dv_06"],
+    "isActive": true,
+    "expectedDecision": "DENY"
+  }
+]

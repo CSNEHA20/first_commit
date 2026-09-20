@@ -195,7 +195,8 @@ class InMemoryPolicyLabRepository(IPolicyLabRepository):
     # --- Connected Workspace (session-scoped) ---------------------------------
 
     def save_workspace(self, workspace: Dict[str, Any]) -> None:
-        self._workspaces[workspace["id"]] = workspace
+        ws_id = workspace.get("workspaceId") or workspace.get("id")
+        self._workspaces[ws_id] = workspace
 
     def get_workspace(self, workspace_id: str) -> Optional[Dict[str, Any]]:
         return self._workspaces.get(workspace_id)

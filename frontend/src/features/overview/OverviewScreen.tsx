@@ -22,12 +22,14 @@ import { ActiveTab } from "@/components/layout/AppSidebar"
 import { TOP_COUNTEREXAMPLES, BLAST_RADIUS_RESULT } from "@/fixtures/acmepay"
 import { Counterexample } from "@/types/authz"
 import { checkBackendHealth, getDeploymentHistory } from "@/lib/api"
+import { useWorkspace } from "@/store/workspaceStore"
 
 interface OverviewScreenProps {
   onNavigate: (tab: ActiveTab) => void
 }
 
 export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) => {
+  const { isDemoMode, activeWorkspace, connectedData } = useWorkspace()
   const [selectedEvidence, setSelectedEvidence] = useState<Counterexample | null>(null)
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false)
   const [backendHealth, setBackendHealth] = useState<{
@@ -106,7 +108,7 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
 
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-            ACMEPAY BENCHMARK SUITE (432 SCENARIOS)
+            {isDemoMode ? "ACMEPAY BENCHMARK SUITE (432 SCENARIOS)" : `${activeWorkspace?.name?.toUpperCase() || "CONNECTED"} (${connectedData?.scenarios.length || 0} SCENARIOS)`}
           </span>
         </div>
       </div>
@@ -115,11 +117,11 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.1] pb-3">
         <div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono mb-1">
-            <span>Baseline: <strong className="text-foreground">v12 (Production)</strong></span>
+            <span>Baseline: <strong className="text-foreground">{isDemoMode ? "v12 (Production)" : (connectedData?.baselineLabel || "Baseline")}</strong></span>
             <span className="text-muted-foreground/40">➔</span>
-            <span>Candidate: <strong className="text-red-400">v13 (Draft)</strong></span>
+            <span>Candidate: <strong className="text-red-400">{isDemoMode ? "v13 (Draft)" : (connectedData?.candidateLabel || "Candidate")}</strong></span>
             <span className="text-muted-foreground/40">·</span>
-            <span>Store: <code className="text-orange-400 font-semibold">ps-acmepay-prod</code></span>
+            <span>Store: <code className="text-orange-400 font-semibold">{isDemoMode ? "ps-acmepay-prod" : (activeWorkspace?.id || "connected")}</code></span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground flex items-center gap-2.5">
             <ShieldAlert className="h-6 w-6 text-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />

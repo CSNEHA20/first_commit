@@ -1,0 +1,55 @@
+[
+  {
+    "uid": { "type": "DocVault::Role", "id": "legal_counsel" },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": { "type": "DocVault::Role", "id": "compliance_officer" },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": { "type": "DocVault::Role", "id": "external_auditor" },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": { "type": "DocVault::User", "id": "attorney_elena" },
+    "attrs": {},
+    "parents": [{ "type": "DocVault::Role", "id": "legal_counsel" }]
+  },
+  {
+    "uid": { "type": "DocVault::User", "id": "compliance_marcus" },
+    "attrs": {},
+    "parents": [{ "type": "DocVault::Role", "id": "compliance_officer" }]
+  },
+  {
+    "uid": { "type": "DocVault::User", "id": "auditor_dave" },
+    "attrs": {},
+    "parents": [{ "type": "DocVault::Role", "id": "external_auditor" }]
+  },
+  {
+    "uid": { "type": "DocVault::Document", "id": "litigation_hold_901" },
+    "attrs": {
+      "classification": "RESTRICTED_LITIGATION",
+      "matterId": "MAT-2026-09"
+    },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DocVault::Document", "id": "compliance_report_104" },
+    "attrs": {
+      "classification": "INTERNAL_COMPLIANCE",
+      "matterId": "MAT-2026-01"
+    },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DocVault::AuditRecord", "id": "system_access_log_q3" },
+    "attrs": {
+      "classification": "AUDIT_LOG"
+    },
+    "parents": []
+  }
+]
