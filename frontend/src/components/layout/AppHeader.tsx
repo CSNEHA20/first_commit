@@ -55,7 +55,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   }
 
   return (
-    <header className="border-b border-white/[0.08] bg-[#090A0D]/90 backdrop-blur-md text-foreground sticky top-0 z-40 h-12 px-4 flex items-center justify-between gap-4 transition-colors select-none">
+    <header className="border-b border-border bg-card/80 backdrop-blur-md text-foreground sticky top-0 z-40 h-12 px-4 flex items-center justify-between gap-4 transition-colors select-none">
       {/* Left: Workbench Identifier & Project Context */}
       <div className="flex items-center gap-2 text-xs min-w-0 shrink">
         {/* Monogram / Logotype */}
@@ -74,19 +74,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           onClick={onSwitchWorkspace}
           disabled={!onSwitchWorkspace}
-          className="text-foreground font-medium hidden sm:inline text-xs hover:text-orange-400 transition-colors disabled:cursor-default truncate max-w-[140px] md:max-w-[200px]"
-          title={onSwitchWorkspace ? "Switch workspace" : undefined}
+          className="text-foreground font-medium hidden sm:inline text-xs hover:text-orange-500 transition-colors disabled:cursor-default truncate max-w-[140px] md:max-w-[200px]"
+          title={onSwitchWorkspace ? "Return to Console Hub / Switch workspace" : undefined}
         >
           {activeProject}
         </button>
 
         {/* Workspace Mode Badge */}
         {workspaceMode === "demo" ? (
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20 shrink-0">
+          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 shrink-0">
             DEMO
           </span>
         ) : (
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
+          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 shrink-0">
             CONNECTED
           </span>
         )}
@@ -95,7 +95,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Environment Tag */}
         <div className="hidden md:flex items-center gap-1.5 shrink-0">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#18B868]" />
             {environment}
           </span>
@@ -107,7 +107,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="hidden xl:flex items-center gap-2 text-muted-foreground text-[11px] font-mono shrink-0">
           <span>Baseline: <strong className="text-foreground">{activeVersion}</strong></span>
           <span className="text-muted-foreground/40">➔</span>
-          <span>Review: <strong className="text-red-400">{candidateVersion} (Draft)</strong></span>
+          <span>Review: <strong className="text-red-500">{candidateVersion} (Draft)</strong></span>
         </div>
       </div>
 
@@ -130,20 +130,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           variant="outline"
           size="sm"
           onClick={handleExportEvidence}
-          className="h-7 text-xs gap-1.5 border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.08] text-foreground hidden sm:flex shrink-0"
+          className="h-7 text-xs gap-1.5 border-border bg-card hover:bg-muted text-foreground hidden sm:flex shrink-0"
         >
-          <Download className="h-3 w-3 text-orange-400 shrink-0" />
+          <Download className="h-3 w-3 text-orange-500 shrink-0" />
           <span>Export</span>
         </Button>
 
-        <div className="h-3.5 w-[1px] bg-white/[0.1] shrink-0" />
+        <div className="h-3.5 w-[1px] bg-border shrink-0" />
 
         {/* Theme Toggle Button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
-          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-white/[0.05] shrink-0"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
           title={`Switch to ${theme === "light" ? "Dark" : "Light"} mode`}
         >
           {theme === "light" ? (

@@ -8,27 +8,81 @@ import { ChangeAnalysisScreen } from "@/features/changes/ChangeAnalysisScreen"
 import { AuditScreen } from "@/features/audit/AuditScreen"
 import { RegressionScreen } from "@/features/regression/RegressionScreen"
 import { DeploymentScreen } from "@/features/deployment/DeploymentScreen"
-import { useState } from "react"
+import { LandingPage } from "@/features/landing/LandingPage"
+import { HubConsole } from "@/features/hub/HubConsole"
 import { WorkspaceProvider } from "@/store/WorkspaceProvider"
-import { WorkspaceSelector } from "@/features/workspace/WorkspaceSelector"
-import { useWorkspace } from "@/store/workspaceStore"
+import { useWorkspace, DEMO_WORKSPACE } from "@/store/workspaceStore"
+import { useAppRouter } from "@/lib/router"
+import { DOCVAULT_WORKSPACE } from "@/fixtures/docvault"
+import { useEffect } from "react"
 
 // ─── Inner component: rendered inside WorkspaceProvider context ───────────────
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("overview")
+  const { route, navigate } = useAppRouter()
   const { activeWorkspace, isDemoMode, dispatch } = useWorkspace()
 
-  // Show workspace selector when no workspace is active
-  if (!activeWorkspace) {
-    return <WorkspaceSelector />
+  // Handle benchmark launch from landing page
+  const handleOpenBenchmark = (benchmark: 'acmepay' | 'docvault') => {
+    if (benchmark === 'acmepay') {
+      dispatch({ type: 'SELECT_WORKSPACE', id: DEMO_WORKSPACE.id })
+      navigate({ type: 'workspace', workspaceId: 'demo', tab: 'overview' })
+    } else {
+      dispatch({ type: 'CREATE_WORKSPACE', workspace: DOCVAULT_WORKSPACE })
+      dispatch({ type: 'SELECT_WORKSPACE', id: 'docvault-production' })
+      navigate({ type: 'workspace', workspaceId: 'docvault-production', tab: 'overview' })
+    }
+  }
+
+  // Handle opening workspace from Hub Console
+  const handleOpenWorkspace = (workspaceId: string) => {
+    navigate({ type: 'workspace', workspaceId, tab: 'overview' })
+  }
+
+  // Sync route changes with workspace selection if navigated directly via URL
+  useEffect(() => {
+    if (route.type === 'workspace') {
+      if (route.workspaceId === 'demo' && !isDemoMode) {
+        dispatch({ type: 'SELECT_WORKSPACE', id: DEMO_WORKSPACE.id })
+      } else if (route.workspaceId !== 'demo' && activeWorkspace?.id !== route.workspaceId) {
+        dispatch({ type: 'SELECT_WORKSPACE', id: route.workspaceId })
+      }
+    }
+  }, [route, isDemoMode, activeWorkspace?.id, dispatch])
+
+  // If on Landing Page route or no workspace active and hash is empty
+  if (route.type === 'landing') {
+    return (
+      <LandingPage
+        onEnterConsole={() => navigate({ type: 'console' })}
+        onOpenBenchmark={handleOpenBenchmark}
+      />
+    )
+  }
+
+  // If on Console Hub route or no active workspace
+  if (route.type === 'console' || (!activeWorkspace && route.type !== 'workspace')) {
+    return (
+      <HubConsole
+        onOpenWorkspace={handleOpenWorkspace}
+        onReturnToLanding={() => navigate({ type: 'landing' })}
+      />
+    )
+  }
+
+  // Active tab in workbench
+  const currentTab: ActiveTab = route.type === 'workspace' ? route.tab : 'overview'
+
+  const handleSelectTab = (tab: ActiveTab) => {
+    const wsId = isDemoMode ? 'demo' : (activeWorkspace?.id || 'connected')
+    navigate({ type: 'workspace', workspaceId: wsId, tab })
   }
 
   const renderActiveScreen = () => {
-    switch (activeTab) {
+    switch (currentTab) {
       case "overview":
-        return <OverviewScreen onNavigate={setActiveTab} />
+        return <OverviewScreen onNavigate={handleSelectTab} />
       case "policies":
-        return <PolicyEditorScreen onNavigate={setActiveTab} />
+        return <PolicyEditorScreen onNavigate={handleSelectTab} />
       case "simulator":
         return <SimulatorScreen />
       case "changes":
@@ -40,15 +94,15 @@ function AppContent() {
       case "deployments":
         return <DeploymentScreen />
       default:
-        return <OverviewScreen onNavigate={setActiveTab} />
+        return <OverviewScreen onNavigate={handleSelectTab} />
     }
   }
 
-  const projectName = isDemoMode ? "AcmePay / Authorization" : activeWorkspace.name
+  const projectName = isDemoMode ? "AcmePay / Authorization" : activeWorkspace?.name || "Connected Project"
 
   return (
-    <div className="min-h-screen bg-[#090A0D] text-foreground flex flex-col font-sans relative overflow-x-hidden cyber-canvas-grid">
-      {/* Multi-layer Atmospheric Cyber Auroras */}
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans relative overflow-x-hidden cyber-canvas-grid selection:bg-orange-500 selection:text-white">
+      {/* Atmospheric Cyber Auroras */}
       <div className="fixed top-0 inset-x-0 h-[520px] cyber-aurora-top pointer-events-none z-0" />
       <div className="fixed top-[-100px] right-[-100px] h-[650px] w-[650px] cyber-aurora-corner pointer-events-none z-0" />
       <div className="fixed top-[35%] left-[-150px] h-[550px] w-[550px] cyber-aurora-left pointer-events-none z-0" />
@@ -58,15 +112,15 @@ function AppContent() {
         activeProject={projectName}
         activeVersion={isDemoMode ? "v12 (PROD)" : undefined}
         workspaceMode={isDemoMode ? "demo" : "connected"}
-        onSwitchWorkspace={() => dispatch({ type: "SHOW_WORKSPACE_SELECTOR" })}
+        onSwitchWorkspace={() => navigate({ type: 'console' })}
       />
 
       {/* Main Split Workspace Layout */}
       <div className="flex-1 flex flex-col md:flex-row w-full min-w-0 relative z-10">
         {/* Workspace Sidebar */}
         <AppSidebar
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
+          activeTab={currentTab}
+          onSelectTab={handleSelectTab}
           failedContractsCount={isDemoMode ? 3 : 0}
           counterexamplesCount={isDemoMode ? 3 : 0}
         />

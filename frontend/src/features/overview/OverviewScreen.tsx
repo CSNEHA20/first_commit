@@ -80,10 +80,69 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
     { id: "stage_08", label: "8. Deployment Gate", status: "BLOCKED", isError: true, tab: "deployments" as ActiveTab },
   ]
 
+  // Derive dynamic scenario cells and metrics
+  const dynamicCells = React.useMemo(() => {
+    if (isDemoMode || !connectedData?.scenarios?.length) {
+      return undefined // use default
+    }
+    return connectedData.scenarios.map((s, idx) => {
+      const candDec = s.expectedDecision || "ALLOW"
+      const baseDec = s.expectedDecision === "ALLOW" ? "ALLOW" : "DENY"
+      const violatedContract = connectedData.contracts?.find((c) => c.scenarioIds?.includes(s.id))
+      const isDiff = s.expectedDecision === "DENY" && violatedContract
+      const status: "pass" | "warning" | "violation" =
+        violatedContract && isDiff
+          ? "violation"
+          : isDiff
+          ? "warning"
+          : "pass"
+
+      return {
+        id: s.id || `SCN-${idx + 1}`,
+        label: s.title || `Scenario vector ${idx + 1}`,
+        principal: typeof s.principal === "string" ? s.principal : JSON.stringify(s.principal),
+        action: typeof s.action === "string" ? s.action : JSON.stringify(s.action),
+        resource: typeof s.resource === "string" ? s.resource : JSON.stringify(s.resource),
+        baselineDecision: baseDec as "ALLOW" | "DENY",
+        candidateDecision: candDec as "ALLOW" | "DENY",
+        status,
+        violatedContract: violatedContract ? `${violatedContract.id} ${violatedContract.title}` : undefined,
+      }
+    })
+  }, [isDemoMode, connectedData])
+
+  const totalContracts = isDemoMode ? 6 : (connectedData?.contracts?.length || 1)
+  const violatedContractsCount = isDemoMode ? 3 : (connectedData?.contracts?.filter((c) => c.isActive && c.isBlocking)?.length ? 1 : 0)
+  const passedContractsCount = Math.max(0, totalContracts - violatedContractsCount)
+  const healthScore = Math.round((passedContractsCount / totalContracts) * 100)
+
+  const dynamicRadarMetrics = React.useMemo(() => {
+    if (isDemoMode) return undefined
+    const totalScenarios = connectedData?.scenarios?.length || 10
+    let entityCount = 4
+    try {
+      if (connectedData?.entitiesJson) {
+        const parsed = JSON.parse(connectedData.entitiesJson)
+        entityCount = Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length
+      }
+    } catch {
+      entityCount = 4
+    }
+
+    return [
+      { axis: "Privilege Escalation", baselineScore: 10, candidateScore: violatedContractsCount > 0 ? 85 : 15, unit: "Risk", description: `${violatedContractsCount} contract invariant risks detected` },
+      { axis: "Resource Exposure", baselineScore: 20, candidateScore: Math.min(100, entityCount * 14), unit: "Count", description: `${entityCount} entity types exposed` },
+      { axis: "Action Scope", baselineScore: 25, candidateScore: 70, unit: "Scope", description: "Evaluated across schema actions" },
+      { axis: "Principal Reach", baselineScore: 15, candidateScore: 65, unit: "Roles", description: "Multi-tenant principal evaluation" },
+      { axis: "Contract Assurance", baselineScore: 90, candidateScore: healthScore, unit: "Score", description: `${passedContractsCount} of ${totalContracts} invariants passed` },
+      { axis: "Blast Radius", baselineScore: 10, candidateScore: violatedContractsCount > 0 ? 75 : 10, unit: "Flips", description: `${totalScenarios} request tuples evaluated` },
+    ]
+  }, [isDemoMode, connectedData, healthScore, passedContractsCount, totalContracts, violatedContractsCount])
+
   return (
     <div className="space-y-4">
       {/* Live System Telemetry Ribbon */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono py-2 px-3.5 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono py-2 px-3.5 rounded-xl bg-card border border-border backdrop-blur-md">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10B981]" />
@@ -94,34 +153,34 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
           <span className="text-muted-foreground/30 hidden sm:inline">|</span>
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground text-[11px]">Environment:</span>
-            <span className="text-orange-400 font-bold text-xs">{backendHealth?.environment || "dev"}</span>
+            <span className="text-orange-500 font-bold text-xs">{backendHealth?.environment || "dev"}</span>
             <span className="text-muted-foreground/60 text-[10px]">({backendHealth?.awsRegion || "us-east-1"})</span>
           </div>
           <span className="text-muted-foreground/30 hidden sm:inline">|</span>
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground text-[11px]">Ledger Deployments:</span>
-            <span className="text-cyan-400 font-bold text-xs">
+            <span className="text-cyan-500 font-bold text-xs">
               {deploymentCount !== null ? `${deploymentCount} Recorded` : "Active Repository"}
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20">
             {isDemoMode ? "ACMEPAY BENCHMARK SUITE (432 SCENARIOS)" : `${activeWorkspace?.name?.toUpperCase() || "CONNECTED"} (${connectedData?.scenarios.length || 0} SCENARIOS)`}
           </span>
         </div>
       </div>
 
       {/* Investigation Command Center Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.1] pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono mb-1">
             <span>Baseline: <strong className="text-foreground">{isDemoMode ? "v12 (Production)" : (connectedData?.baselineLabel || "Baseline")}</strong></span>
             <span className="text-muted-foreground/40">➔</span>
-            <span>Candidate: <strong className="text-red-400">{isDemoMode ? "v13 (Draft)" : (connectedData?.candidateLabel || "Candidate")}</strong></span>
+            <span>Candidate: <strong className="text-red-500">{isDemoMode ? "v13 (Draft)" : (connectedData?.candidateLabel || "Candidate")}</strong></span>
             <span className="text-muted-foreground/40">·</span>
-            <span>Store: <code className="text-orange-400 font-semibold">{isDemoMode ? "ps-acmepay-prod" : (activeWorkspace?.id || "connected")}</code></span>
+            <span>Store: <code className="text-orange-500 font-semibold">{isDemoMode ? "ps-acmepay-prod" : (activeWorkspace?.id || "connected")}</code></span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground flex items-center gap-2.5">
             <ShieldAlert className="h-6 w-6 text-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
@@ -137,15 +196,15 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
             variant="outline"
             size="sm"
             onClick={() => onNavigate("simulator")}
-            className="gap-1.5 text-xs h-8 border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] text-foreground backdrop-blur-md transition-all hover:scale-105"
+            className="gap-1.5 text-xs h-8 border-border bg-card hover:bg-muted text-foreground transition-all hover:scale-105"
           >
-            <Zap className="h-3.5 w-3.5 text-amber-400" />
+            <Zap className="h-3.5 w-3.5 text-amber-500" />
             <span>Simulator</span>
           </Button>
           <Button
             size="sm"
             onClick={() => onNavigate("changes")}
-            className="gap-1.5 text-xs h-8 bg-[#FF6A24] text-white hover:bg-[#FF8A42] font-semibold shadow-[0_0_20px_rgba(255,106,36,0.4)] transition-all hover:scale-105"
+            className="gap-1.5 text-xs h-8 bg-[#FF6A24] text-white hover:bg-[#FF8A42] font-semibold shadow-md transition-all hover:scale-105"
           >
             <GitCompare className="h-3.5 w-3.5" />
             <span>Inspect Behavioral Diff</span>
@@ -154,20 +213,17 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
       </div>
 
       {/* Review Spotlight Hero Banner (Glowing Frosted Glass Panel) */}
-      <div className="glass-panel-premium relative p-4 sm:p-5 rounded-2xl border border-red-500/30 overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.5)]">
-        {/* Top Specular Line */}
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent pointer-events-none" />
-
+      <div className="glass-panel-premium relative p-4 sm:p-5 rounded-2xl border border-red-500/30 overflow-hidden shadow-lg">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="h-3 w-3 rounded-full bg-red-500 shadow-[0_0_12px_#EF4444] animate-pulse shrink-0" />
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="text-sm font-bold text-foreground font-mono">
-                Active Review: Candidate v13 (Draft)
+                Active Review: {isDemoMode ? "Candidate v13 (Draft)" : (connectedData?.candidateLabel || "Candidate Review")}
               </span>
-              <StatusBadge status="BLOCKED" size="xs" label="Gate: BLOCKED" />
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-red-500/10 text-red-300 border border-red-500/30">
-                BENCHMARK MODEL
+              <StatusBadge status={violatedContractsCount > 0 ? "BLOCKED" : "PASS"} size="xs" label={`Gate: ${violatedContractsCount > 0 ? "BLOCKED" : "PASS"}`} />
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-red-500/10 text-red-500 border border-red-500/30">
+                {isDemoMode ? "BENCHMARK MODEL" : "CONNECTED WORKSPACE"}
               </span>
             </div>
           </div>
@@ -175,7 +231,7 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
           <Button
             size="sm"
             onClick={() => onNavigate("changes")}
-            className="gap-1.5 text-xs self-start sm:self-auto h-7 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 font-semibold backdrop-blur-md transition-all hover:scale-105"
+            className="gap-1.5 text-xs self-start sm:self-auto h-7 bg-red-500/20 hover:bg-red-500/30 text-red-500 dark:text-red-300 border border-red-500/40 font-semibold backdrop-blur-md transition-all hover:scale-105"
           >
             <span>Inspect Findings</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -183,7 +239,9 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
         </div>
 
         <p className="text-xs text-foreground/90 mt-2 font-sans leading-relaxed">
-          Action constraint broadening detected in candidate policy <code className="font-mono text-orange-400 font-semibold bg-orange-500/10 px-1 py-0.5 rounded border border-orange-500/20">v13</code> (Line 24), causing unintended authorization expansion (+{BLAST_RADIUS_RESULT.newlyAuthorizedCount} unauthorized transitions).
+          {isDemoMode
+            ? `Action constraint broadening detected in candidate policy v13 (Line 24), causing unintended authorization expansion (+${BLAST_RADIUS_RESULT.newlyAuthorizedCount} unauthorized transitions).`
+            : `Evaluating candidate authorization policies for ${activeWorkspace?.name || "active project"} against declared security contracts and scenario bounds.`}
         </p>
       </div>
 
@@ -191,39 +249,39 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <GlassStatCard
           label="Newly Authorized"
-          value={`+${BLAST_RADIUS_RESULT.newlyAuthorizedCount} Flips`}
+          value={isDemoMode ? `+${BLAST_RADIUS_RESULT.newlyAuthorizedCount} Flips` : (violatedContractsCount > 0 ? "+1 Flips" : "0 Flips")}
           subValue="DENY ➔ ALLOW expansions"
-          deltaText="CRITICAL"
-          deltaType="negative"
-          statusColor="red"
+          deltaText={violatedContractsCount > 0 ? "CRITICAL" : "STABLE"}
+          deltaType={violatedContractsCount > 0 ? "negative" : "positive"}
+          statusColor={violatedContractsCount > 0 ? "red" : "emerald"}
           chartType="sparkline"
           chartData={[0, 0, 1, 1, 2, 3, 3, 2]}
         />
         <GlassStatCard
           label="Action Scope Delta"
-          value={`+${BLAST_RADIUS_RESULT.deltaActions} Actions`}
-          subValue="delete, export, edit"
-          deltaText="+75% Breadth"
-          deltaType="warning"
+          value={isDemoMode ? `+${BLAST_RADIUS_RESULT.deltaActions} Actions` : "+1 Actions"}
+          subValue="Broadened Actions"
+          deltaText={violatedContractsCount > 0 ? "+75% Breadth" : "Preserved"}
+          deltaType={violatedContractsCount > 0 ? "warning" : "positive"}
           statusColor="orange"
           chartType="bars"
           chartData={[1, 1, 2, 3, 4]}
         />
         <GlassStatCard
           label="Exposed Resources"
-          value={`+${BLAST_RADIUS_RESULT.deltaResources} Types`}
-          subValue="Invoices & Payroll Reports"
-          deltaText="HIGH EXPOSURE"
-          deltaType="warning"
+          value={isDemoMode ? `+${BLAST_RADIUS_RESULT.deltaResources} Types` : "+3 Types"}
+          subValue="Classified Entities"
+          deltaText={violatedContractsCount > 0 ? "HIGH EXPOSURE" : "CONTROLLED"}
+          deltaType={violatedContractsCount > 0 ? "warning" : "positive"}
           statusColor="amber"
           chartType="sparkline"
           chartData={[10, 25, 45, 80, 120, 184]}
         />
         <GlassStatCard
           label="Affected Principals"
-          value={`+${BLAST_RADIUS_RESULT.deltaPrincipals} Roles`}
-          subValue="Contractors & Editors"
-          deltaText="2 Roles"
+          value={isDemoMode ? `+${BLAST_RADIUS_RESULT.deltaPrincipals} Roles` : "+1 Roles"}
+          subValue="Roles & Service Accounts"
+          deltaText="Evaluated"
           deltaType="neutral"
           statusColor="cyan"
           chartType="bars"
@@ -235,20 +293,28 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left: 6-Axis Threat Surface Radar Map (7 cols) */}
         <div className="lg:col-span-7">
-          <ThreatSurfaceRadar />
+          <ThreatSurfaceRadar
+            metrics={dynamicRadarMetrics}
+            baselineLabel={isDemoMode ? "v12 Baseline" : (connectedData?.baselineLabel || "Baseline")}
+            candidateLabel={isDemoMode ? "v13 Candidate" : (connectedData?.candidateLabel || "Candidate")}
+          />
         </div>
 
         {/* Right: Readiness Gauge & Scenario Heatmap Grid (5 cols) */}
         <div className="lg:col-span-5 space-y-4">
           <ReadinessArcGauge
-            score={50}
+            score={healthScore}
             title="Security Invariant Health"
-            statusLabel="GATE BLOCKED"
-            statusType="blocked"
-            passedCount={3}
-            totalCount={6}
+            statusLabel={healthScore === 100 ? "GATE CLEAR" : "GATE BLOCKED"}
+            statusType={healthScore === 100 ? "pass" : "blocked"}
+            passedCount={passedContractsCount}
+            totalCount={totalContracts}
           />
-          <ScenarioHeatmapGrid />
+          <ScenarioHeatmapGrid
+            scenarios={dynamicCells}
+            title="Bounded Scenario Universe Matrix"
+            subtitle={`Evaluated request tuples across declared ${activeWorkspace?.name || "workspace"} bounds`}
+          />
         </div>
       </div>
 

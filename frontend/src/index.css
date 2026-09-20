@@ -4,54 +4,54 @@
 
 @layer base {
   :root {
-    /* Cybersecurity Workstation Light Mode Palette */
-    --background: 220 14% 96%;
-    --foreground: 220 24% 8%;
+    /* Claude-Style Warm Ivory / Stone Light Mode Palette */
+    --background: 45 20% 98%;          /* #FAF9F5 - Claude warm ivory parchment */
+    --foreground: 24 10% 12%;          /* #201E1D - Crisp warm charcoal */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 24% 8%;
+    --card: 0 0% 100%;                 /* #FFFFFF - Pure white panel */
+    --card-foreground: 24 10% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 24% 8%;
+    --popover-foreground: 24 10% 12%;
 
-    --primary: 20 100% 57%;            /* #FF6A24 */
+    --primary: 20 100% 52%;            /* #FF5A1F - Warm brand cyber terracotta orange */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 220 24% 8%;
+    --secondary: 40 15% 94%;           /* #F3F2EE - Warm stone secondary */
+    --secondary-foreground: 24 10% 15%;
 
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 40 14% 93%;               /* #F1F0EB */
+    --muted-foreground: 25 6% 45%;     /* #75716B - High readability stone gray */
 
-    --accent: 220 14% 90%;
-    --accent-foreground: 220 24% 8%;
+    --accent: 40 15% 91%;              /* #EAE8E2 */
+    --accent-foreground: 24 10% 12%;
 
-    --destructive: 0 74% 50%;
+    --destructive: 0 78% 54%;          /* #E53935 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 86%;
-    --input: 220 13% 86%;
-    --ring: 20 100% 57%;
+    --border: 40 12% 87%;              /* #E3E1DA - Crisp warm border */
+    --input: 40 12% 87%;
+    --ring: 20 100% 52%;
     --radius: 0.75rem;
 
-    --status-allow: 149 71% 30%;
-    --status-allow-foreground: 149 80% 96%;
-    --status-allow-border: 149 50% 70%;
+    --status-allow: 152 76% 36%;       /* #0D9652 */
+    --status-allow-foreground: 152 80% 98%;
+    --status-allow-border: 152 50% 68%;
 
-    --status-deny: 0 74% 50%;
-    --status-deny-foreground: 0 85% 97%;
-    --status-deny-border: 0 60% 75%;
+    --status-deny: 0 78% 54%;          /* #E53935 */
+    --status-deny-foreground: 0 85% 98%;
+    --status-deny-border: 0 60% 72%;
 
-    --status-warning: 39 90% 48%;
-    --status-warning-foreground: 48 96% 96%;
-    --status-warning-border: 38 80% 70%;
+    --status-warning: 38 92% 44%;      /* #D97706 */
+    --status-warning-foreground: 48 96% 98%;
+    --status-warning-border: 38 80% 68%;
 
-    --status-blocked: 0 74% 50%;
-    --status-blocked-foreground: 0 85% 97%;
-    --status-blocked-border: 0 60% 75%;
+    --status-blocked: 0 78% 54%;
+    --status-blocked-foreground: 0 85% 98%;
+    --status-blocked-border: 0 60% 72%;
 
     --surface-elevated: 0 0% 100%;
-    --surface-subtle: 220 14% 94%;
+    --surface-subtle: 45 18% 95%;
   }
 
   .dark {
@@ -169,6 +169,13 @@
 
 /* Premium Frosted Glassmorphism Card Style */
 .glass-card-premium {
+  background: #FFFFFF;
+  border: 1px solid rgba(227, 225, 218, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .glass-card-premium {
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.07) 0%,
@@ -181,11 +188,17 @@
     inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
     inset 0 0 16px 0 rgba(255, 106, 36, 0.03),
     0 10px 32px 0 rgba(0, 0, 0, 0.45);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card-premium:hover {
   transform: translateY(-2px);
+  border-color: rgba(255, 106, 36, 0.45);
+  box-shadow: 
+    0 8px 24px -4px rgba(255, 90, 31, 0.12),
+    0 4px 12px -2px rgba(0, 0, 0, 0.06);
+}
+
+.dark .glass-card-premium:hover {
   border-color: rgba(255, 106, 36, 0.45);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
@@ -196,6 +209,13 @@
 
 /* Elevated Frosted Glass Panel */
 .glass-panel-premium {
+  background: #FFFFFF;
+  border: 1px solid rgba(227, 225, 218, 0.95);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .glass-panel-premium {
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.09) 0%,
@@ -208,10 +228,16 @@
     inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
     inset 0 0 20px 0 rgba(255, 106, 36, 0.05),
     0 14px 44px 0 rgba(0, 0, 0, 0.55);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-panel-premium:hover {
+  border-color: rgba(255, 106, 36, 0.5);
+  box-shadow: 
+    0 12px 32px -4px rgba(255, 90, 31, 0.15),
+    0 6px 16px -2px rgba(0, 0, 0, 0.08);
+}
+
+.dark .glass-panel-premium:hover {
   border-color: rgba(255, 106, 36, 0.5);
   box-shadow: 
     inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
@@ -222,10 +248,15 @@
 
 /* Glass Input & Selector */
 .glass-input {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(227, 225, 218, 0.9) !important;
+  transition: all 0.2s ease;
+}
+
+.dark .glass-input {
   background: rgba(10, 14, 20, 0.6) !important;
   backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  transition: all 0.2s ease;
 }
 
 .glass-input:focus {

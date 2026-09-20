@@ -14,6 +14,8 @@ interface ThreatSurfaceRadarProps {
   className?: string
   title?: string
   subtitle?: string
+  baselineLabel?: string
+  candidateLabel?: string
 }
 
 const DEFAULT_METRICS: RadarMetric[] = [
@@ -29,7 +31,9 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
   metrics = DEFAULT_METRICS,
   className,
   title = "Authorization Threat Surface Map",
-  subtitle = "Dimensional comparison of baseline (v12) vs candidate (v13) security boundaries",
+  subtitle = "Dimensional comparison of baseline vs candidate security boundaries",
+  baselineLabel = "Baseline",
+  candidateLabel = "Candidate",
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
@@ -92,11 +96,11 @@ export const ThreatSurfaceRadar: React.FC<ThreatSurfaceRadarProps> = ({
         <div className="flex items-center gap-3 text-[10px] font-mono shrink-0">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20">
             <span className="h-1.5 w-3 rounded-sm bg-sky-400" />
-            <span className="text-sky-300">v12 Baseline</span>
+            <span className="text-sky-600 dark:text-sky-300">{baselineLabel}</span>
           </div>
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-500/15 border border-orange-500/30">
             <span className="h-1.5 w-3 rounded-sm bg-orange-500 shadow-[0_0_8px_#FF6A24]" />
-            <span className="text-orange-400 font-bold">v13 Candidate</span>
+            <span className="text-orange-500 font-bold">{candidateLabel}</span>
           </div>
         </div>
       </div>

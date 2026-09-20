@@ -104,7 +104,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   ]
 
   return (
-    <aside className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-white/[0.08] bg-[#0D1015]/90 backdrop-blur-xl flex md:flex-col justify-between p-3 overflow-x-auto md:overflow-y-auto select-none">
+    <aside className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-border bg-card/90 backdrop-blur-xl flex md:flex-col justify-between p-3 overflow-x-auto md:overflow-y-auto select-none">
       <div className="space-y-4 w-full">
         {/* Brand Header (Inspired by CY·FOCUS in Reference Images) */}
         <div className="hidden md:flex items-center justify-between px-1 py-1">
@@ -129,7 +129,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         <div className="hidden md:block">
           <button
             onClick={() => onSelectTab("tests")}
-            className="w-full h-8 px-3 rounded-lg bg-[#FF6A24] hover:bg-[#FF8A42] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,106,36,0.35)] transition-all duration-150 active:scale-[0.98]"
+            className="w-full h-8 px-3 rounded-lg bg-[#FF6A24] hover:bg-[#FF8A42] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer"
           >
             <Play className="h-3 w-3 fill-current" />
             <span>Run Verification</span>
@@ -140,7 +140,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         {/* Navigation Sections */}
         {sections.map((section, sIdx) => (
           <div key={sIdx} className="space-y-1">
-            <div className="hidden md:block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 font-mono">
+            <div className="hidden md:block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground font-mono">
               {section.title}
             </div>
 
@@ -153,16 +153,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => onSelectTab(item.id)}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all duration-150 ${
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all duration-150 cursor-pointer ${
                       isActive
-                        ? "bg-white/[0.08] text-white font-semibold border-l-2 border-[#FF6A24] pl-2 shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04] font-medium"
+                        ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold border-l-2 border-orange-500 pl-2 shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Icon
                         className={`h-4 w-4 shrink-0 transition-colors ${
-                          isActive ? "text-[#FF6A24]" : "text-muted-foreground"
+                          isActive ? "text-orange-500" : "text-muted-foreground"
                         }`}
                       />
                       <span className="truncate whitespace-nowrap">{item.label}</span>
@@ -185,9 +185,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       </div>
 
       {/* Sidebar Footer: Contextual Gate Card & Operator Profile */}
-      <div className="hidden md:block pt-3 border-t border-white/[0.07] mt-3 space-y-2.5">
+      <div className="hidden md:block pt-3 border-t border-border mt-3 space-y-2.5">
         {/* Active Review Widget */}
-        <div className="p-2.5 rounded-lg bg-[#13171E]/90 border border-white/[0.08] space-y-1.5 text-xs shadow-inner">
+        <div className="p-2.5 rounded-lg bg-card border border-border space-y-1.5 text-xs shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground font-mono">
               Active Review
@@ -197,19 +197,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
           <div className="flex items-center justify-between text-[11px]">
             <span className="font-mono font-semibold text-foreground">v13 (Candidate)</span>
-            <span className="text-red-400 font-bold font-mono">BLOCKED</span>
+            <span className="text-red-500 font-bold font-mono">BLOCKED</span>
           </div>
 
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <AlertTriangle className="h-3 w-3 text-red-400 shrink-0" />
+            <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />
             <span>3 Invariant Violations</span>
           </div>
         </div>
 
-        {/* Operator Profile (Inspired by Ref Images bottom card) */}
-        <div className="p-2 rounded-lg bg-black/30 border border-white/[0.05] flex items-center justify-between text-xs">
+        {/* Operator Profile */}
+        <div className="p-2 rounded-lg bg-muted/40 border border-border flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="h-6 w-6 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center font-mono text-[10px] text-orange-400 font-bold shrink-0">
+            <div className="h-6 w-6 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center font-mono text-[10px] text-orange-500 font-bold shrink-0">
               VS
             </div>
             <div className="truncate">

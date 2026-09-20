@@ -154,54 +154,125 @@ export const UserSessionBadge: React.FC = () => {
 
       {/* Cognito JWT Modal */}
       {showCognitoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="glass-panel-premium w-full max-w-md p-5 rounded-2xl border border-white/20 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="glass-panel-premium w-full max-w-lg p-5 rounded-2xl border border-border shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-cyan-400" />
-                <h3 className="text-sm font-bold text-foreground">
-                  Amazon Cognito Authentication
-                </h3>
+                <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
+                  <Shield className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Amazon Cognito Authentication & Token Guide
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    AWS Verified Permissions JWT Identity Validation
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setShowCognitoModal(false)}
-                className="text-muted-foreground hover:text-foreground text-xs"
+                className="text-muted-foreground hover:text-foreground text-xs p-1 rounded-md hover:bg-muted"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-2 text-xs text-muted-foreground">
-              <p>
-                Currently authenticated via:{" "}
-                <strong className={isCognito ? "text-cyan-300" : "text-amber-300"}>
-                  {isCognito ? "Amazon Cognito User Pool ID Token" : "Local Development Synthetic Token"}
-                </strong>
-              </p>
-              <p className="text-[11px]">
-                To test real Cognito verification with AWS API Gateway HTTP API, paste a genuine Cognito ID or Access token below.
-              </p>
+              <div className="p-3 rounded-xl bg-card border border-border flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase font-mono block">Current Auth Mode</span>
+                  <strong className={isCognito ? "text-cyan-500 font-bold" : "text-amber-500 font-bold"}>
+                    {isCognito ? "Amazon Cognito User Pool ID Token" : "Local Development Synthetic Token"}
+                  </strong>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-foreground">
+                  Role: {user.role}
+                </span>
+              </div>
             </div>
 
-            <div className="space-y-2">
+            {/* Step-by-Step Guide Accordion / Box */}
+            <div className="p-3.5 rounded-xl bg-card border border-border space-y-2 text-xs text-muted-foreground font-sans">
+              <span className="text-xs font-bold text-foreground block font-mono">
+                📖 How & Where to Retrieve an AWS Cognito Token
+              </span>
+              <ol className="list-decimal list-inside space-y-1.5 text-[11px] leading-relaxed">
+                <li>
+                  <strong>In AWS Console:</strong> Navigate to <strong>Amazon Cognito</strong> &gt; <strong>User Pools</strong> &gt; Select your User Pool.
+                </li>
+                <li>
+                  Under <strong>App integration</strong>, find your <strong>App client ID</strong> and <strong>Cognito domain</strong>.
+                </li>
+                <li>
+                  <strong>Using AWS CLI:</strong> Execute the command below to authenticate and receive an ID Token:
+                  <pre className="mt-1 p-2 rounded bg-black/80 text-cyan-300 font-mono text-[10px] overflow-x-auto border border-white/10">
+{`aws cognito-idp initiate-auth \\
+  --auth-flow USER_PASSWORD_AUTH \\
+  --client-id <CLIENT_ID> \\
+  --auth-parameters USERNAME=<EMAIL>,PASSWORD=<PASSWORD> \\
+  --query "AuthenticationResult.IdToken" --output text`}
+                  </pre>
+                </li>
+              </ol>
+            </div>
+
+            {/* Quick Test Token Injector */}
+            <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-2 text-xs">
+              <span className="text-[11px] font-semibold text-foreground block font-mono">
+                Quick 1-Click Test Personas (Synthetic Cognito Claims)
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { label: "Admin Claims", role: "admin", email: "admin@policylab.internal" },
+                  { label: "Approver Claims", role: "approver", email: "approver@policylab.internal" },
+                  { label: "Author Claims", role: "engineer", email: "author@policylab.internal" },
+                ].map((persona) => (
+                  <button
+                    key={persona.role}
+                    onClick={() => {
+                      const payload = {
+                        sub: `cognito-test-${persona.role}`,
+                        "cognito:username": persona.label,
+                        email: persona.email,
+                        "custom:role": persona.role,
+                        "cognito:groups": [persona.role],
+                        iss: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_TestPool",
+                      }
+                      // create simulated base64 jwt
+                      const simulatedJwt = `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify(payload)).replace(/=/g, '')}.simulated_signature`
+                      setJwtInput(simulatedJwt)
+                    }}
+                    className="text-[11px] px-2.5 py-1 rounded-md border border-border bg-card hover:bg-muted text-foreground transition-all"
+                  >
+                    + {persona.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground font-mono">
+                Paste Cognito ID Token (JWT)
+              </label>
               <textarea
                 value={jwtInput}
                 onChange={(e) => setJwtInput(e.target.value)}
                 placeholder="eyJhbGciOiJSUzI1NiIsImtpZCI6..."
-                className="w-full h-24 p-2.5 rounded-lg bg-black/60 border border-white/15 text-[11px] font-mono text-foreground focus:ring-1 focus:ring-cyan-500 focus:outline-none resize-none"
+                className="w-full h-20 p-2.5 rounded-lg bg-card border border-border text-[11px] font-mono text-foreground focus:ring-1 focus:ring-cyan-500 focus:outline-none resize-none"
               />
               {jwtError && (
-                <p className="text-red-400 text-xs font-mono">{jwtError}</p>
+                <p className="text-red-500 text-xs font-mono">{jwtError}</p>
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
               {isCognito ? (
                 <Button
                   onClick={handleDisconnect}
                   variant="outline"
                   size="sm"
-                  className="text-xs h-8 border-red-500/40 text-red-300 hover:bg-red-950/30 gap-1.5"
+                  className="text-xs h-8 border-red-500/40 text-red-500 hover:bg-red-500/10 gap-1.5"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Reset to Dev Mode</span>
@@ -214,7 +285,7 @@ export const UserSessionBadge: React.FC = () => {
                   onClick={() => setShowCognitoModal(false)}
                   variant="ghost"
                   size="sm"
-                  className="text-xs h-8"
+                  className="text-xs h-8 text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </Button>

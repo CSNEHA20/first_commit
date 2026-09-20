@@ -39,11 +39,15 @@ import {
   AuditWorkflowReport,
   SecurityContract,
   AsyncAuditStatusResponse,
+  ScenarioSuite,
 } from "@/types/authz"
+
+import { useWorkspace } from "@/store/workspaceStore"
 
 type AuditDataSource = "LIVE_AGENT" | "STEP_FUNCTIONS" | "FIXTURE_PREVIEW"
 
 export const AuditScreen: React.FC = () => {
+  const { isDemoMode, activeWorkspace, connectedData } = useWorkspace()
   const [candidateVersion, setCandidateVersion] = useState<"v13_draft" | "v13_fixed">("v13_draft")
   const [dataSource, setDataSource] = useState<AuditDataSource>("FIXTURE_PREVIEW")
   const [isRunningAudit, setIsRunningAudit] = useState(false)
@@ -59,8 +63,62 @@ export const AuditScreen: React.FC = () => {
   const [auditError, setAuditError] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
 
-  const activeCandidatePolicyText =
-    candidateVersion === "v13_draft" ? POLICY_V13_TEXT : POLICY_V13_FIXED_TEXT
+  const activeCandidatePolicyText = isDemoMode
+    ? (candidateVersion === "v13_draft" ? POLICY_V13_TEXT : POLICY_V13_FIXED_TEXT)
+    : (connectedData?.candidatePolicyText || "")
+
+  const activeBaselinePolicyText = isDemoMode
+    ? POLICY_V12_TEXT
+    : (connectedData?.baselinePolicyText || "")
+
+  const activeSchemaText = isDemoMode
+    ? ACMEPAY_SCHEMA
+    : (connectedData?.schemaText || "")
+
+  const activeEntities = React.useMemo(() => {
+    if (isDemoMode) return ACMEPAY_ENTITIES
+    try {
+      if (connectedData?.entitiesJson) {
+        const parsed = JSON.parse(connectedData.entitiesJson)
+        return Array.isArray(parsed) ? parsed : [parsed]
+      }
+    } catch {
+      // fallback
+    }
+    return []
+  }, [isDemoMode, connectedData?.entitiesJson])
+
+  const activeSuite: ScenarioSuite = isDemoMode
+    ? ACMEPAY_SCENARIO_SUITE
+    : {
+        id: activeWorkspace?.id || "connected-suite",
+        name: `${activeWorkspace?.name || "Connected"} Authorization Suite`,
+        description: "Evaluated scenarios across active workspace bounds",
+        version: "1.0",
+        scenarios: connectedData?.scenarios || [],
+      }
+
+  const activeContracts: SecurityContract[] = isDemoMode
+    ? SECURITY_CONTRACTS.map((c) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        severity: c.severity,
+        isBlocking: true,
+        scenarioIds: c.scenarioIds,
+        isActive: true,
+        expectedDecision: c.expectedDecision,
+      }))
+    : (connectedData?.contracts || []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        severity: c.severity || "CRITICAL",
+        isBlocking: c.isBlocking !== false,
+        scenarioIds: c.scenarioIds || [],
+        isActive: c.isActive !== false,
+        expectedDecision: c.expectedDecision,
+      }))
 
   const handleRunStrandsAudit = async () => {
     setIsRunningAudit(true)
@@ -72,32 +130,22 @@ export const AuditScreen: React.FC = () => {
       setProgress(35)
       setAuditStageText("Step 2 & 3: Strands orchestrating bounded scenario diff matrix and counterexample extraction...")
 
-      const contractsPayload: SecurityContract[] = SECURITY_CONTRACTS.map((c) => ({
-        id: c.id,
-        title: c.title,
-        description: c.description,
-        severity: c.severity,
-        isBlocking: true,
-        scenarioIds: c.scenarioIds,
-        isActive: true,
-        expectedDecision: c.expectedDecision,
-      }))
-
       setProgress(60)
       setAuditStageText("Step 4: Executing formal security contracts and evaluating deployment gate...")
 
       const report = await runAgentAudit({
-        baselinePolicyText: POLICY_V12_TEXT,
+        baselinePolicyText: activeBaselinePolicyText,
         candidatePolicyText: activeCandidatePolicyText,
-        suite: ACMEPAY_SCENARIO_SUITE,
-        contracts: contractsPayload,
-        schemaText: ACMEPAY_SCHEMA,
-        entities: ACMEPAY_ENTITIES,
-        baselineLabel: "AcmePay Baseline (v12)",
-        candidateLabel:
-          candidateVersion === "v13_draft"
-            ? "AcmePay Candidate (v13 Draft)"
-            : "AcmePay Candidate (v13 Fixed)",
+        suite: activeSuite,
+        contracts: activeContracts,
+        schemaText: activeSchemaText,
+        entities: activeEntities,
+        baselineLabel: isDemoMode ? "AcmePay Baseline (v12)" : (connectedData?.baselineLabel || "Baseline"),
+        candidateLabel: isDemoMode
+          ? (candidateVersion === "v13_draft"
+              ? "AcmePay Candidate (v13 Draft)"
+              : "AcmePay Candidate (v13 Fixed)")
+          : (connectedData?.candidateLabel || "Candidate"),
         runAiExplanation: true,
       })
 

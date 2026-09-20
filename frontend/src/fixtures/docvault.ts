@@ -300,3 +300,26 @@ export const DOCVAULT_CONTRACTS: SecurityContract[] = [
     expectedDecision: "DENY"
   }
 ]
+
+export const DOCVAULT_WORKSPACE = {
+  id: "docvault-production",
+  mode: "connected" as const,
+  name: "DocVault Document Management",
+  createdAt: "2026-09-19T12:00:00Z",
+  connected: {
+    baselinePolicyText: DOCVAULT_BASELINE_POLICY,
+    baselineLabel: "DocVault v1.0 (Production)",
+    candidatePolicyText: DOCVAULT_CANDIDATE_POLICY,
+    candidateLabel: "DocVault v1.1 (Draft)",
+    schemaText: DOCVAULT_SCHEMA,
+    entitiesJson: JSON.stringify(DOCVAULT_ENTITIES, null, 2),
+    scenarios: DOCVAULT_SCENARIOS,
+    contracts: DOCVAULT_CONTRACTS,
+    importSource: "LOCAL_CLI" as const,
+    sourceRef: "fixtures/docvault",
+    analysisStale: false,
+    approvalStale: false,
+    lastAnalyzedAt: null,
+    lastAnalysisSource: null,
+  },
+}
