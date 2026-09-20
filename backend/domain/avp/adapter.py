@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import hashlib
 import os
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..models.deployment import (
     AVPReadinessResponse,
@@ -232,17 +232,37 @@ class Boto3AVPAdapter(IAVPAdapter):
                 },
             )
             policy_id = res.get("policyId", f"pol_{uuid.uuid4().hex[:6]}")
-            proof = f"avp-aws-proof-{policy_id}"
+
+            # Remote State Verification: Read back policy to ensure creation is confirmed in AVP
+            verified_remote = False
+            try:
+                get_res = client.get_policy(policyStoreId=store_id, policyId=policy_id)
+                stmt = get_res.get("definition", {}).get("static", {}).get("statement", "")
+                if stmt:
+                    verified_remote = True
+            except Exception as v_ex:
+                import logging
+                logging.getLogger("policylab.avp").warning(
+                    "AVP get_policy remote verification encountered error: %s", v_ex
+                )
+
+            proof = f"avp-aws-verified-{policy_id}" if verified_remote else f"avp-aws-proof-{policy_id}"
+            status = DeploymentStatus.SYNCHRONIZED if verified_remote else DeploymentStatus.SUBMITTED
+            msg = (
+                f"Synchronized and remotely verified policy in Amazon Verified Permissions store '{store_id}' (Policy ID: '{policy_id}')."
+                if verified_remote
+                else f"Submitted policy to Amazon Verified Permissions store '{store_id}' (Policy ID: '{policy_id}', verification read pending)."
+            )
 
             return DeploymentSubmitResponse(
                 deploymentId=f"dep_{uuid.uuid4().hex[:8]}",
-                status=DeploymentStatus.SYNCHRONIZED,
+                status=status,
                 targetStoreId=store_id,
                 policyHash=policy_hash,
                 deployedBy=approved_by,
                 deployedAt=now,
                 verificationProof=proof,
-                message=f"Synchronized policy to Amazon Verified Permissions store '{store_id}' as policy ID '{policy_id}'.",
+                message=msg,
             )
         except Exception as ex:
             now = datetime.now(timezone.utc).isoformat()
@@ -264,7 +284,7 @@ class DeploymentService:
     and submission to Amazon Verified Permissions.
     """
 
-    def __init__(self, avp_adapter: Optional[IAVPAdapter] = None):
+    def __init__(self, avp_adapter: Optional[IAVPAdapter] = None, repository: Optional[Any] = None):
         if avp_adapter:
             self.avp_adapter = avp_adapter
         elif os.environ.get("AWS_AVP_ENABLED") == "true":
@@ -272,6 +292,7 @@ class DeploymentService:
         else:
             self.avp_adapter = DeterministicFakeAVPAdapter()
 
+        self.repository = repository
         self._prepared_deployments: Dict[str, Dict] = {}
         self._approvals: Dict[str, HumanApprovalResponse] = {}
         self._deployment_history: List[DeploymentRecord] = [
@@ -446,8 +467,23 @@ class DeploymentService:
                 verificationProof=submit_res.verificationProof or "avp-sync-proof",
             )
             self._deployment_history.insert(0, record)
+            if self.repository:
+                try:
+                    self.repository.save_deployment(record)
+                except Exception as ddb_ex:
+                    import logging
+                    logging.getLogger("policylab.avp").warning(
+                        "Failed to persist deployment record to repository: %s", ddb_ex
+                    )
 
         return submit_res
 
     def get_history(self) -> List[DeploymentRecord]:
+        if self.repository:
+            try:
+                repo_records = self.repository.list_deployments()
+                if repo_records:
+                    return repo_records
+            except Exception:
+                pass
         return self._deployment_history

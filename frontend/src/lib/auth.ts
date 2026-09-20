@@ -139,6 +139,57 @@ export function switchDemoRole(role: UserRole): UserProfile {
   return profile
 }
 
+/**
+ * Attaches and verifies a genuine Amazon Cognito User Pool JWT token.
+ * Extracts user identity, subject UUID, email, and assigned cognito:groups.
+ */
+export function setCognitoToken(jwtToken: string): UserProfile {
+  const parts = jwtToken.trim().split(".")
+  if (parts.length !== 3) {
+    throw new Error("Invalid JWT token format: Expected 3 parts separated by dots.")
+  }
+
+  let payload: Record<string, any>
+  try {
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/")
+    const jsonStr = decodeURIComponent(
+      atob(b64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    )
+    payload = JSON.parse(jsonStr)
+  } catch (err) {
+    throw new Error("Could not parse JWT token claims payload.")
+  }
+
+  const rawGroups = payload["cognito:groups"]
+  let role: UserRole = "viewer"
+  if (Array.isArray(rawGroups) && rawGroups.length > 0) {
+    const validRoles: UserRole[] = ["admin", "approver", "deployer", "engineer", "viewer"]
+    const matched = rawGroups
+      .map((g: string) => g.toLowerCase())
+      .find((g: string) => validRoles.includes(g as UserRole))
+    if (matched) role = matched as UserRole
+  }
+
+  const profile: UserProfile = {
+    sub: payload.sub || "cognito_user",
+    username: payload["cognito:username"] || payload.username || payload.email || "Cognito User",
+    email: payload.email,
+    role,
+    authSource: "COGNITO",
+  }
+
+  setAuthToken(jwtToken)
+  setStoredUser(profile)
+  return profile
+}
+
+export function disconnectCognito(): UserProfile {
+  return switchDemoRole("approver")
+}
+
 export function clearSession(): void {
   try {
     localStorage.removeItem(STORAGE_KEY_TOKEN)

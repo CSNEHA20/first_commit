@@ -432,3 +432,69 @@ export async function getDeploymentHistory(): Promise<import("../types/authz").D
   return res.json()
 }
 
+export async function runAgentAudit(
+  payload: import("../types/authz").AgentAuditRequest
+): Promise<import("../types/authz").AuditWorkflowReport> {
+  const res = await fetchWithAuth("/audits/agent-run", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Strands Agent audit orchestration failed")
+  }
+  return res.json()
+}
+
+export async function exportAuditReport(
+  report: import("../types/authz").AuditWorkflowReport,
+  format: "markdown" | "json" = "markdown"
+): Promise<{ exportId: string; format: string; content: string; exportedAt: string }> {
+  const res = await fetchWithAuth("/audits/export", {
+    method: "POST",
+    body: JSON.stringify({ report, format }),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Audit export failed")
+  }
+  return res.json()
+}
+
+export async function startAsyncAudit(
+  payload: import("../types/authz").AgentAuditRequest
+): Promise<import("../types/authz").AsyncAuditStartResponse> {
+  const res = await fetchWithAuth("/audits/async-run", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Step Functions async audit initiation failed")
+  }
+  return res.json()
+}
+
+export async function getAsyncAuditStatus(
+  executionArn: string
+): Promise<import("../types/authz").AsyncAuditStatusResponse> {
+  const encodedArn = encodeURIComponent(executionArn)
+  const res = await fetchWithAuth(`/audits/executions/${encodedArn}`)
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Failed to query Step Functions execution status")
+  }
+  return res.json()
+}
+
+export async function getAuditReport(
+  auditId: string
+): Promise<import("../types/authz").AuditWorkflowReport> {
+  const res = await fetchWithAuth(`/audits/${encodeURIComponent(auditId)}`)
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(errorBody.detail || "Failed to fetch audit report")
+  }
+  return res.json()
+}
+

@@ -263,6 +263,28 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
               </div>
             ) : explanation ? (
               <div className="glass-card-premium p-3.5 rounded-xl space-y-2.5 text-xs">
+                {/* Truthful Provider Attribution Badge */}
+                <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-1.5">
+                    {explanation.provider?.startsWith("bedrock") ? (
+                      <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[9px] font-mono gap-1">
+                        <Sparkles className="h-2.5 w-2.5 text-purple-400" />
+                        Amazon Bedrock ({explanation.provider.replace("bedrock:", "")})
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-mono gap-1">
+                        <ShieldCheck className="h-2.5 w-2.5 text-amber-400" />
+                        Deterministic Template Provider
+                      </Badge>
+                    )}
+                  </div>
+                  {explanation.isFallback && (
+                    <span className="text-[9px] text-amber-400 font-mono">
+                      (Fallback Active)
+                    </span>
+                  )}
+                </div>
+
                 <div>
                   <span className="font-semibold text-foreground block text-[11px] mb-0.5">
                     Summary:

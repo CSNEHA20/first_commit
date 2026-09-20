@@ -77,7 +77,11 @@ from .domain.cedar.input_validation import (
 )
 from .domain.cedar.matrix import AccessMatrixReport, AccessMatrixService
 from .domain.cedar.whatif import WhatIfSimulationResponse, WhatIfSimulatorService
-from .domain.persistence.repository import InMemoryPolicyLabRepository
+from .domain.persistence.repository import IPolicyLabRepository, InMemoryPolicyLabRepository
+from .domain.persistence.aws_repository import (
+    DynamoDBPolicyLabRepository,
+    S3ArtifactRepository,
+)
 from .domain.persistence.timeline import PolicyVersionTimelineEntry, VersionTimelineService
 from .domain.ai.explanation import AIExplanationService
 from .domain.ai.generator import (
@@ -114,8 +118,9 @@ app.add_middleware(
 @app.middleware("http")
 async def correlation_middleware(request: Request, call_next):
     cid = request.headers.get("X-Correlation-ID")
-    set_correlation_id(cid)
+    actual_cid = set_correlation_id(cid)
     response = await call_next(request)
+    response.headers["X-Correlation-ID"] = actual_cid
     return response
 
 
@@ -137,14 +142,25 @@ regression_engine = RegressionEngine(
 )
 cedar_adapter = LocalCedarAdapter()
 explanation_service = AIExplanationService()
-deployment_service = DeploymentService()
+
+if os.environ.get("AWS_DYNAMODB_ENABLED") == "true":
+    repository: IPolicyLabRepository = DynamoDBPolicyLabRepository(
+        table_name=aws_config.dynamodb_table, region=aws_config.region
+    )
+else:
+    repository: IPolicyLabRepository = InMemoryPolicyLabRepository()
+
+artifact_repository = S3ArtifactRepository(
+    bucket_name=aws_config.artifact_bucket, region=aws_config.region
+)
+
+deployment_service = DeploymentService(repository=repository)
 
 # Phase 7 Newly Integrated Domain Services
 input_validator = CedarInputValidationService(policy_validator=validation_service)
 enforced_pipeline = EnforcedEvaluationPipeline(validator=input_validator, evaluator=evaluation_service)
 matrix_service = AccessMatrixService(evaluation_service=evaluation_service)
 whatif_service = WhatIfSimulatorService(regression_engine=regression_engine)
-repository = InMemoryPolicyLabRepository()
 timeline_service = VersionTimelineService(repository=repository)
 fixture_entity_provider = FixtureEntityProvider()
 policy_generator = PolicyGeneratorService(validator=validation_service)
@@ -575,7 +591,7 @@ def run_agent_audit(
     Deterministic Cedar tools own authorization results.
     """
     try:
-        return audit_agent.execute_audit(
+        report = audit_agent.execute_audit(
             baseline_policy_text=request.baselinePolicyText,
             candidate_policy_text=request.candidatePolicyText,
             suite=request.suite,
@@ -586,10 +602,152 @@ def run_agent_audit(
             candidate_label=request.candidateLabel,
             run_ai_explanation=request.runAiExplanation,
         )
+        try:
+            repository.save_audit_run({
+                "id": report.auditRunId,
+                "timestamp": report.timestamp,
+                "status": report.status.value if hasattr(report.status, "value") else str(report.status),
+                "gateDecision": report.gateDecision.value if hasattr(report.gateDecision, "value") else str(report.gateDecision),
+                "summary": report.summary,
+                "data": report.model_dump(),
+            })
+        except Exception as save_err:
+            logger.warning(f"Could not persist audit run to repository: {save_err}")
+        return report
     except Exception as ex:
         raise HTTPException(
             status_code=500,
             detail=f"Audit agent orchestration failed: {str(ex)}",
+        )
+
+
+@app.get("/audits/{audit_id}")
+def get_audit_report(
+    audit_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    """
+    Retrieves a previously persisted audit run report by ID.
+    """
+    rec = repository.get_audit_run(audit_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail=f"Audit run '{audit_id}' not found.")
+    return rec.get("data", rec)
+
+
+class AsyncAuditStartResponse(BaseModel):
+    executionArn: str
+    startDate: str
+    status: str
+    stateMachineArn: str
+    message: str
+
+
+class AsyncAuditStatusResponse(BaseModel):
+    executionArn: str
+    status: str
+    startDate: Optional[str] = None
+    stopDate: Optional[str] = None
+    output: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    cause: Optional[str] = None
+
+
+@app.post("/audits/async-run", response_model=AsyncAuditStartResponse)
+def run_async_audit(
+    request: AgentAuditRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    """
+    Initiates an asynchronous verification workflow via AWS Step Functions.
+    Requires AUDIT_STATE_MACHINE_ARN configured and active AWS credentials with states:StartExecution.
+    If unconfigured or inaccessible, returns an explicit error explaining the requirement
+    and directing to the synchronous Strands audit endpoint /audits/agent-run.
+    """
+    sfn_arn = os.environ.get("AUDIT_STATE_MACHINE_ARN") or aws_config.state_machine_arn
+    if not sfn_arn:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "AWS Step Functions state machine ARN is not configured. "
+                "Set AUDIT_STATE_MACHINE_ARN in your environment to the deployed "
+                "PolicyAuditWorkflow state machine ARN. "
+                "For local deterministic execution or interactive demonstration, "
+                "use the Strands orchestration endpoint: POST /audits/agent-run."
+            ),
+        )
+
+    try:
+        import json
+        import uuid
+        import boto3
+        sfn_client = boto3.client("stepfunctions", region_name=aws_config.region)
+        payload = {
+            "candidatePolicyText": request.candidatePolicyText,
+            "baselinePolicyText": request.baselinePolicyText,
+            "schemaText": request.schemaText,
+            "suite": request.suite.model_dump(),
+            "contracts": [c.model_dump() for c in request.contracts] if request.contracts else [],
+            "entities": request.entities or [],
+            "baselineLabel": request.baselineLabel,
+            "candidateLabel": request.candidateLabel,
+        }
+        exec_name = f"audit-{uuid.uuid4().hex[:12]}"
+        response = sfn_client.start_execution(
+            stateMachineArn=sfn_arn,
+            name=exec_name,
+            input=json.dumps(payload),
+        )
+        return AsyncAuditStartResponse(
+            executionArn=response["executionArn"],
+            startDate=response["startDate"].isoformat(),
+            status="RUNNING",
+            stateMachineArn=sfn_arn,
+            message="Step Functions audit workflow execution initiated.",
+        )
+    except Exception as ex:
+        logger.error("Failed to start Step Functions execution", extra={"extra_data": {"error": str(ex)}})
+        raise HTTPException(
+            status_code=503,
+            detail=f"Failed to start Step Functions execution: {str(ex)}. Ensure AWS IAM role permits states:StartExecution on {sfn_arn}.",
+        )
+
+
+@app.get("/audits/executions/{execution_arn:path}", response_model=AsyncAuditStatusResponse)
+def get_async_audit_status(
+    execution_arn: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    """
+    Retrieves the execution status and output of a Step Functions audit workflow.
+    """
+    try:
+        import json
+        import boto3
+        sfn_client = boto3.client("stepfunctions", region_name=aws_config.region)
+        desc = sfn_client.describe_execution(executionArn=execution_arn)
+
+        parsed_output = None
+        if "output" in desc and desc["output"]:
+            try:
+                parsed_output = json.loads(desc["output"])
+            except Exception:
+                parsed_output = {"raw": desc["output"][:1000]}
+
+        return AsyncAuditStatusResponse(
+            executionArn=desc["executionArn"],
+            status=desc["status"],
+            startDate=desc.get("startDate").isoformat() if desc.get("startDate") else None,
+            stopDate=desc.get("stopDate").isoformat() if desc.get("stopDate") else None,
+            output=parsed_output,
+            error=desc.get("error"),
+            cause=desc.get("cause"),
+        )
+    except Exception as ex:
+        logger.error("Failed to describe Step Functions execution", extra={"extra_data": {"error": str(ex), "arn": execution_arn}})
+        raise HTTPException(
+            status_code=503,
+            detail=f"Failed to query execution status from AWS Step Functions: {str(ex)}",
         )
 
 

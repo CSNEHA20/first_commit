@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
   ShieldAlert,
   ArrowRight,
@@ -21,6 +21,7 @@ import { ScenarioHeatmapGrid } from "@/components/common/ScenarioHeatmapGrid"
 import { ActiveTab } from "@/components/layout/AppSidebar"
 import { TOP_COUNTEREXAMPLES, BLAST_RADIUS_RESULT } from "@/fixtures/acmepay"
 import { Counterexample } from "@/types/authz"
+import { checkBackendHealth, getDeploymentHistory } from "@/lib/api"
 
 interface OverviewScreenProps {
   onNavigate: (tab: ActiveTab) => void
@@ -29,6 +30,35 @@ interface OverviewScreenProps {
 export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) => {
   const [selectedEvidence, setSelectedEvidence] = useState<Counterexample | null>(null)
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false)
+  const [backendHealth, setBackendHealth] = useState<{
+    status: string
+    engine: string
+    cedarVersion: string
+    cedarLangVersion?: string
+    environment?: string
+    awsRegion?: string
+    credentialsDetected?: boolean
+  } | null>(null)
+  const [deploymentCount, setDeploymentCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    checkBackendHealth()
+      .then((h) => {
+        if (isMounted) setBackendHealth(h)
+      })
+      .catch((err) => console.warn("Backend health check unavailable:", err))
+
+    getDeploymentHistory()
+      .then((records) => {
+        if (isMounted) setDeploymentCount(records.length)
+      })
+      .catch((err) => console.warn("Deployment history query failed:", err))
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const primaryCounterexample = TOP_COUNTEREXAMPLES[0]
 
@@ -50,6 +80,37 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
 
   return (
     <div className="space-y-4">
+      {/* Live System Telemetry Ribbon */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono py-2 px-3.5 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10B981]" />
+            <span className="text-muted-foreground text-[11px]">Cedar Engine:</span>
+            <span className="text-foreground font-bold text-xs">{backendHealth?.engine || "Cedar WASM"}</span>
+            <span className="text-muted-foreground/60 text-[10px]">({backendHealth?.cedarVersion || "v4.13.0"})</span>
+          </div>
+          <span className="text-muted-foreground/30 hidden sm:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-muted-foreground text-[11px]">Environment:</span>
+            <span className="text-orange-400 font-bold text-xs">{backendHealth?.environment || "dev"}</span>
+            <span className="text-muted-foreground/60 text-[10px]">({backendHealth?.awsRegion || "us-east-1"})</span>
+          </div>
+          <span className="text-muted-foreground/30 hidden sm:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-muted-foreground text-[11px]">Ledger Deployments:</span>
+            <span className="text-cyan-400 font-bold text-xs">
+              {deploymentCount !== null ? `${deploymentCount} Recorded` : "Active Repository"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+            ACMEPAY BENCHMARK SUITE (432 SCENARIOS)
+          </span>
+        </div>
+      </div>
+
       {/* Investigation Command Center Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.1] pb-3">
         <div>
@@ -98,11 +159,14 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="h-3 w-3 rounded-full bg-red-500 shadow-[0_0_12px_#EF4444] animate-pulse shrink-0" />
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
               <span className="text-sm font-bold text-foreground font-mono">
                 Active Review: Candidate v13 (Draft)
               </span>
               <StatusBadge status="BLOCKED" size="xs" label="Gate: BLOCKED" />
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-red-500/10 text-red-300 border border-red-500/30">
+                BENCHMARK MODEL
+              </span>
             </div>
           </div>
 

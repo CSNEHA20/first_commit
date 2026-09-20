@@ -226,18 +226,24 @@ export interface AIExplanationRequest {
 }
 
 export interface AIExplanationResponse {
+  findingId?: string
   summary: string
-  observedTransition: string
+  observedTransition?: string
   rootCause: string
-  securityImpact: string
+  securityImpact?: string
+  securityRisk?: string
   remediationSuggestion?: string | null
   remediationCedar?: string | null
-  evidenceCitations: string[]
-  limitations: string[]
-  isFactGrounded: boolean
-  isDeterministicFallback: boolean
-  providerUsed: string
+  evidenceCitations?: string[]
+  evidenceReferences?: string[]
+  limitations?: string[] | string
+  isFactGrounded?: boolean
+  isDeterministicFallback?: boolean
+  providerUsed?: string
+  provider?: string
   modelId?: string | null
+  isFallback?: boolean
+  generatedAt?: string
 }
 
 export interface AVPReadinessResponse {
@@ -334,5 +340,88 @@ export interface DeploymentRecord {
   deployedBy: string
   deployedAt: string
   verificationProof: string
+}
+
+export interface ToolInvocation {
+  tool: string
+  target?: string
+  success?: boolean
+  timestamp?: string
+  runId?: string
+  gateStatus?: string
+  findingId?: string
+  provider?: string
+  [key: string]: unknown
+}
+
+export interface AuditWorkflowReport {
+  auditRunId: string
+  timestamp: string
+  agentIdentity: string
+  status: "COMPLETED_PASS" | "COMPLETED_BLOCKED" | "VALIDATION_FAILED" | "EXECUTION_ERROR"
+  gateDecision: "PASS" | "BLOCKED" | "INCOMPLETE"
+  summary: string
+  validationReport: {
+    candidateValid?: boolean
+    baselineValid?: boolean
+    errors?: string[]
+    warnings?: string[]
+  }
+  diffReport?: any
+  counterexamples: Counterexample[]
+  contractResults: Array<{
+    contract: SecurityContract
+    status: "SATISFIED" | "VIOLATED" | "SKIPPED"
+    violatingScenarioIds?: string[]
+    [key: string]: unknown
+  }>
+  regressionReport?: unknown
+  aiExplanations: AIExplanationResponse[]
+  toolInvocations: ToolInvocation[]
+  evidenceLedger: {
+    auditId?: string
+    regressionRunId?: string
+    gateDecision?: string
+    reasons?: string[]
+    [key: string]: unknown
+  }
+}
+
+export interface ScenarioSuite {
+  id: string
+  name: string
+  description?: string
+  version?: string
+  scenarios: Scenario[]
+}
+
+export interface AgentAuditRequest {
+  baselinePolicyText: string
+  candidatePolicyText: string
+  suite: ScenarioSuite
+  contracts?: SecurityContract[]
+  schemaText?: string
+  entities?: Array<Record<string, unknown>>
+  baselineLabel?: string
+  candidateLabel?: string
+  runAiExplanation?: boolean
+}
+
+export interface AsyncAuditStartResponse {
+  executionArn: string
+  startDate: string
+  status: string
+  stateMachineArn: string
+  message: string
+}
+
+export interface AsyncAuditStatusResponse {
+  executionArn: string
+  status: string
+  startDate?: string | null
+  stopDate?: string | null
+  output?: Record<string, unknown> | null
+  error?: string | null
+  cause?: string | null
 }
 

@@ -120,13 +120,17 @@ class DeterministicTemplateExplanationProvider(IAIExplanationProvider):
 
 class BedrockExplanationProvider(IAIExplanationProvider):
     """
-    Live Amazon Bedrock provider interfacing with Anthropic Claude 3.5 Sonnet.
+    Live Amazon Bedrock provider interfacing with Anthropic Claude 3.5 Sonnet or Haiku.
     Uses strict prompt delimiting and schema enforcement to prevent prompt injection and hallucinations.
     """
 
-    def __init__(self, region: Optional[str] = None, model_id: str = "anthropic.claude-3-5-sonnet-20240620-v1:0"):
+    def __init__(self, region: Optional[str] = None, model_id: Optional[str] = None):
         self.region = region or os.environ.get("AWS_REGION", "us-east-1")
-        self.model_id = model_id
+        self.model_id = (
+            model_id
+            or os.environ.get("BEDROCK_MODEL_ID")
+            or "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        )
         self._fallback_provider = DeterministicTemplateExplanationProvider()
 
     def generate_explanation(self, evidence: AIExplanationRequest) -> AIExplanationResponse:
@@ -202,9 +206,14 @@ class BedrockExplanationProvider(IAIExplanationProvider):
                     generatedAt=datetime.now(timezone.utc).isoformat(),
                     isFallback=False,
                 )
-        except Exception:
-            # If Bedrock is unavailable or fails, delegate to deterministic fallback
-            pass
+        except Exception as ex:
+            import logging
+            logger = logging.getLogger("policylab.bedrock")
+            logger.warning(
+                "Bedrock explanation invocation failed (%s): %s; activating deterministic template fallback",
+                type(ex).__name__,
+                ex,
+            )
 
         # Return deterministic fallback with isFallback=True
         fallback_res = self._fallback_provider.generate_explanation(evidence)

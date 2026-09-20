@@ -1,4 +1,5 @@
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
+import Editor, { Monaco } from "@monaco-editor/react"
 import {
   FileCode2,
   CheckCircle2,
@@ -14,7 +15,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import {
   POLICY_V12_TEXT,
@@ -26,6 +26,111 @@ import { validateCedarPolicy, PolicyValidationResponse } from "@/lib/api"
 
 interface PolicyEditorScreenProps {
   onNavigate: (tab: ActiveTab) => void
+}
+
+function configureCedarMonaco(monaco: Monaco) {
+  if (!monaco.languages.getLanguages().some((l: any) => l.id === "cedar")) {
+    monaco.languages.register({ id: "cedar" })
+    monaco.languages.setMonarchTokensProvider("cedar", {
+      keywords: [
+        "permit",
+        "forbid",
+        "when",
+        "unless",
+        "in",
+        "is",
+        "has",
+        "like",
+        "principal",
+        "action",
+        "resource",
+        "context",
+        "true",
+        "false",
+        "if",
+        "then",
+        "else",
+      ],
+      typeKeywords: [
+        "Action",
+        "User",
+        "Role",
+        "Department",
+        "Invoice",
+        "PayrollReport",
+        "CustomerRecord",
+        "SupportTicket",
+        "ResourceType",
+        "Entity",
+        "String",
+        "Long",
+        "Boolean",
+        "Set",
+        "Record",
+        "ipaddr",
+        "decimal",
+      ],
+      operators: [
+        "==",
+        "!=",
+        "<=",
+        ">=",
+        "<",
+        ">",
+        "&&",
+        "||",
+        "!",
+        "+",
+        "-",
+        "*",
+        "/",
+      ],
+      tokenizer: {
+        root: [
+          [/\/\/.*$/, "comment"],
+          [/"([^"\\]|\\.)*"/, "string"],
+          [/\b[A-Z][a-zA-Z0-9_]*::/, "type.identifier"],
+          [
+            /\b[a-zA-Z_][a-zA-Z0-9_]*\b/,
+            {
+              cases: {
+                "@keywords": "keyword",
+                "@typeKeywords": "type",
+                "@default": "identifier",
+              },
+            },
+          ],
+          [/[{}()\[\]]/, "delimiter"],
+          [/[;,.]/, "delimiter"],
+          [/==|!=|<=|>=|<|>|&&|\|\||!/, "operator"],
+          [/\b\d+\b/, "number"],
+        ],
+      },
+    })
+
+    monaco.editor.defineTheme("policylab-cedar-dark", {
+      base: "vs-dark",
+      inherit: true,
+      rules: [
+        { token: "keyword", foreground: "F97316", fontStyle: "bold" },
+        { token: "type", foreground: "38BDF8" },
+        { token: "type.identifier", foreground: "C084FC" },
+        { token: "string", foreground: "34D399" },
+        { token: "comment", foreground: "6B7280", fontStyle: "italic" },
+        { token: "operator", foreground: "F43F5E" },
+        { token: "delimiter", foreground: "94A3B8" },
+        { token: "number", foreground: "FBBF24" },
+      ],
+      colors: {
+        "editor.background": "#0c1017",
+        "editor.lineHighlightBackground": "#ffffff08",
+        "editorCursor.foreground": "#F97316",
+        "editorWhitespace.foreground": "#ffffff15",
+        "editorIndentGuide.background": "#ffffff10",
+        "editorIndentGuide.activeBackground": "#f9731640",
+      },
+    })
+  }
 }
 
 export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
@@ -42,12 +147,22 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   const [validationResult, setValidationResult] = useState<PolicyValidationResponse | null>(null)
   const [valDurationMs, setValDurationMs] = useState<number | null>(null)
 
+  const editorRef = useRef<any>(null)
+  const monacoRef = useRef<Monaco | null>(null)
+
   const handleVersionChange = (ver: "v12" | "v13") => {
     setSelectedVersion(ver)
-    setCode(ver === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT)
+    const newCode = ver === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT
+    setCode(newCode)
     setIsSaved(false)
     setValidationResult(null)
     setValDurationMs(null)
+    if (monacoRef.current && editorRef.current) {
+      const model = editorRef.current.getModel()
+      if (model) {
+        monacoRef.current.editor.setModelMarkers(model, "cedar-validation", [])
+      }
+    }
   }
 
   const handleValidate = async () => {
@@ -57,6 +172,29 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
       const res = await validateCedarPolicy(code)
       setValDurationMs(Math.round((performance.now() - start) * 10) / 10)
       setValidationResult(res)
+
+      if (monacoRef.current && editorRef.current) {
+        const model = editorRef.current.getModel()
+        if (model) {
+          if (res.isValid) {
+            monacoRef.current.editor.setModelMarkers(model, "cedar-validation", [])
+          } else {
+            const markers = res.errors.map((err) => {
+              const lineMatch = err.message.match(/line\s+(\d+)/i)
+              const lineNum = lineMatch ? parseInt(lineMatch[1], 10) : 1
+              return {
+                startLineNumber: lineNum,
+                startColumn: 1,
+                endLineNumber: lineNum,
+                endColumn: model.getLineMaxColumn(lineNum) || 120,
+                message: err.message,
+                severity: monacoRef.current!.MarkerSeverity.Error,
+              }
+            })
+            monacoRef.current.editor.setModelMarkers(model, "cedar-validation", markers)
+          }
+        }
+      }
     } catch (err: any) {
       setValDurationMs(Math.round((performance.now() - start) * 10) / 10)
       setValidationResult({
@@ -75,7 +213,7 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
   }
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(code)
+    navigator.clipboard.writeText(activeTab === "code" ? code : ACMEPAY_SCHEMA)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -84,8 +222,6 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2500)
   }
-
-  const lineCount = code.split("\n").length
 
   return (
     <div className="space-y-4">
@@ -120,80 +256,117 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
               onClick={() => handleVersionChange("v13")}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 selectedVersion === "v13"
-                  ? "bg-[#FF6A24] text-white shadow-sm font-semibold"
+                  ? "bg-orange-500/20 text-orange-400 border border-orange-500/30 shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v13 (Candidate Draft)
+              v13 (Candidate)
             </button>
           </div>
 
           <Button
-            variant="outline"
             size="sm"
             onClick={handleValidate}
             disabled={isValidating}
-            className="text-xs gap-1 h-7 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 transition-all font-semibold"
-            title="Validate policy syntax with live Cedar WASM engine"
+            className="gap-1.5 text-xs h-8 bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all hover:scale-105"
           >
-            <CheckCircle2 className={`h-3 w-3 ${isValidating ? "animate-spin text-orange-400" : "text-orange-400"}`} />
-            <span>{isValidating ? "Validating..." : "Validate AST"}</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyCode}
-            className="text-xs gap-1 h-7 border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.08] text-foreground"
-          >
-            {copied ? (
+            {isValidating ? (
               <>
-                <Check className="h-3 w-3 text-emerald-400" />
-                <span>Copied</span>
+                <div className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                <span>Validating...</span>
               </>
             ) : (
               <>
-                <Copy className="h-3 w-3" />
-                <span>Copy</span>
+                <Play className="h-3.5 w-3.5 fill-current" />
+                <span>Validate AST</span>
               </>
             )}
           </Button>
 
           <Button
             size="sm"
+            variant="outline"
             onClick={handleSave}
-            className="text-xs gap-1 h-7 bg-[#FF6A24] text-white hover:bg-[#FF8A42] font-medium shadow-[0_0_15px_rgba(255,106,36,0.3)]"
+            className="gap-1.5 text-xs h-8 border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] text-foreground transition-all hover:scale-105"
           >
-            <Save className="h-3 w-3" />
-            <span>{isSaved ? "Saved" : "Save Version"}</span>
+            {isSaved ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="text-emerald-400 font-medium">Saved</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-3.5 w-3.5" />
+                <span>Save</span>
+              </>
+            )}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onNavigate("changes")}
+            className="gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground transition-all hover:scale-105"
+          >
+            <GitCompare className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Inspect Diff</span>
           </Button>
         </div>
       </div>
 
-      {/* Editor & Context Workbench */}
+      {/* Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left Column: Code Surface (8 cols) */}
+        {/* Left Column: Monaco Code Editor (8 cols) */}
         <div className="lg:col-span-8 space-y-3">
-          <div className="glass-panel-premium rounded-2xl overflow-hidden shadow-2xl transition-all duration-300">
-            {/* Editor Sub-Header */}
-            <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/[0.08] bg-white/[0.02] text-xs">
-              <div className="flex items-center gap-2">
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-                  <TabsList className="h-6 bg-black/40 border border-white/[0.08]">
-                    <TabsTrigger value="code" className="text-xs h-5 px-2.5 font-mono text-muted-foreground data-[state=active]:text-white data-[state=active]:bg-white/[0.1]">
-                      policy.cedar
-                    </TabsTrigger>
-                    <TabsTrigger value="schema" className="text-xs h-5 px-2.5 font-mono text-muted-foreground data-[state=active]:text-white data-[state=active]:bg-white/[0.1]">
-                      schema.json
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <span className="text-[11px] text-muted-foreground font-mono">
-                  {lineCount} lines
-                </span>
+          <div className="glass-panel-premium rounded-2xl border border-white/[0.08] overflow-hidden">
+            {/* Editor Sub-header / File tabs */}
+            <div className="flex items-center justify-between px-3.5 py-2 border-b border-white/[0.08] bg-black/40">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setActiveTab("code")}
+                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                    activeTab === "code"
+                      ? "bg-white/[0.08] text-foreground font-semibold border border-white/[0.06]"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Code2 className="h-3.5 w-3.5 text-orange-400" />
+                  <span>policy_{selectedVersion}.cedar</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("schema")}
+                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                    activeTab === "schema"
+                      ? "bg-white/[0.08] text-foreground font-semibold border border-white/[0.06]"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Hash className="h-3.5 w-3.5 text-sky-400" />
+                  <span>schema.json</span>
+                </button>
               </div>
 
               <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleCopyCode}
+                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-3 w-3 text-emerald-400 mr-1" />
+                      <span className="text-emerald-400">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3 mr-1" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </Button>
+
                 {validationResult ? (
                   validationResult.isValid ? (
                     <Badge variant="allow" className="text-[10px] gap-1 font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
@@ -209,47 +382,70 @@ export const PolicyEditorScreen: React.FC<PolicyEditorScreenProps> = ({
                 ) : (
                   <Badge variant="allow" className="text-[10px] gap-1 font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                     <CheckCircle2 className="h-3 w-3" />
-                    AST Valid
+                    Monaco Engine
                   </Badge>
                 )}
               </div>
             </div>
 
-            {/* Code Body Area */}
-            <div>
+            {/* Code Body Area with Monaco */}
+            <div className="bg-[#0c1017]">
               {activeTab === "code" ? (
-                <div className="flex bg-black/40 backdrop-blur-sm font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
-                  {/* Line Numbers */}
-                  <div className="py-3 px-2.5 select-none text-right text-muted-foreground/30 border-r border-white/[0.08] bg-black/30 w-11 shrink-0 text-[11px]">
-                    {Array.from({ length: lineCount }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`h-5 leading-5 ${
-                          selectedVersion === "v13" && (i + 1 === 18 || i + 1 === 24)
-                            ? "text-orange-400 font-bold"
-                            : ""
-                        }`}
-                      >
-                        {i + 1}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Textarea Code Input */}
-                  <textarea
+                <div className="min-h-[460px]">
+                  <Editor
+                    height="460px"
+                    language="cedar"
+                    theme="policylab-cedar-dark"
                     value={code}
-                    onChange={(e) => {
-                      setCode(e.target.value)
-                      setIsSaved(false)
+                    beforeMount={configureCedarMonaco}
+                    onMount={(editor, monaco) => {
+                      editorRef.current = editor
+                      monacoRef.current = monaco
                     }}
-                    spellCheck={false}
-                    className="w-full p-3 bg-transparent resize-none outline-none font-mono text-xs leading-5 text-foreground selection:bg-orange-500/30 whitespace-pre focus:ring-0"
-                    rows={lineCount + 2}
+                    onChange={(value) => {
+                      setCode(value || "")
+                      setIsSaved(false)
+                      if (monacoRef.current && editorRef.current) {
+                        const model = editorRef.current.getModel()
+                        if (model) {
+                          monacoRef.current.editor.setModelMarkers(model, "cedar-validation", [])
+                        }
+                      }
+                    }}
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 12.5,
+                      fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      wordWrap: "on",
+                      automaticLayout: true,
+                      padding: { top: 12, bottom: 12 },
+                      renderLineHighlight: "all",
+                      tabSize: 4,
+                      folding: true,
+                    }}
                   />
                 </div>
               ) : (
-                <div className="p-3 bg-black/40 backdrop-blur-sm font-mono text-xs leading-relaxed overflow-x-auto min-h-[460px]">
-                  <pre className="text-muted-foreground">{ACMEPAY_SCHEMA}</pre>
+                <div className="min-h-[460px]">
+                  <Editor
+                    height="460px"
+                    language="json"
+                    theme="vs-dark"
+                    value={ACMEPAY_SCHEMA}
+                    options={{
+                      readOnly: true,
+                      minimap: { enabled: false },
+                      fontSize: 12.5,
+                      fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      wordWrap: "on",
+                      automaticLayout: true,
+                      padding: { top: 12, bottom: 12 },
+                    }}
+                  />
                 </div>
               )}
             </div>

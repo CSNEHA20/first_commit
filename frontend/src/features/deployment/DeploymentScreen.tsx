@@ -36,6 +36,7 @@ import {
 import {
   POLICY_V12_TEXT,
   POLICY_V13_TEXT,
+  POLICY_V13_FIXED_TEXT,
   ACMEPAY_SCHEMA,
   ALL_REGRESSION_SCENARIOS,
   SECURITY_CONTRACTS,
@@ -44,7 +45,7 @@ import {
 
 export const DeploymentScreen: React.FC = () => {
   const [targetEnv, setTargetEnv] = useState<"staging" | "production">("production")
-  const [selectedVersion, setSelectedVersion] = useState<"v12" | "v13">("v13")
+  const [selectedVersion, setSelectedVersion] = useState<"v12" | "v13" | "v13_fixed">("v13")
   const [readiness, setReadiness] = useState<AVPReadinessResponse | null>(null)
   const [prepResult, setPrepResult] = useState<DeploymentPrepareResponse | null>(null)
   const [approval, setApproval] = useState<HumanApprovalResponse | null>(null)
@@ -56,7 +57,12 @@ export const DeploymentScreen: React.FC = () => {
   const [deploymentRecords, setDeploymentRecords] = useState<DeploymentRecord[]>(DEFAULT_DEPLOYMENT_HISTORY as any)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const candidatePolicyText = selectedVersion === "v12" ? POLICY_V12_TEXT : POLICY_V13_TEXT
+  const candidatePolicyText =
+    selectedVersion === "v12"
+      ? POLICY_V12_TEXT
+      : selectedVersion === "v13_fixed"
+      ? POLICY_V13_FIXED_TEXT
+      : POLICY_V13_TEXT
 
   useEffect(() => {
     loadReadinessAndHistory()
@@ -189,11 +195,21 @@ export const DeploymentScreen: React.FC = () => {
               onClick={() => setSelectedVersion("v13")}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 selectedVersion === "v13"
-                  ? "bg-[#FF6A24] text-white shadow-sm font-semibold"
+                  ? "bg-red-500/20 text-red-400 border border-red-500/30 shadow-sm font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              v13 (Candidate - Violates SC-04)
+              v13 (Candidate - BLOCKED)
+            </button>
+            <button
+              onClick={() => setSelectedVersion("v13_fixed")}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                selectedVersion === "v13_fixed"
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              v13 (Fixed - Ready to Deploy)
             </button>
           </div>
         </div>
