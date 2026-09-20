@@ -159,6 +159,17 @@ audit_agent = PolicyAuditAgent(
 report_exporter = AuditReportExportService()
 
 
+@app.get("/")
+def get_root():
+    """Root endpoint providing service metadata."""
+    return {
+        "service": "PolicyLab API",
+        "status": "online",
+        "environment": aws_config.environment,
+        "engine": "Cedar Deterministic Verification",
+    }
+
+
 @app.get("/health")
 def get_health():
     """Health check endpoint returning Cedar engine and AWS environment status."""

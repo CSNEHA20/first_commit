@@ -61,3 +61,8 @@ Thumbs.db
 
 # AWS SAM
 .aws-sam/
+
+# Environment files
+.env
+.env.*
+!.env.example

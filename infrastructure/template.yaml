@@ -26,12 +26,12 @@ Globals:
 Parameters:
   EnvironmentName:
     Type: String
-    Default: prod
+    Default: dev
     AllowedValues: [dev, staging, prod]
     Description: Deployment target environment stage.
   AVPPolicyStoreId:
     Type: String
-    Default: ps-acmepay-prod
+    Default: ps-acmepay-dev
     Description: Target Amazon Verified Permissions policy store identifier.
   FrontendOrigin:
     Type: String

@@ -24,7 +24,17 @@ from backend.domain.models.regression import RegressionRunRequest
 from backend.core.logging import get_logger, set_correlation_id
 
 logger = get_logger("policylab.lambda")
-mangum_handler = Mangum(app, lifespan="off")
+
+_mangum_cache: Dict[str, Mangum] = {}
+
+
+def _get_mangum(base_path: str = "/") -> Mangum:
+    if base_path not in _mangum_cache:
+        _mangum_cache[base_path] = Mangum(app, lifespan="off", api_gateway_base_path=base_path)
+    return _mangum_cache[base_path]
+
+
+mangum_handler = _get_mangum("/")
 
 
 def handle_step_functions_task(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -112,4 +122,15 @@ def handler(event: Dict[str, Any], context: Any) -> Any:
         return handle_step_functions_task(event, context)
 
     # Otherwise, handle via Mangum ASGI adapter for API Gateway HTTP API
-    return mangum_handler(event, context)
+    # Detect stage prefix in API Gateway HTTP API (e.g. /dev, /staging, /prod)
+    base_path = "/"
+    if isinstance(event, dict):
+        rc = event.get("requestContext")
+        if isinstance(rc, dict):
+            stage = rc.get("stage", "")
+            http_info = rc.get("http", {})
+            path = http_info.get("path", "") if isinstance(http_info, dict) else ""
+            if stage and stage != "$default" and (path.startswith(f"/{stage}/") or path == f"/{stage}"):
+                base_path = f"/{stage}"
+
+    return _get_mangum(base_path)(event, context)
