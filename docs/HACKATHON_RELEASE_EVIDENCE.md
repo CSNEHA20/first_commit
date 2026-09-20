@@ -7,6 +7,9 @@
 **Repository Remotes:**
 - `origin` -> `https://github.com/Vishallakshmikanthan/policylab.git`
 - `first_commit` -> `https://github.com/CSNEHA20/first_commit.git`
+**Live Production Deployments:**
+- **Hosted Web Application (AWS Amplify):** [`https://main.d2np06j97bpfgw.amplifyapp.com/`](https://main.d2np06j97bpfgw.amplifyapp.com/)
+- **Serverless API Gateway (us-east-1):** [`https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health`](https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health)
 **Release Version:** v1.5.0-final  
 **Release Date:** 2026-09-20  
 

@@ -96,7 +96,7 @@ During guided deployment, provide:
 - **AWS Region:** `us-east-1`
 - **Parameter EnvironmentName:** `prod`
 - **Parameter AVPPolicyStoreId:** `ps-acmepay-prod`
-- **Parameter FrontendOrigin:** Your deployed frontend URL (e.g. `https://main.d123456.amplifyapp.com` or `http://localhost:5173`)
+- **Parameter FrontendOrigin:** Your deployed frontend URL (e.g. `https://main.d2np06j97bpfgw.amplifyapp.com` or `http://localhost:5173`)
 - **Confirm changes before deploy:** `Y`
 - **Allow SAM CLI to create IAM roles:** `Y`
 - **Save arguments to configuration file:** `Y`

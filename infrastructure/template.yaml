@@ -35,7 +35,7 @@ Parameters:
     Description: Target Amazon Verified Permissions policy store identifier.
   FrontendOrigin:
     Type: String
-    Default: 'http://localhost:5173'
+    Default: 'https://main.d2np06j97bpfgw.amplifyapp.com'
     Description: Allowed CORS origin for the frontend web client.
 
 Resources:
@@ -81,6 +81,7 @@ Resources:
       CorsConfiguration:
         AllowOrigins:
           - !Ref FrontendOrigin
+          - 'http://localhost:5173'
         AllowMethods:
           - GET
           - POST

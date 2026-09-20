@@ -8,6 +8,8 @@ An enterprise-grade authorization change-verification and policy-engineering pla
 
 <br/>
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-AWS%20Amplify-FF9900?style=for-the-badge&logo=awsamplify&logoColor=white)](https://main.d2np06j97bpfgw.amplifyapp.com/)
+[![Live API](https://img.shields.io/badge/Live%20API-API%20Gateway%20%7C%20Healthy-22c55e?style=for-the-badge&logo=amazonapigateway&logoColor=white)](https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health)
 [![Hackathon](https://img.shields.io/badge/WeMakeDevs%20%C3%97%20AWS-First%20Commit%202026-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)](https://wemakedevs.org)
 [![Team](https://img.shields.io/badge/Team-VibeSync-00C7B7?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Vishallakshmikanthan/policylab)
 [![Cedar Engine](https://img.shields.io/badge/Authz-Cedar%20Policy%20v4.13.0-22c55e?style=for-the-badge&logo=shield&logoColor=white)](https://www.cedarpolicy.com)
@@ -37,13 +39,14 @@ An enterprise-grade authorization change-verification and policy-engineering pla
 | :--- | :--- |
 | **Hackathon & Track** | **WeMakeDevs × AWS First Commit 2026** — *Cloud Security, Developer Tooling & Fine-Grained Authorization* |
 | **Team VibeSync** | • **Vishal Lakshmikanthan** ([@Vishallakshmikanthan](https://github.com/Vishallakshmikanthan)) — *Architecture, Cedar Domain Engine, AWS Cloud Backend, Cryptographic Gates*<br>• **Sneha C.** ([@CSNEHA20](https://github.com/CSNEHA20)) — *Frontend Engineering, Monaco Cedar Editor, Blast Radius Visualizer, Benchmark Suites* |
+| **Live Cloud Deployment** | 🌐 **Web Client (AWS Amplify):** [`https://main.d2np06j97bpfgw.amplifyapp.com/`](https://main.d2np06j97bpfgw.amplifyapp.com/)<br>⚡ **Serverless API (Amazon API Gateway):** [`https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health`](https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health) |
 | **Core Value Proposition** | Eliminates authorization blind spots by converting dangerous Cedar policy edits into observable, mathematically verifiable, and testable blast radius models before reaching production. |
 | **AWS Services Utilized** | **Amazon Verified Permissions (AVP)**, **Amazon Bedrock** (*Claude 3.5 Sonnet* & *Claude 3 Haiku*), **Amazon DynamoDB** (*Single-Table Design*), **Amazon S3** (*Policy Artifacts*), **AWS Lambda** (*Serverless ASGI*), **Amazon API Gateway** (*HTTP v2*), **AWS Step Functions** (*ASL Audit Pipelines*), **Amazon Cognito** (*Email OTP & Google OAuth*), **Amazon CloudWatch** (*Embedded Metric Format*). |
 | **Core Engine** | **Cedar Policy WASM 4.13.0** (Deterministic, sub-millisecond evaluation in `<1ms`). |
 | **AI Safety Guardrail** | **AI Never Decides Authorization.** Cedar and deterministic rules are the sole arbiters of access truth. AI models synthesize grounded explanations strictly citing verified deterministic finding IDs. |
 | **Verification & Quality** | **172 Passed / 0 Failed (100% Pass Rate)** across 26 backend test modules and clean zero-error frontend TypeScript build. |
 | **Dual Repositories** | Synchronized in lockstep: [`origin`](https://github.com/Vishallakshmikanthan/policylab) & [`first_commit`](https://github.com/CSNEHA20/first_commit) on branch `main`. |
-| **Judge Quick-Links** | [🎬 Repeatable Demonstration Walkthrough](./docs/HACKATHON_RELEASE_EVIDENCE.md#5-judge-evaluation-script--repeatable-walkthrough) • [🏗️ Architecture Deep-Dive](./docs/ARCHITECTURE.md) • [🧪 Test Verification Report](./docs/TESTING_AND_VERIFICATION.md) • [☁️ AWS Deployment Runbook](./docs/AWS_DEPLOYMENT_AND_CLEANUP.md) |
+| **Judge Quick-Links** | [🚀 Live Production Application](https://main.d2np06j97bpfgw.amplifyapp.com/) • [🎬 Repeatable Demonstration Walkthrough](./docs/HACKATHON_RELEASE_EVIDENCE.md#5-judge-evaluation-script--repeatable-walkthrough) • [🏗️ Architecture Deep-Dive](./docs/ARCHITECTURE.md) • [🧪 Test Verification Report](./docs/TESTING_AND_VERIFICATION.md) • [☁️ AWS Deployment Runbook](./docs/AWS_DEPLOYMENT_AND_CLEANUP.md) |
 
 ---
 
@@ -1006,6 +1009,14 @@ All 12 acceptance stages are codified and verified in `tests/integration/test_en
 
 ## 🚀 Quickstart & Local Setup
 
+> [!TIP]
+> ### 🌐 Live Hosted Production Application
+> **Zero Local Setup Required:** The entire PolicyLab platform is live and operational on AWS:
+> * **Hosted Web Application (AWS Amplify):** [`https://main.d2np06j97bpfgw.amplifyapp.com/`](https://main.d2np06j97bpfgw.amplifyapp.com/)
+> * **Serverless API Gateway & Lambda (us-east-1):** [`https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health`](https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health)
+> 
+> You can test all interactive scenarios, policy diffs, counterexample replays, security gates, and AI explanations live in your browser.
+
 ### 1. Prerequisites
 - **Python 3.11+**
 - **Node.js 18+** & npm
@@ -1119,6 +1130,8 @@ PolicyLab provides complete, authoritative engineering documentation in the [`do
   - **Vishal Lakshmikanthan** — Architecture, Cedar Domain Engine, AWS Backend, Security Gates
   - **Sneha C.** — Frontend Experience, Monaco Editor, Interactive Simulator, Benchmarks
 - **Category:** Authorization Engineering / Security Developer Tooling
+- **Live Deployed Web Application (Amplify):** [`https://main.d2np06j97bpfgw.amplifyapp.com/`](https://main.d2np06j97bpfgw.amplifyapp.com/)
+- **Live Serverless API Endpoint (API Gateway):** [`https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev`](https://9w5uzo7f9g.execute-api.us-east-1.amazonaws.com/dev/health)
 - **Core Technology:** Cedar Policy v4.13.0, Amazon Verified Permissions, Amazon Bedrock, Amazon DynamoDB, Amazon S3, AWS Lambda, React 18+, TypeScript, Vite, Monaco Editor.
 - **Repository Remotes:**
   - `origin`: [`https://github.com/Vishallakshmikanthan/policylab.git`](https://github.com/Vishallakshmikanthan/policylab.git)

@@ -112,6 +112,7 @@ app = FastAPI(
 
 allowed_origins = [
     os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173"),
+    "https://main.d2np06j97bpfgw.amplifyapp.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
