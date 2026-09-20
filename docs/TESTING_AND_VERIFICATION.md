@@ -31,49 +31,54 @@ backend\.venv\Scripts\python.exe -m pytest -v
 platform win32 -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0
 rootdir: C:\Users\Lenovo\Downloads\policylab
 configfile: pytest.ini
-collected 120 items
+collected 169 items
 
 tests/unit/test_ai_explanation.py ................................ [  2%]
-tests/unit/test_avp_adapter.py ................................... [  7%]
-tests/unit/test_aws_config.py .................................... [ 11%]
-tests/unit/test_cedar_evaluation.py .............................. [ 15%]
-tests/unit/test_cedar_validation.py .............................. [ 18%]
-tests/unit/test_counterexamples.py ............................... [ 22%]
+tests/unit/test_authentication_and_authorization.py ............ [  9%]
+tests/unit/test_avp_adapter.py ................................... [ 13%]
+tests/unit/test_aws_config.py .................................... [ 15%]
+tests/unit/test_cedar_evaluation.py .............................. [ 18%]
+tests/unit/test_cedar_validation.py .............................. [ 21%]
+tests/unit/test_counterexamples.py ............................... [ 24%]
 tests/unit/test_entity_provider.py ............................... [ 27%]
-tests/unit/test_input_validation.py .............................. [ 31%]
-tests/unit/test_lambda_stepfunctions_handler.py .................. [ 35%]
+tests/unit/test_input_validation.py .............................. [ 30%]
+tests/unit/test_lambda_stepfunctions_handler.py .................. [ 33%]
+tests/unit/test_packaging_and_config.py .......................... [ 36%]
 tests/unit/test_persistence_adapters.py .......................... [ 39%]
-tests/unit/test_phase8_failure_injection.py ...................... [ 46%]
-tests/unit/test_policy_diff.py ................................... [ 51%]
-tests/unit/test_regression_engine.py ............................. [ 53%]
-tests/unit/test_scenario_runner.py ............................... [ 57%]
-tests/unit/test_security_contracts.py ............................ [ 62%]
-tests/unit/test_security_hardening.py ............................ [ 66%]
-tests/integration/test_acmepay_e2e_full_lifecycle.py ............. [ 68%]
-tests/integration/test_acmepay_e2e_regression.py ................. [ 69%]
-tests/integration/test_api.py .................................... [ 72%]
-tests/integration/test_batch_api.py .............................. [ 76%]
-tests/integration/test_diff_api.py ............................... [ 80%]
-tests/integration/test_phase5_api.py ............................. [ 85%]
+tests/unit/test_phase8_failure_injection.py ...................... [ 44%]
+tests/unit/test_policy_diff.py ................................... [ 47%]
+tests/unit/test_regression_engine.py ............................. [ 49%]
+tests/unit/test_scenario_runner.py ............................... [ 52%]
+tests/unit/test_security_contracts.py ............................ [ 55%]
+tests/unit/test_security_hardening.py ............................ [ 58%]
+tests/integration/test_acmepay_e2e_full_lifecycle.py ............. [ 59%]
+tests/integration/test_acmepay_e2e_regression.py ................. [ 60%]
+tests/integration/test_api.py .................................... [ 62%]
+tests/integration/test_batch_api.py .............................. [ 65%]
+tests/integration/test_diff_api.py ............................... [ 68%]
+tests/integration/test_end_to_end_acceptance.py .................. [ 75%]
+tests/integration/test_frontend_screen_flows_e2e.py .............. [ 80%]
+tests/integration/test_phase5_api.py ............................. [ 84%]
 tests/integration/test_phase7_api.py ............................. [ 91%]
-tests/integration/test_phase8_aws_status_api.py .................. [ 96%]
+tests/integration/test_phase8_aws_status_api.py .................. [ 93%]
 tests/integration/test_regression_api.py ......................... [100%]
 
-====================== 120 passed, 2 warnings in 20.96s =======================
+====================== 169 passed, 2 warnings in 58.20s =======================
 ```
 
-**Overall Pass Rate: 120 / 120 (100.0%)**
+**Overall Pass Rate: 169 / 169 (100.0%)**
 
 ---
 
 ## 3. Test Module Inventory & Coverage
 
-### Tier 1: Unit Tests (16 Modules, 82 Tests)
+### Tier 1: Unit Tests (16 Modules, 98 Tests)
 
 | Test Module | Test Focus | Pass Count |
 | :--- | :--- | :---: |
 | `tests/unit/test_ai_explanation.py` | Bedrock explanation generation, citation verification, prompt injection defense | 3 / 3 |
-| `tests/unit/test_avp_adapter.py` | Readiness checklist, candidate eligibility, approval registration, submission | 6 / 6 |
+| `tests/unit/test_authentication_and_authorization.py` | Fail-closed JWT validation, Cognito groups mapping, least-privilege RBAC | 11 / 11 |
+| `tests/unit/test_avp_adapter.py` | Readiness checklist, candidate eligibility, approval registration, submission | 7 / 7 |
 | `tests/unit/test_aws_config.py` | Environment variable defaults, strict mode fail-closed checks, status reporting | 4 / 4 |
 | `tests/unit/test_cedar_evaluation.py` | Permit/forbid semantics, hierarchy matching, determining policies | 5 / 5 |
 | `tests/unit/test_cedar_validation.py` | Cedar syntax parsing, empty policies, schema compatibility, source locations | 4 / 4 |
@@ -81,15 +86,16 @@ tests/integration/test_regression_api.py ......................... [100%]
 | `tests/unit/test_entity_provider.py` | FixtureEntityProvider, entity parsing, snapshot determinism, caching | 6 / 6 |
 | `tests/unit/test_input_validation.py` | 9-stage validation pipeline, entity graph checks, request/context validation | 4 / 4 |
 | `tests/unit/test_lambda_stepfunctions_handler.py` | Step Functions direct task routing (`validate_policy`, `run_regression`, etc.) | 5 / 5 |
+| `tests/unit/test_packaging_and_config.py` | Lambda handler packaging, requirements parity, SAM template invariants | 5 / 5 |
 | `tests/unit/test_persistence_adapters.py` | In-memory repository, stored entity provider, DynamoDB & S3 local fallbacks | 5 / 5 |
 | `tests/unit/test_phase8_failure_injection.py` | AVP errors, Bedrock timeouts, malformed output, DynamoDB conflicts, S3 digests | 8 / 8 |
 | `tests/unit/test_policy_diff.py` | Behavioral transitions (v12 vs v13), blast radius calculation, error isolation | 6 / 6 |
 | `tests/unit/test_regression_engine.py` | Multi-phase regression execution, gate decision (`PASS`, `BLOCKED`, `INCOMPLETE`) | 3 / 3 |
 | `tests/unit/test_scenario_runner.py` | Deterministic scenario suite execution, duplicate ID detection, error handling | 5 / 5 |
 | `tests/unit/test_security_contracts.py` | Invariant evaluation, contract satisfaction, scenario matching | 5 / 5 |
-| `tests/unit/test_security_hardening.py` | Payload limits (policy size, entity count, scenarios), fail-closed enforcement | 5 / 5 |
+| `tests/unit/test_security_hardening.py` | Payload limits (policy size, entity count, scenarios), fail-closed enforcement | 7 / 7 |
 
-### Tier 2: Integration Tests (9 Modules, 38 Tests)
+### Tier 2: Integration Tests (10 Modules, 71 Tests)
 
 | Test Module | Test Focus | Pass Count |
 | :--- | :--- | :---: |
@@ -98,6 +104,12 @@ tests/integration/test_regression_api.py ......................... [100%]
 | `tests/integration/test_api.py` | Core REST API health, single scenario simulation, policy validation | 4 / 4 |
 | `tests/integration/test_batch_api.py` | Batch simulation across scenario suites | 5 / 5 |
 | `tests/integration/test_diff_api.py` | Semantic diff and blast radius calculation endpoints | 5 / 5 |
+| `tests/integration/test_end_to_end_acceptance.py` | Full 12-stage platform acceptance harness (Stages A through L) | 12 / 12 |
+| `tests/integration/test_frontend_screen_flows_e2e.py` | Frontend screen 1-7 flow contracts and RBAC matrix | 8 / 8 |
+| `tests/integration/test_phase5_api.py` | Grounded AI explanation, AVP readiness, prepare, approve, submit endpoints | 6 / 6 |
+| `tests/integration/test_phase7_api.py` | Multi-stage validation, generator, agent, export, matrix, what-if, timeline | 11 / 11 |
+| `tests/integration/test_phase8_aws_status_api.py` | Truthful AWS status diagnostics, health endpoint details, frontend models | 4 / 4 |
+| `tests/integration/test_regression_api.py` | Full regression run, counterexample extraction, security contract evaluation | 4 / 4 |
 | `tests/integration/test_phase5_api.py` | Grounded AI explanation, AVP readiness, prepare, approve, submit endpoints | 6 / 6 |
 | `tests/integration/test_phase7_api.py` | Multi-stage validation, generator, agent, export, matrix, what-if, timeline | 7 / 7 |
 | `tests/integration/test_phase8_aws_status_api.py` | Truthful AWS status diagnostics, health endpoint details, frontend models | 4 / 4 |

@@ -110,15 +110,26 @@ class AWSConfig:
         # 1. Amazon Verified Permissions (AVP)
         avp_reqs = ["AWS_REGION", "AVP_POLICY_STORE_ID", "AWS_ACCESS_KEY_ID"]
         avp_missing = [k for k in ["AVP_POLICY_STORE_ID"] if not os.environ.get(k)]
-        if not creds_ok:
+        if not creds_ok or not self.avp_enabled:
             avp_status = OperationalStatus.LOCAL_MOCKED if not self.strict_mode else OperationalStatus.NOT_CONFIGURED
-            avp_details = "Local deterministic AVP simulation adapter active (No AWS credentials configured)."
+            avp_details = (
+                "Local deterministic AVP simulation adapter active (No AWS credentials configured)."
+                if not creds_ok
+                else "Local deterministic AVP simulation adapter active (AWS_AVP_ENABLED is false)."
+            )
         elif self.avp_enabled and not avp_missing:
-            avp_status = OperationalStatus.LIVE
-            avp_details = f"Live AVP client ready targeting store '{self.avp_policy_store_id}' in '{self.region}'."
+            try:
+                import boto3
+                avp_client = boto3.client("verifiedpermissions", region_name=self.region)
+                avp_client.get_policy_store(policyStoreId=self.avp_policy_store_id)
+                avp_status = OperationalStatus.LIVE
+                avp_details = f"Live AVP client ready targeting store '{self.avp_policy_store_id}' in '{self.region}'."
+            except Exception as e:
+                avp_status = OperationalStatus.UNAVAILABLE
+                avp_details = f"Live AVP connection blocked: {str(e)}"
         else:
             avp_status = OperationalStatus.NOT_CONFIGURED
-            avp_details = "AWS credentials present but AWS_AVP_ENABLED is false or policy store ID missing."
+            avp_details = "AWS credentials present but AVP policy store ID is missing."
         services["verified_permissions"] = ServiceStatus(
             serviceName="Amazon Verified Permissions",
             status=avp_status,
@@ -131,12 +142,23 @@ class AWSConfig:
         # 2. Amazon Bedrock
         bedrock_reqs = ["AWS_REGION", "BEDROCK_MODEL_ID", "AWS_ACCESS_KEY_ID"]
         bedrock_missing = [k for k in ["BEDROCK_MODEL_ID"] if not os.environ.get(k)]
-        if not creds_ok:
-            bedrock_status = OperationalStatus.LOCAL_MOCKED
-            bedrock_details = "Deterministic template generator and grounded fallback active (No AWS credentials)."
+        if not creds_ok or not self.bedrock_enabled:
+            bedrock_status = OperationalStatus.LOCAL_MOCKED if not self.strict_mode else OperationalStatus.NOT_CONFIGURED
+            bedrock_details = (
+                "Deterministic template generator and grounded fallback active (No AWS credentials)."
+                if not creds_ok
+                else "Deterministic template generator and grounded fallback active (AWS_BEDROCK_ENABLED is false)."
+            )
         elif self.bedrock_enabled:
-            bedrock_status = OperationalStatus.LIVE
-            bedrock_details = f"Bedrock client configured with model '{self.bedrock_model_id}'."
+            try:
+                import boto3
+                bedrock_client = boto3.client("bedrock", region_name=self.region)
+                bedrock_client.list_foundation_models(byProvider="Anthropic")
+                bedrock_status = OperationalStatus.LIVE
+                bedrock_details = f"Bedrock client confirmed with model '{self.bedrock_model_id}'."
+            except Exception as e:
+                bedrock_status = OperationalStatus.UNAVAILABLE
+                bedrock_details = f"Bedrock live connection blocked: {str(e)}"
         else:
             bedrock_status = OperationalStatus.NOT_CONFIGURED
             bedrock_details = "AWS credentials present but AWS_BEDROCK_ENABLED is false."
@@ -152,12 +174,23 @@ class AWSConfig:
         # 3. Amazon DynamoDB
         ddb_reqs = ["POLICYLAB_DYNAMODB_TABLE", "AWS_REGION", "AWS_ACCESS_KEY_ID"]
         ddb_missing = [k for k in ["POLICYLAB_DYNAMODB_TABLE"] if not os.environ.get(k)]
-        if not creds_ok:
-            ddb_status = OperationalStatus.LOCAL_MOCKED
-            ddb_details = "In-memory repository active for local development/testing."
+        if not creds_ok or not self.dynamodb_enabled:
+            ddb_status = OperationalStatus.LOCAL_MOCKED if not self.strict_mode else OperationalStatus.NOT_CONFIGURED
+            ddb_details = (
+                "In-memory repository active for local development/testing."
+                if not creds_ok
+                else "In-memory repository active for local development/testing (AWS_DYNAMODB_ENABLED is false)."
+            )
         elif self.dynamodb_enabled and not ddb_missing:
-            ddb_status = OperationalStatus.LIVE
-            ddb_details = f"Connected to DynamoDB table '{self.dynamodb_table}'."
+            try:
+                import boto3
+                ddb_client = boto3.client("dynamodb", region_name=self.region)
+                ddb_client.describe_table(TableName=self.dynamodb_table)
+                ddb_status = OperationalStatus.LIVE
+                ddb_details = f"Connected to DynamoDB table '{self.dynamodb_table}'."
+            except Exception as e:
+                ddb_status = OperationalStatus.UNAVAILABLE
+                ddb_details = f"DynamoDB live table blocked: {str(e)}"
         else:
             ddb_status = OperationalStatus.NOT_CONFIGURED
             ddb_details = "AWS credentials present but DynamoDB disabled or table unconfigured."
@@ -173,12 +206,23 @@ class AWSConfig:
         # 4. Amazon S3 Artifacts
         s3_reqs = ["POLICYLAB_ARTIFACT_BUCKET", "AWS_REGION", "AWS_ACCESS_KEY_ID"]
         s3_missing = [k for k in ["POLICYLAB_ARTIFACT_BUCKET"] if not os.environ.get(k)]
-        if not creds_ok:
-            s3_status = OperationalStatus.LOCAL_MOCKED
-            s3_details = "Local in-memory & disk storage active for Cedar artifacts."
+        if not creds_ok or not self.s3_enabled:
+            s3_status = OperationalStatus.LOCAL_MOCKED if not self.strict_mode else OperationalStatus.NOT_CONFIGURED
+            s3_details = (
+                "Local in-memory & disk storage active for Cedar artifacts."
+                if not creds_ok
+                else "Local in-memory & disk storage active for Cedar artifacts (AWS_S3_ENABLED is false)."
+            )
         elif self.s3_enabled and not s3_missing:
-            s3_status = OperationalStatus.LIVE
-            s3_details = f"S3 artifact repository targeting bucket '{self.artifact_bucket}'."
+            try:
+                import boto3
+                s3_client = boto3.client("s3", region_name=self.region)
+                s3_client.head_bucket(Bucket=self.artifact_bucket)
+                s3_status = OperationalStatus.LIVE
+                s3_details = f"S3 artifact repository targeting bucket '{self.artifact_bucket}'."
+            except Exception as e:
+                s3_status = OperationalStatus.UNAVAILABLE
+                s3_details = f"S3 bucket blocked: {str(e)}"
         else:
             s3_status = OperationalStatus.NOT_CONFIGURED
             s3_details = "AWS credentials present but S3 disabled or bucket unconfigured."
@@ -195,15 +239,27 @@ class AWSConfig:
         sfn_status = OperationalStatus.NOT_CONFIGURED if not self.state_machine_arn else (
             OperationalStatus.LIVE if creds_ok else OperationalStatus.LOCAL_MOCKED
         )
+        if self.state_machine_arn and creds_ok:
+            try:
+                import boto3
+                sfn_client = boto3.client("stepfunctions", region_name=self.region)
+                sfn_client.describe_state_machine(stateMachineArn=self.state_machine_arn)
+                sfn_status = OperationalStatus.LIVE
+                sfn_details = f"State machine ARN '{self.state_machine_arn}' confirmed."
+            except Exception as e:
+                sfn_status = OperationalStatus.UNAVAILABLE
+                sfn_details = f"State machine ARN '{self.state_machine_arn}' registered, but access blocked: {str(e)}"
+        else:
+            sfn_details = (
+                f"State machine ARN '{self.state_machine_arn}' registered."
+                if self.state_machine_arn
+                else "ASL workflow defined in infrastructure/statemachines/audit_workflow.asl.json; not deployed."
+            )
         services["step_functions"] = ServiceStatus(
             serviceName="AWS Step Functions",
             status=sfn_status,
             isLive=(sfn_status == OperationalStatus.LIVE),
-            details=(
-                f"State machine ARN '{self.state_machine_arn}' registered."
-                if self.state_machine_arn
-                else "ASL workflow defined in infrastructure/statemachines/audit_workflow.asl.json; not deployed."
-            ),
+            details=sfn_details,
             requiredConfig=["AUDIT_STATE_MACHINE_ARN", "AWS_REGION", "AWS_ACCESS_KEY_ID"],
             missingConfig=["AUDIT_STATE_MACHINE_ARN"] if not self.state_machine_arn else [],
         )
