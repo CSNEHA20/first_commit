@@ -12,6 +12,33 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
+def _load_dotenv() -> None:
+    """Loads environment variables from backend/.env or .env if present."""
+    candidate_paths = [
+        os.path.join(os.getcwd(), "backend", ".env"),
+        os.path.join(os.getcwd(), ".env"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend", ".env"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
+    ]
+    for p in candidate_paths:
+        if os.path.isfile(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k = k.strip()
+                            v = v.strip().strip("'\"")
+                            os.environ[k] = v
+            except Exception:
+                pass
+            break
+
+
+_load_dotenv()
+
+
 class OperationalStatus(str, Enum):
     LIVE = "LIVE"
     LOCAL_MOCKED = "LOCAL_MOCKED"
@@ -49,6 +76,11 @@ class AWSConfig:
     """
 
     def __init__(self):
+        self.reload_config()
+
+    def reload_config(self) -> None:
+        """Reloads configuration values from the current environment."""
+        _load_dotenv()
         self.environment: str = os.environ.get("ENVIRONMENT", "dev").lower()
         self.strict_mode: bool = os.environ.get("STRICT_AWS", "false").lower() in ("true", "1")
         self.region: str = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
@@ -62,7 +94,7 @@ class AWSConfig:
             "AVP_POLICY_STORE_ID", "ps-acmepay-prod"
         )
         self.bedrock_model_id: str = os.environ.get(
-            "BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0"
+            "BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"
         )
         self.state_machine_arn: Optional[str] = os.environ.get("AUDIT_STATE_MACHINE_ARN")
 
@@ -73,7 +105,10 @@ class AWSConfig:
         self.s3_enabled: bool = os.environ.get("AWS_S3_ENABLED", "false").lower() in ("true", "1")
 
     def has_aws_credentials(self) -> bool:
-        """Inspects whether active AWS credentials are discoverable by boto3."""
+        """Inspects whether active AWS credentials are discoverable by environment or boto3."""
+        _load_dotenv()
+        if os.environ.get("AWS_ACCESS_KEY_ID") and os.environ.get("AWS_SECRET_ACCESS_KEY"):
+            return True
         try:
             import boto3
             session = boto3.Session(region_name=self.region)
@@ -104,6 +139,7 @@ class AWSConfig:
         Audits all PolicyLab AWS integration touchpoints and reports their truthful status.
         Never fabricates live status when credentials or resources are missing.
         """
+        self.reload_config()
         creds_ok = self.has_aws_credentials()
         services: Dict[str, ServiceStatus] = {}
 

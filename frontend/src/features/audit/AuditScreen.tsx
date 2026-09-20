@@ -511,8 +511,18 @@ export const AuditScreen: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {inv.provider && (
-                      <span className="text-[10px] font-mono text-orange-300 bg-orange-500/10 border border-orange-500/20 px-1.5 py-0.5 rounded">
-                        {inv.provider.includes("Bedrock") ? "Bedrock" : "Template"}
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                        inv.provider.toLowerCase().includes("bedrock")
+                          ? "text-purple-300 bg-purple-500/10 border-purple-500/20"
+                          : inv.provider.toLowerCase().includes("nemotron")
+                          ? "text-emerald-300 bg-emerald-500/10 border-emerald-500/20"
+                          : "text-amber-300 bg-amber-500/10 border-amber-500/20"
+                      }`}>
+                        {inv.provider.toLowerCase().includes("bedrock")
+                          ? "Bedrock"
+                          : inv.provider.toLowerCase().includes("nemotron")
+                          ? "Nemotron"
+                          : "Template"}
                       </span>
                     )}
                     <StatusBadge

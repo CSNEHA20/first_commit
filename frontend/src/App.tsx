@@ -123,6 +123,7 @@ function AppContent() {
         activeVersion={isDemoMode ? "v12 (PROD)" : undefined}
         workspaceMode={isDemoMode ? "demo" : "connected"}
         onSwitchWorkspace={() => navigate({ type: 'console' })}
+        onReturnToLanding={() => navigate({ type: 'landing' })}
       />
 
       {/* Main Split Workspace Layout */}

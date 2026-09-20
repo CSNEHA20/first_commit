@@ -271,6 +271,11 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
                         <Sparkles className="h-2.5 w-2.5 text-purple-400" />
                         Amazon Bedrock ({explanation.provider.replace("bedrock:", "")})
                       </Badge>
+                    ) : explanation.provider?.startsWith("nemotron") ? (
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-mono gap-1">
+                        <Sparkles className="h-2.5 w-2.5 text-emerald-400" />
+                        NVIDIA Nemotron ({explanation.provider.replace("nemotron:", "")})
+                      </Badge>
                     ) : (
                       <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-mono gap-1">
                         <ShieldCheck className="h-2.5 w-2.5 text-amber-400" />

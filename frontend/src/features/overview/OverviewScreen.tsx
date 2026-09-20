@@ -163,6 +163,21 @@ export const OverviewScreen: React.FC<OverviewScreenProps> = ({ onNavigate }) =>
               {deploymentCount !== null ? `${deploymentCount} Recorded` : "Active Repository"}
             </span>
           </div>
+          <span className="text-muted-foreground/30 hidden sm:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-muted-foreground text-[11px]">AWS Telemetry:</span>
+            {backendHealth?.credentialsDetected ? (
+              <span className="text-emerald-400 font-bold text-xs flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                Live Keys Active
+              </span>
+            ) : (
+              <span className="text-amber-400 font-bold text-xs flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 inline-block" />
+                Local Adapter
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

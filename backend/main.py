@@ -7,14 +7,19 @@ and human-approved Amazon Verified Permissions (AVP) deployment.
 """
 
 import os
+import logging
 from typing import Any, Dict, List, Optional
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+logger = logging.getLogger("policylab.api")
+
 from .core.auth import AuthenticatedUser, get_current_user, require_roles
 from .core.logging import log_operational_metric, set_correlation_id
-from .core.aws_config import aws_config, AWSClusterStatus
+from .core.aws_config import aws_config, AWSClusterStatus, _load_dotenv
+
+_load_dotenv()
 from .domain.models.authz import (
     AuthorizationRequest,
     CanonicalEvidence,
@@ -185,7 +190,7 @@ report_exporter = AuditReportExportService()
 
 @app.get("/")
 def get_root():
-    """Root endpoint providing service metadata."""
+    """Root endpoint providing service metadata and Cedar engine status."""
     return {
         "service": "PolicyLab API",
         "status": "online",
@@ -476,6 +481,8 @@ def generate_explanation(request: AIExplanationRequest, current_user: Authentica
     from supplied deterministic authorization evidence.
     """
     try:
+        provider_cls = type(explanation_service.provider).__name__
+        logger.info(f"Generating explanation using provider: {provider_cls}")
         explanation = explanation_service.explain(request)
         return explanation
     except ValueError as ve:

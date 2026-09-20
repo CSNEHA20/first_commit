@@ -7,9 +7,12 @@ import {
   ArrowRight,
   Database,
   GitBranch,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { UserSessionBadge } from '@/components/common/UserSessionBadge'
+import { useTheme } from '@/theme/ThemeProvider'
 import { GitHubConnector } from '@/features/workspace/connectors/GitHubConnector'
 import { LocalConnector } from '@/features/workspace/connectors/LocalConnector'
 import { AVPConnector } from '@/features/workspace/connectors/AVPConnector'
@@ -44,6 +47,7 @@ export const HubConsole: React.FC<HubConsoleProps> = ({
   onOpenWorkspace,
   onReturnToLanding,
 }) => {
+  const { theme, toggleTheme } = useTheme()
   const { state, dispatch } = useWorkspace()
   const [activeModal, setActiveModal] = useState<'github' | 'local' | 'avp' | null>(null)
   const [showAiSettings, setShowAiSettings] = useState(false)
@@ -121,7 +125,7 @@ export const HubConsole: React.FC<HubConsoleProps> = ({
       <div className="fixed top-0 inset-x-0 h-[400px] cyber-aurora-top pointer-events-none z-0" />
 
       {/* Hub Top Bar */}
-      <header className="sticky top-0 z-40 h-14 border-b border-border bg-card/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between transition-colors">
+      <header className="sticky top-0 z-40 h-14 border-b border-border bg-card/85 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between transition-colors select-none">
         <div className="flex items-center gap-3">
           <button
             onClick={onReturnToLanding}
@@ -155,6 +159,18 @@ export const HubConsole: React.FC<HubConsoleProps> = ({
           </Button>
 
           <UserSessionBadge />
+
+          <div className="h-3.5 w-[1px] bg-border shrink-0" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+            title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} mode`}
+          >
+            {theme === 'light' ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+          </Button>
         </div>
       </header>
 

@@ -19,8 +19,10 @@ interface AppHeaderProps {
   environment?: "Production" | "Staging"
   /** Mode badge: 'demo' shows orange DEMO label, 'connected' shows sky CONNECTED label */
   workspaceMode?: "demo" | "connected"
-  /** Callback to open the workspace switcher */
+  /** Callback to open the workspace switcher / Console Hub */
   onSwitchWorkspace?: () => void
+  /** Callback to return to the opening landing page */
+  onReturnToLanding?: () => void
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -31,6 +33,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   environment = "Production",
   workspaceMode = "demo",
   onSwitchWorkspace,
+  onReturnToLanding,
 }) => {
   const { theme, toggleTheme } = useTheme()
 
@@ -55,46 +58,56 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   }
 
   return (
-    <header className="border-b border-border bg-card/80 backdrop-blur-md text-foreground sticky top-0 z-40 h-12 px-4 flex items-center justify-between gap-4 transition-colors select-none">
+    <header className="border-b border-border bg-card/85 backdrop-blur-xl text-foreground sticky top-0 z-40 h-14 px-4 sm:px-6 flex items-center justify-between gap-4 transition-colors select-none">
       {/* Left: Workbench Identifier & Project Context */}
-      <div className="flex items-center gap-2 text-xs min-w-0 shrink">
-        {/* Monogram / Logotype */}
-        <div className="flex items-center gap-2 font-semibold shrink-0">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-orange-500 to-amber-600 shadow-[0_0_10px_rgba(255,106,36,0.4)]">
-            <Shield className="h-3.5 w-3.5 text-white" />
+      <div className="flex items-center gap-2 sm:gap-2.5 text-xs min-w-0 shrink">
+        {/* Monogram / Logotype with return to landing page */}
+        <button
+          onClick={onReturnToLanding}
+          className="flex items-center gap-2 font-semibold shrink-0 cursor-pointer group text-left transition-opacity hover:opacity-90"
+          title="Return to PolicyLab Landing Page"
+        >
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 shadow-[0_0_12px_rgba(255,106,36,0.4)] group-hover:scale-105 transition-transform">
+            <Shield className="h-4 w-4 text-white" />
           </div>
-          <span className="font-bold tracking-tight text-foreground text-xs hidden sm:inline">
+          <span className="font-extrabold tracking-tight text-foreground text-sm hidden sm:inline">
             PolicyLab
           </span>
-        </div>
-
-        <ChevronRight className="h-3 w-3 text-muted-foreground/40 shrink-0" />
-
-        {/* Project Name — clickable to switch workspace */}
-        <button
-          onClick={onSwitchWorkspace}
-          disabled={!onSwitchWorkspace}
-          className="text-foreground font-medium hidden sm:inline text-xs hover:text-orange-500 transition-colors disabled:cursor-default truncate max-w-[140px] md:max-w-[200px]"
-          title={onSwitchWorkspace ? "Return to Console Hub / Switch workspace" : undefined}
-        >
-          {activeProject}
         </button>
 
-        {/* Workspace Mode Badge */}
-        {workspaceMode === "demo" ? (
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 shrink-0">
-            DEMO
-          </span>
-        ) : (
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 shrink-0">
-            CONNECTED
-          </span>
-        )}
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
 
-        <ChevronRight className="h-3 w-3 text-muted-foreground/40 hidden md:inline shrink-0" />
+        {/* Return to Console Hub breadcrumb */}
+        <button
+          onClick={onSwitchWorkspace}
+          className="text-muted-foreground hover:text-foreground font-medium text-xs transition-colors cursor-pointer hidden md:inline shrink-0"
+          title="Return to Console Hub"
+        >
+          Console
+        </button>
+
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 hidden md:inline shrink-0" />
+
+        {/* Project Name & Workspace Mode Badge */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-foreground font-bold text-xs truncate max-w-[130px] sm:max-w-[180px] md:max-w-[220px]">
+            {activeProject}
+          </span>
+          {workspaceMode === "demo" ? (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 shrink-0">
+              DEMO
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 shrink-0">
+              CONNECTED
+            </span>
+          )}
+        </div>
+
+        <ChevronRight className="h-3 w-3 text-muted-foreground/40 hidden lg:inline shrink-0" />
 
         {/* Environment Tag */}
-        <div className="hidden md:flex items-center gap-1.5 shrink-0">
+        <div className="hidden lg:flex items-center gap-1.5 shrink-0">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#18B868]" />
             {environment}
