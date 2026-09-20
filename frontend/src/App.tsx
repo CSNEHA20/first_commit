@@ -24,10 +24,11 @@ function AppContent() {
 
   // Handle Cognito OAuth callback on initial mount
   useEffect(() => {
-    const user = handleCognitoRedirectCallback()
-    if (user && route.type === 'landing') {
-      navigate({ type: 'console' })
-    }
+    handleCognitoRedirectCallback().then((user) => {
+      if (user) {
+        navigate({ type: 'console' })
+      }
+    })
   }, [])
 
   // Handle benchmark launch from landing page

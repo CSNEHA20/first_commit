@@ -22,7 +22,8 @@ export const COGNITO_CONFIG: CognitoConfig = {
   userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || 'us-east-1_JSKBNDt51',
   clientId: import.meta.env.VITE_COGNITO_CLIENT_ID || '1oqk3mk4j4em9k311gcmv2rv9v',
   domain: import.meta.env.VITE_COGNITO_DOMAIN || 'https://policylab.auth.us-east-1.amazoncognito.com',
-  redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/` : 'http://localhost:5173/',
+  // Strict matching with Cognito Allowed Callback URLs (no trailing slash)
+  redirectUri: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
 }
 
 /**
@@ -31,21 +32,22 @@ export const COGNITO_CONFIG: CognitoConfig = {
 export function redirectToGoogleOAuth(): void {
   const { domain, clientId, redirectUri } = COGNITO_CONFIG
   const cleanDomain = domain.replace(/\/$/, '')
-  // Uses response_type=token for direct SPA client-side token acquisition
+  
+  // Standard Cognito OAuth authorize endpoint for Google Identity Provider
   const authUrl = `${cleanDomain}/oauth2/authorize?identity_provider=Google&redirect_uri=${encodeURIComponent(
     redirectUri
-  )}&response_type=token&client_id=${clientId}&scope=email+openid+profile`
+  )}&response_type=code&client_id=${clientId}&scope=email+openid+profile`
   
   window.location.href = authUrl
 }
 
 /**
- * Initiates standard Cognito Hosted Login (Google + Email)
+ * Initiates standard Cognito Hosted Login UI (Google + Email)
  */
 export function redirectToCognitoHostedUI(): void {
   const { domain, clientId, redirectUri } = COGNITO_CONFIG
   const cleanDomain = domain.replace(/\/$/, '')
-  const authUrl = `${cleanDomain}/login?client_id=${clientId}&response_type=token&scope=email+openid+profile&redirect_uri=${encodeURIComponent(
+  const authUrl = `${cleanDomain}/login?client_id=${clientId}&response_type=code&scope=email+openid+profile&redirect_uri=${encodeURIComponent(
     redirectUri
   )}`
   
@@ -53,37 +55,81 @@ export function redirectToCognitoHostedUI(): void {
 }
 
 /**
- * Checks URL hash for Cognito OAuth redirect tokens (e.g. #id_token=...&access_token=...)
+ * Exchanges OAuth authorization code for Cognito ID & Access tokens
+ */
+export async function exchangeCodeForTokens(code: string): Promise<UserProfile | null> {
+  const { domain, clientId, redirectUri } = COGNITO_CONFIG
+  const cleanDomain = domain.replace(/\/$/, '')
+  const tokenEndpoint = `${cleanDomain}/oauth2/token`
+
+  const body = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: clientId,
+    code,
+    redirect_uri: redirectUri,
+  })
+
+  try {
+    const res = await fetch(tokenEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body.toString(),
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.error('Cognito Token Exchange Error:', errorText)
+      return null
+    }
+
+    const data = await res.json()
+    if (data.id_token) {
+      return setCognitoToken(data.id_token)
+    }
+  } catch (err) {
+    console.error('Network error during Cognito token exchange:', err)
+  }
+  return null
+}
+
+/**
+ * Checks URL for Cognito OAuth redirect tokens or codes
  * If present, stores the token and cleans the URL.
  */
-export function handleCognitoRedirectCallback(): UserProfile | null {
+export async function handleCognitoRedirectCallback(): Promise<UserProfile | null> {
   if (typeof window === 'undefined') return null
 
-  // 1. Check URL hash for implicit token response (#id_token=...)
-  if (window.location.hash && window.location.hash.includes('id_token=')) {
-    const hash = window.location.hash.substring(1)
-    const params = new URLSearchParams(hash)
-    const idToken = params.get('id_token')
-    if (idToken) {
-      try {
-        const user = setCognitoToken(idToken)
-        // Clean hash from URL without refreshing
-        window.history.replaceState(null, '', window.location.pathname + window.location.search)
-        return user
-      } catch (err) {
-        console.error('Failed to parse Cognito ID token from URL hash:', err)
-      }
+  // 1. Check for OAuth Error in URL params
+  const searchParams = new URLSearchParams(window.location.search)
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  
+  const oauthError = searchParams.get('error_description') || searchParams.get('error') || hashParams.get('error_description') || hashParams.get('error')
+  if (oauthError) {
+    console.error('Cognito OAuth Error received:', oauthError)
+    window.history.replaceState(null, '', window.location.pathname)
+    return null
+  }
+
+  // 2. Check URL hash for implicit token response (#id_token=...)
+  const idToken = hashParams.get('id_token')
+  if (idToken) {
+    try {
+      const user = setCognitoToken(idToken)
+      window.history.replaceState(null, '', window.location.pathname)
+      return user
+    } catch (err) {
+      console.error('Failed to parse Cognito ID token from URL hash:', err)
     }
   }
 
-  // 2. Check URL search query for code response (?code=...)
-  if (window.location.search && window.location.search.includes('code=')) {
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-    if (code) {
-      // Clean query code
-      window.history.replaceState(null, '', window.location.pathname)
-    }
+  // 3. Check URL search query for authorization code response (?code=...)
+  const code = searchParams.get('code')
+  if (code) {
+    window.history.replaceState(null, '', window.location.pathname)
+    const user = await exchangeCodeForTokens(code)
+    return user
   }
 
   return null
