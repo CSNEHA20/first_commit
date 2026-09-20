@@ -1,31 +1,64 @@
-# PolicyLab
+<div align="center">
 
-> **Prove your authorization changes before they reach production.**
+# 🛡️ PolicyLab
 
-[![Hackathon](https://img.shields.io/badge/AWS-First%20Commit%202026-orange?style=for-the-badge&logo=amazonaws)](https://wemakedevs.org)
-[![Team](https://img.shields.io/badge/Team-VibeSync-00C7B7?style=for-the-badge)](https://github.com/Vishallakshmikanthan)
-[![Cedar Engine](https://img.shields.io/badge/Authz-Cedar%20Policy%20v4.13.0-green?style=for-the-badge)](https://www.cedarpolicy.com)
-[![Tests](https://img.shields.io/badge/Tests-172%20Passed%20%7C%200%20Failed-brightgreen?style=for-the-badge)]()
-[![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20Monaco-61DAFB?style=for-the-badge&logo=react)](./frontend)
-[![Backend](https://img.shields.io/badge/Backend-Python%203.11%20%7C%20FastAPI-3776AB?style=for-the-badge&logo=python)](./backend)
-[![AWS Targets](https://img.shields.io/badge/AWS-AVP%20%7C%20Bedrock%20%7C%20DynamoDB%20%7C%20S3-FF9900?style=for-the-badge&logo=amazonaws)](./infrastructure)
-[![AI Providers](https://img.shields.io/badge/AI%20Reasoning-Bedrock%20%7C%20Nemotron%20%7C%20Fallback-purple?style=for-the-badge)]()
-[![Dual Repo](https://img.shields.io/badge/Sync-origin%20%26%20first__commit-blue?style=for-the-badge&logo=git)]()
-[![Status](https://img.shields.io/badge/Status-Submission%20Ready%20(v1.5.0)-success?style=for-the-badge)]()
+### *Prove your authorization changes before they reach production.*
+
+An enterprise-grade authorization change-verification and policy-engineering platform for **Cedar Policy** and the **AWS Authorization Ecosystem** (**Amazon Verified Permissions**, **Amazon Bedrock**, **Amazon DynamoDB**, **Amazon S3**, **AWS Lambda**, and **Amazon Cognito**).
+
+<br/>
+
+[![Hackathon](https://img.shields.io/badge/WeMakeDevs%20%C3%97%20AWS-First%20Commit%202026-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)](https://wemakedevs.org)
+[![Team](https://img.shields.io/badge/Team-VibeSync-00C7B7?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Vishallakshmikanthan/policylab)
+[![Cedar Engine](https://img.shields.io/badge/Authz-Cedar%20Policy%20v4.13.0-22c55e?style=for-the-badge&logo=shield&logoColor=white)](https://www.cedarpolicy.com)
+[![Tests](https://img.shields.io/badge/Tests-172%20Passed%20%7C%200%20Failed-success?style=for-the-badge&logo=checkmarx&logoColor=white)]()
+[![Dual Repo Sync](https://img.shields.io/badge/Dual%20Sync-origin%20%E2%86%94%20first__commit-blue?style=for-the-badge&logo=git&logoColor=white)]()
+
+<br/>
+
+[![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20Monaco-61DAFB?style=flat-square&logo=react&logoColor=black)](./frontend)
+[![Backend](https://img.shields.io/badge/Backend-Python%203.11%20%7C%20FastAPI-3776AB?style=flat-square&logo=python&logoColor=white)](./backend)
+[![AWS Targets](https://img.shields.io/badge/AWS-AVP%20%7C%20Bedrock%20%7C%20DynamoDB%20%7C%20S3%20%7C%20Lambda-FF9900?style=flat-square&logo=amazonaws&logoColor=white)](./infrastructure)
+[![AI Reasoning](https://img.shields.io/badge/AI%20Grounded-Bedrock%20Claude%20%7C%20Nemotron-8A2BE2?style=flat-square&logo=anthropic&logoColor=white)]()
+[![Status](https://img.shields.io/badge/Status-Submission%20Ready%20(v1.5.0)-brightgreen?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey?style=flat-square)](LICENSE)
+
+<br/>
+
+</div>
+
+---
+
+## 🏆 WeMakeDevs × AWS First Commit 2026 Submission Spotlight
+
+> **Engineered with mathematical precision by Team VibeSync for the WeMakeDevs × AWS First Commit 2026 Hackathon.**
+
+| Dimension | Official Project Evidence & Implementation Telemetry |
+| :--- | :--- |
+| **Hackathon & Track** | **WeMakeDevs × AWS First Commit 2026** — *Cloud Security, Developer Tooling & Fine-Grained Authorization* |
+| **Team VibeSync** | • **Vishal Lakshmikanthan** ([@Vishallakshmikanthan](https://github.com/Vishallakshmikanthan)) — *Architecture, Cedar Domain Engine, AWS Cloud Backend, Cryptographic Gates*<br>• **Sneha C.** ([@CSNEHA20](https://github.com/CSNEHA20)) — *Frontend Engineering, Monaco Cedar Editor, Blast Radius Visualizer, Benchmark Suites* |
+| **Core Value Proposition** | Eliminates authorization blind spots by converting dangerous Cedar policy edits into observable, mathematically verifiable, and testable blast radius models before reaching production. |
+| **AWS Services Utilized** | **Amazon Verified Permissions (AVP)**, **Amazon Bedrock** (*Claude 3.5 Sonnet* & *Claude 3 Haiku*), **Amazon DynamoDB** (*Single-Table Design*), **Amazon S3** (*Policy Artifacts*), **AWS Lambda** (*Serverless ASGI*), **Amazon API Gateway** (*HTTP v2*), **AWS Step Functions** (*ASL Audit Pipelines*), **Amazon Cognito** (*Email OTP & Google OAuth*), **Amazon CloudWatch** (*Embedded Metric Format*). |
+| **Core Engine** | **Cedar Policy WASM 4.13.0** (Deterministic, sub-millisecond evaluation in `<1ms`). |
+| **AI Safety Guardrail** | **AI Never Decides Authorization.** Cedar and deterministic rules are the sole arbiters of access truth. AI models synthesize grounded explanations strictly citing verified deterministic finding IDs. |
+| **Verification & Quality** | **172 Passed / 0 Failed (100% Pass Rate)** across 26 backend test modules and clean zero-error frontend TypeScript build. |
+| **Dual Repositories** | Synchronized in lockstep: [`origin`](https://github.com/Vishallakshmikanthan/policylab) & [`first_commit`](https://github.com/CSNEHA20/first_commit) on branch `main`. |
+| **Judge Quick-Links** | [🎬 Repeatable Demonstration Walkthrough](./docs/HACKATHON_RELEASE_EVIDENCE.md#5-judge-evaluation-script--repeatable-walkthrough) • [🏗️ Architecture Deep-Dive](./docs/ARCHITECTURE.md) • [🧪 Test Verification Report](./docs/TESTING_AND_VERIFICATION.md) • [☁️ AWS Deployment Runbook](./docs/AWS_DEPLOYMENT_AND_CLEANUP.md) |
 
 ---
 
 ## 📑 Table of Contents
 
-1. [Executive Summary](#-executive-summary)
-2. [The Problem: The Authorization Visibility Crisis](#-the-problem-the-authorization-visibility-crisis)
-3. [The Solution: PolicyLab Platform](#-the-solution-policylab-platform)
-4. [Core Architectural Rules & Invariants](#-core-architectural-rules--invariants)
-5. [System Architecture](#-system-architecture)
+1. [Hackathon Submission Spotlight](#-wemakedevs--aws-first-commit-2026-submission-spotlight)
+2. [Executive Summary](#-executive-summary)
+3. [The Problem: The Authorization Visibility Crisis](#-the-problem-the-authorization-visibility-crisis)
+4. [The Solution: PolicyLab Platform](#-the-solution-policylab-platform)
+5. [Core Architectural Rules & Invariants](#-core-architectural-rules--invariants)
+6. [System Architecture](#-system-architecture)
    - [High-Level Architecture](#high-level-architecture)
    - [Component Decomposition](#component-decomposition)
    - [Layered Trust Model](#layered-trust-model)
-6. [End-to-End Data Flows](#-end-to-end-data-flows)
+7. [End-to-End Data Flows](#-end-to-end-data-flows)
    - [System-Wide Data Flow](#1-system-wide-data-flow)
    - [Monaco Policy Validation Flow](#2-monaco-policy-validation-flow)
    - [Real-Time Single Scenario Simulation](#3-real-time-single-scenario-simulation)
@@ -34,18 +67,18 @@
    - [Security Invariant Contracts & Pre-Deployment Gate](#6-security-invariant-contracts--pre-deployment-gate)
    - [Autonomous Strands Agent & Grounded AI Synthesis](#7-autonomous-strands-agent--grounded-ai-synthesis)
    - [Cryptographically Bound Human Sign-off & AVP Deployment](#8-cryptographically-bound-human-sign-off--avp-deployment)
-7. [Benchmarks & Workspaces](#-benchmarks--workspaces)
+8. [Benchmarks & Workspaces](#-benchmarks--workspaces)
    - [AcmePay Benchmark (Fintech Core)](#acmepay-benchmark-fintech-core)
    - [DocVault Benchmark (HIPAA Healthcare EHR)](#docvault-benchmark-hipaa-healthcare-ehr)
    - [Connected Workspaces Engine](#connected-workspaces-engine)
-8. [Visual Feature Tour & Screenshots](#-visual-feature-tour--screenshots)
-9. [Authentication & Least-Privilege Identity](#-authentication--least-privilege-identity)
-10. [AWS Services & Cloud Architecture Matrix](#-aws-services--cloud-architecture-matrix)
-11. [Testing, Verification & Acceptance Proof](#-testing-verification--acceptance-proof)
-12. [Quickstart & Local Setup](#-quickstart--local-setup)
-13. [AWS SAM Deployment Runbook](#-aws-sam-deployment-runbook)
-14. [Authoritative Documentation Index](#-authoritative-documentation-index)
-15. [Hackathon Submission Summary](#-hackathon-submission-summary)
+9. [Visual Feature Tour & Screenshots](#-visual-feature-tour--screenshots)
+10. [Authentication & Least-Privilege Identity](#-authentication--least-privilege-identity)
+11. [AWS Services & Cloud Architecture Matrix](#-aws-services--cloud-architecture-matrix)
+12. [Testing, Verification & Acceptance Proof](#-testing-verification--acceptance-proof)
+13. [Quickstart & Local Setup](#-quickstart--local-setup)
+14. [AWS SAM Deployment Runbook](#-aws-sam-deployment-runbook)
+15. [Authoritative Documentation Index](#-authoritative-documentation-index)
+16. [Hackathon Submission Summary](#-hackathon-submission-summary)
 
 ---
 
